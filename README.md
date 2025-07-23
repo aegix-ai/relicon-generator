@@ -13,7 +13,7 @@
 ## System Architecture
 
 ```
-relicon-rewrite/
+relicon/
 ├── backend/                    # FastAPI + LangGraph Agent System
 │   ├── agents/                # AI Agent Components
 │   │   ├── master_planner.py  # Ultra-detailed planning agent
