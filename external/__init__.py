@@ -1,1 +1,0 @@
-"""External integrations module for Relicon AI"""
