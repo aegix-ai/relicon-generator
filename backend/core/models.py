@@ -123,7 +123,7 @@ class SceneComponent(BaseModel):
 class AdScene(BaseModel):
     """Complete scene with all components"""
     
-    scene_id: str = Field(..., regex=r"^scene_\d+$")
+    scene_id: str = Field(..., pattern=r"^scene_\d+$")
     scene_type: Literal["hook", "problem", "solution", "benefits", "cta", "transition"]
     scene_purpose: str = Field(..., min_length=10)
     

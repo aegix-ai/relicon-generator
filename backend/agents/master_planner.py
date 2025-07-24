@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
-from langgraph import StateGraph, END
+from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolExecutor
 from core.models import (
     AdCreationRequest, MasterAdPlan, AdScene, SceneComponent, 
@@ -37,8 +37,10 @@ class MasterPlannerAgent:
     def _create_planning_graph(self) -> StateGraph:
         """Create the LangGraph state machine for planning"""
         
-        # Define the planning state
-        class PlanningState:
+        # Define the planning state as a TypedDict
+        from typing import TypedDict
+        
+        class PlanningState(TypedDict):
             request: AdCreationRequest
             context: PlanningContext
             strategic_analysis: Dict[str, Any]

@@ -294,8 +294,14 @@ def get_database() -> Session:
 def init_database():
     """Initialize database with tables"""
     print("🗄️ Initializing database...")
-    db_manager.create_tables()
-    print("✅ Database initialized successfully!")
+    try:
+        db_manager.create_tables()
+        print("✅ Database initialized successfully!")
+    except Exception as e:
+        print(f"⚠️ Database initialization failed: {e}")
+        print("⚠️ Continuing without database (testing mode)")
+        return False
+    return True
 
 
 if __name__ == "__main__":

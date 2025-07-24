@@ -23,6 +23,7 @@ from core.models import (
     HealthCheckResponse, JobStatus, ErrorResponse
 )
 from core.database import get_database, init_database, db_manager
+from core.mock_database import get_mock_database, init_mock_database, mock_db_manager
 
 # AI Agents
 from agents.master_planner import master_planner
@@ -43,11 +44,24 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Relicon AI Ad Creator - Starting up...")
     
+    # Set start time
+    app.state.start_time = time.time()
+    
     # Initialize database
-    init_database()
+    db_available = init_database()
+    
+    # Use mock database if real one fails
+    global db_manager, get_database
+    if not db_available:
+        print("🔄 Switching to mock database for testing...")
+        db_manager = mock_db_manager
+        get_database = get_mock_database
+        init_mock_database()
     
     # Check services
-    await check_service_health()
+    services = await check_service_health()
+    if not db_available:
+        services["database"] = "mock"
     
     print("✅ Relicon AI Ad Creator - Started successfully!")
     
@@ -451,11 +465,7 @@ async def get_active_jobs() -> list:
         return []
 
 
-# Initialize start time
-@app.on_event("startup")
-async def set_start_time():
-    """Set application start time"""
-    app.state.start_time = time.time()
+# Initialize start time in lifespan
 
 
 if __name__ == "__main__":

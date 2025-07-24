@@ -4,7 +4,8 @@ Centralized configuration management with validation
 """
 import os
 from typing import List, Optional
-from pydantic import BaseSettings, validator, Field
+from pydantic_settings import BaseSettings
+from pydantic import validator, Field
 from pathlib import Path
 
 
@@ -12,13 +13,13 @@ class Settings(BaseSettings):
     """Application settings with validation"""
     
     # Application Info
-    APP_NAME: str = "Relicon AI Ad Creator"
-    APP_VERSION: str = "1.0.0"
+    APP_NAME: str = "Relicon"
+    APP_VERSION: str = "0.5.0"
     DEBUG: bool = False
     SECRET_KEY: str = Field(..., min_length=32)
     
     # Database
-    DATABASE_URL: str = Field(..., regex=r"^postgresql://.*")
+    DATABASE_URL: str = Field(..., pattern=r"^postgresql://.*")
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
     
     # AI Services
@@ -41,7 +42,7 @@ class Settings(BaseSettings):
     # Video Generation
     DEFAULT_VIDEO_DURATION: int = 30
     MAX_VIDEO_DURATION: int = 60
-    MIN_VIDEO_DURATION: int = 10
+    MIN_VIDEO_DURATION: int = 15
     VIDEO_RESOLUTION: str = "1920x1080"
     VIDEO_FPS: int = 30
     

@@ -27,7 +27,7 @@ class ElevenLabsService:
         
         # Premium voice IDs (these would be your actual ElevenLabs voice IDs)
         self.premium_voices = {
-            "male": {
+            "neutral": {
                 "professional": "21m00Tcm4TlvDq8ikWAM",  # Rachel - professional female
                 "energetic": "AZnzlk1XvdvUeBnXmlld",     # Domi - energetic
                 "casual": "EXAVITQu4vr4xnSDxMaL"        # Bella - casual
@@ -37,7 +37,7 @@ class ElevenLabsService:
                 "energetic": "ThT5KcBeYPX3keUQqHPh",     # Dorothy - energetic
                 "casual": "XrExE9yKIg1WjnnlVkGX"         # Matilda - casual
             },
-            "neutral": {
+            "male": {
                 "professional": "pNInz6obpgDQGcFmaJgB",  # Adam - professional
                 "energetic": "onwK4e9ZLuTAKqWW03F9",     # Daniel - energetic  
                 "casual": "IKne3meq5aSn9XLyUdCD"         # Charlie - casual
