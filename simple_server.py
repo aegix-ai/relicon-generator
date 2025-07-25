@@ -18,7 +18,15 @@ class ReliconHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         
-        if path == '/':
+        if path == '/health':
+            # Health check endpoint for Docker
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {"status": "healthy", "service": "relicon-ai-video-generator"}
+            self.wfile.write(json.dumps(response).encode())
+            
+        elif path == '/':
             # Serve the frontend HTML
             self.send_response(200)
             self.send_header('Content-type', 'text/html')

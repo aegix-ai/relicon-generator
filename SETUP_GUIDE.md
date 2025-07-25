@@ -1,15 +1,88 @@
 # Relicon AI Video Generator - Complete Setup Guide
 
 ## System Overview
-This is the world's most advanced autonomous AI video generation system with 19 Python scripts totaling 3,180 lines of code. The system creates revolutionary 15-second advertisement videos with full AI autonomy.
+This is the world's most advanced autonomous AI video generation system with 14 Python scripts totaling 2,066 lines of clean code. The system creates revolutionary 15-second advertisement videos with full AI autonomy, featuring ElevenLabs premium TTS and ultra-realistic content generation.
 
-## Prerequisites
+## Setup Options
+
+Choose your preferred deployment method:
+- **🐳 Docker (Recommended)** - Production-ready, containerized deployment
+- **🐍 Native Python** - Direct installation for development
+
+---
+
+## 🐳 DOCKER SETUP (RECOMMENDED)
+
+### Prerequisites
+- Docker 20.10+
+- Docker Compose 2.0+
+
+### 1. Download and Extract Code
+```bash
+# If from Git repository
+git clone [your-repo-url] relicon-ai
+cd relicon-ai/relicon-rewrite
+
+# If from ZIP download
+unzip relicon-code.zip
+cd relicon-ai/relicon-rewrite
+```
+
+### 2. Configure Environment Variables
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env with your API keys
+nano .env
+```
+
+Add your API keys:
+```bash
+OPENAI_API_KEY=sk-your-openai-api-key-here
+ELEVENLABS_API_KEY=your-elevenlabs-api-key-here
+LUMA_API_KEY=your-luma-api-key-here
+DEBUG=false
+PORT=8080
+```
+
+### 3. Start with Docker Compose
+```bash
+# Build and start the system
+docker-compose up --build
+
+# Or run in background
+docker-compose up -d --build
+```
+
+### 4. Access the Application
+- Open browser to `http://localhost:8080`
+- Health check: `http://localhost:8080/health`
+- Generated videos in `./outputs/` directory
+
+### 5. Docker Management Commands
+```bash
+# View logs
+docker-compose logs -f
+
+# Stop the system
+docker-compose down
+
+# Rebuild after changes
+docker-compose up --build --force-recreate
+
+# Remove everything (including volumes)
+docker-compose down -v
+```
+
+---
+
+## 🐍 NATIVE PYTHON SETUP
+
+### Prerequisites
 - Python 3.11+ 
-- Node.js 18+ (for development server)
 - FFmpeg (for video processing)
 - Git
-
-## Step-by-Step Setup Instructions
 
 ### 1. Download and Extract Code
 ```bash
@@ -29,7 +102,7 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install required packages
-pip install fastapi uvicorn openai requests aiofiles structlog pydantic pydantic-settings
+pip install -r requirements.txt
 ```
 
 ### 3. Install System Dependencies
@@ -223,8 +296,39 @@ docker run -p 8080:8080 --env-file .env relicon-ai
 ## Cost Estimation
 - **Per 15-second video**: $3-5
 - **OpenAI GPT-4o**: ~$0.02 per video
-- **OpenAI TTS**: ~$0.015 per video  
+- **ElevenLabs TTS**: ~$0.05 per video (premium quality)
 - **Luma AI**: ~$1.50 per scene (2-3 scenes = $3-4.50)
+
+## Docker Features
+
+### Container Architecture
+- **Main Container**: Complete Relicon system with all dependencies
+- **Volume Persistence**: Generated videos saved to `./outputs/`
+- **Health Monitoring**: Built-in health checks at `/health`
+- **Environment Isolation**: Secure API key management
+- **Auto-restart**: Container restarts on failure
+
+### Production Benefits
+- **Consistent Environment**: Same setup across development/production
+- **Easy Scaling**: Ready for horizontal scaling with load balancers
+- **Version Control**: Lock exact Python/FFmpeg versions
+- **Security**: Isolated container environment
+- **Monitoring**: Health checks and log aggregation ready
+
+### Development Workflow
+```bash
+# Make code changes
+nano services/audio/tts_service.py
+
+# Rebuild and restart
+docker-compose up --build
+
+# View real-time logs
+docker-compose logs -f relicon
+
+# Debug inside container
+docker-compose exec relicon bash
+```
 
 ## Support
 For issues or questions:
