@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     
     # Application Info
     APP_NAME: str = "Relicon AI Ad Creator"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "v0.5.4 (Relicon)"
     DEBUG: bool = False
     SECRET_KEY: str = Field(..., min_length=32)
     

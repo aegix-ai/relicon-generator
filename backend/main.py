@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Relicon AI Ad Creator",
     description="Revolutionary AI-powered ad creation system with ultra-detailed planning",
-    version="1.0.0",
+    version="v0.5.4 (Relicon)",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan

@@ -1,4 +1,4 @@
-# Relicon AI Ad Creator - Revolutionary System
+# Relicon AI Ad Creator v0.5.4 (Relicon)
 
 🚀 **World's Most Advanced AI-Powered Ad Creation Platform**
 
@@ -96,6 +96,14 @@ relicon/
 - **Real-time progress** tracking with detailed status
 - **Automatic assembly** with FFmpeg precision
 - **Production quality** output every time
+
+## 📚 Documentation
+
+- **🎓 Learning Guide**: [`docs/LEARNING_ROADMAP.md`](docs/LEARNING_ROADMAP.md) - Master the entire codebase step by step
+- **🏗️ System Overview**: [`docs/SYSTEM_OVERVIEW.md`](docs/SYSTEM_OVERVIEW.md) - Complete architecture explanation  
+- **🚀 Quick Start**: [`docs/LAUNCH_INSTRUCTIONS.md`](docs/LAUNCH_INSTRUCTIONS.md) - Get running in 5 minutes
+- **🧪 Testing Guide**: [`docs/TESTING.md`](docs/TESTING.md) - Comprehensive testing procedures
+- **🌐 Production Deploy**: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) - Enterprise deployment guide
 
 ---
 
