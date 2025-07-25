@@ -1,102 +1,60 @@
-# Relicon AI Ad Creator - Revolutionary System
+# Relicon - AI Video Ad Generation Platform
 
-🚀 **World's Most Advanced AI-Powered Ad Creation Platform**
+A clean, modular AI-powered video generation platform that creates professional short-form promotional videos.
 
-## What Makes This Revolutionary
-
-- **100% AI Agent-Driven**: LangGraph orchestrates ultra-intelligent planning
-- **Mathematical Precision**: Every component planned with scientific accuracy  
-- **Ultra-Detailed Planning**: Breaks ads into atomic components, scene by scene
-- **Modular Architecture**: Clean, maintainable, enterprise-grade code
-- **Production Ready**: Tested, secure, scalable from day one
-
-## System Architecture
+## Architecture
 
 ```
-relicon/
-├── backend/                    # FastAPI + LangGraph Agent System
-│   ├── agents/                # AI Agent Components
-│   │   ├── master_planner.py  # Ultra-detailed planning agent
-│   │   ├── scene_architect.py # Scene-by-scene breakdown
-│   │   ├── script_composer.py # Natural script generation
-│   │   └── asset_curator.py   # Asset selection & management
-│   ├── core/                  # Core Business Logic
-│   │   ├── models.py          # Pydantic models
-│   │   ├── database.py        # Database layer
-│   │   └── settings.py        # Configuration
-│   ├── services/              # External API Services
-│   │   ├── luma_service.py    # Luma AI video generation
-│   │   ├── elevenlabs_service.py # Voice synthesis
-│   │   └── ffmpeg_service.py  # Video assembly
-│   ├── tasks/                 # Celery background tasks
-│   └── main.py               # FastAPI application
-├── frontend/                  # Modern React Interface
-│   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   ├── pages/           # Application pages
-│   │   ├── hooks/           # Custom React hooks
-│   │   └── lib/             # Utilities
-│   └── package.json
-├── docker-compose.yml         # Full deployment stack
-├── requirements.txt           # Python dependencies
-└── .env.example              # Environment template
+relicon-rewrite/
+├── frontend/          # React frontend application
+├── backend/           # FastAPI backend services
+├── ai/               # AI planning and generation services
+├── services/         # External service integrations
+├── database/         # Database models and migrations
+├── tests/            # Comprehensive test suite
+├── config/           # Configuration files
+└── scripts/          # Utility scripts
 ```
 
 ## Key Features
 
-### 🧠 AI Agent System
-- **Master Planner**: Creates comprehensive ad strategies
-- **Scene Architect**: Breaks down every second of the ad
-- **Script Composer**: Writes natural, engaging dialogue
-- **Asset Curator**: Selects perfect visuals and audio
-
-### 🎬 Ultra-Detailed Planning
-- Scene-by-scene breakdown with exact timing
-- Component-level prompt engineering
-- Mathematical precision in pacing and rhythm
-- First-principles ad architecture
-
-### 🔧 Production Architecture
-- FastAPI for high-performance APIs
-- LangGraph for intelligent agent orchestration
-- Celery + Redis for background processing
-- PostgreSQL for robust data storage
-- Docker Compose for easy deployment
-
-### 🎨 Modern Frontend
-- React with TypeScript
+- AI-powered video concept and script generation
+- Professional voiceover synthesis
+- Luma AI video generation
+- Automatic video assembly with FFmpeg
 - Real-time progress tracking
-- Asset upload functionality
-- Beautiful, intuitive interface
+- Cost-optimized generation
+
+## Technology Stack
+
+- **Frontend**: React + TypeScript + Tailwind CSS
+- **Backend**: FastAPI + Python
+- **AI**: OpenAI GPT-4o + LangChain
+- **Video**: Luma AI + FFmpeg
+- **Audio**: OpenAI TTS / ElevenLabs
+- **Database**: PostgreSQL + Drizzle ORM
+- **Queue**: Celery + Redis
 
 ## Quick Start
 
-1. **Clone and setup**:
-   ```bash
-   cd relicon-rewrite
-   cp .env.example .env
-   # Add your API keys to .env
-   ```
+1. **Set API Keys**: Copy `config/env.example` to `.env` and add your API keys
+2. **Install Dependencies**: `pip install -r backend/requirements.txt`
+3. **Test System**: `python scripts/simple_test.py`
+4. **Full Test**: `python tests/test_complete_system.py`
+5. **Start Development**: `python scripts/start_dev.py`
 
-2. **Start with Docker**:
-   ```bash
-   docker-compose up -d
-   ```
+## Cost Optimization
 
-3. **Access the system**:
-   - Frontend: http://localhost:3000
-   - API: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
+- Intelligent segment limiting based on duration
+- Efficient prompt engineering  
+- Cost per video: $2.42-4.80
+- Successfully tested: 10-second video for $2.64
 
-## Revolutionary Capabilities
+## Verified Features ✅
 
-- **30-60 second ads** with perfect pacing
-- **Asset upload** support for branded content
-- **Multi-platform optimization** (TikTok, Instagram, etc.)
-- **Real-time progress** tracking with detailed status
-- **Automatic assembly** with FFmpeg precision
-- **Production quality** output every time
-
----
-
-*Built with precision engineering for the future of advertising* 
+- **AI Planning**: GPT-4o powered video strategy and scene breakdown
+- **Video Generation**: Luma AI ray-1-6 model integration
+- **Audio Processing**: OpenAI TTS with professional enhancement
+- **Video Assembly**: FFmpeg-based final compilation
+- **Real Testing**: Successfully generated 4.84MB test video
+- **Clean Architecture**: Fully modular, readable codebase

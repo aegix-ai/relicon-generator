@@ -1,0 +1,16 @@
+{
+  "name": "relicon-clean-system",
+  "version": "1.0.0",
+  "description": "Clean Relicon AI Video Generation System",
+  "main": "backend/api/main.py",
+  "scripts": {
+    "dev": "cd relicon-rewrite && python3 backend/api/main.py",
+    "start": "cd relicon-rewrite && python3 backend/api/main.py",
+    "test": "cd relicon-rewrite && python3 tests/test_complete_system.py"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}
