@@ -10,7 +10,20 @@ from openai import OpenAI
 
 class AutonomousVideoArchitect:
     def __init__(self):
-        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        # Initialize OpenAI client with compatibility fix
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required")
+        try:
+            # Use basic client initialization to avoid httpx conflicts
+            self.client = OpenAI(
+                api_key=api_key,
+                timeout=60.0,
+                max_retries=2
+            )
+        except Exception as e:
+            print(f"⚠️ OpenAI client initialization failed: {e}")
+            raise ValueError(f"Failed to initialize OpenAI client: {e}")
     
     def architect_complete_video(self, brand_info: Dict[str, Any]) -> Dict[str, Any]:
         """

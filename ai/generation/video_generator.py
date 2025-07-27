@@ -71,19 +71,19 @@ class CompleteVideoGenerator:
                 scene_num = scene.get('scene_number', i + 1)
                 progress = 30 + (i * 35 // len(enhanced_scenes))
                 
-                self.progress_update(progress, f"🎬 Creating revolutionary scene {scene_num}: {scene.get('purpose', 'scene')}")
+                self.progress_update(progress, f"🎬 Creating revolutionary scene {int(scene_num)}: {scene.get('purpose', 'scene')}")
                 
                 # Use ultra-realistic advertisement prompt with uniqueness
                 ultra_realistic_prompt = scene.get('luma_prompt', 'Default prompt')
                 video_url = self.luma_service.generate_video(ultra_realistic_prompt, aspect_ratio="9:16", force_unique=True)
                 
                 # Download video
-                video_file = os.path.join(self.temp_dir, f"scene_{scene_num}.mp4")
+                video_file = os.path.join(self.temp_dir, f"scene_{int(scene_num)}.mp4")
                 if not self.luma_service.download_video(video_url, video_file):
-                    raise Exception(f"Failed to download video for scene {scene_num}")
+                    raise Exception(f"Failed to download video for scene {int(scene_num)}")
                 
                 video_files.append(video_file)
-                print(f"✅ Revolutionary scene {scene_num} completed")
+                print(f"✅ Revolutionary scene {int(scene_num)} completed")
             
             self.progress_update(70, "🎬 Assembling revolutionary video with AI-designed audio")
             

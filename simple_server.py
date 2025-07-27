@@ -11,6 +11,25 @@ from urllib.parse import urlparse, parse_qs
 import threading
 from pathlib import Path
 
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✅ Environment loaded from .env file")
+except ImportError:
+    print("⚠️  python-dotenv not installed. Using system environment variables only.")
+except Exception as e:
+    print(f"⚠️  Could not load .env file: {e}")
+
+# Verify critical API keys are available
+required_keys = ['OPENAI_API_KEY', 'LUMA_API_KEY']
+missing_keys = [key for key in required_keys if not os.getenv(key)]
+if missing_keys:
+    print(f"❌ Missing required environment variables: {missing_keys}")
+    print("Please set these in your .env file or environment")
+else:
+    print("✅ All required API keys found")
+
 # In-memory job storage
 jobs = {}
 

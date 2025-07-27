@@ -14,8 +14,20 @@ class TTSService:
     def __init__(self):
         # Primary: ElevenLabs
         self.elevenlabs_api_key = os.environ.get("ELEVENLABS_API_KEY")
-        # Fallback: OpenAI
-        self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        # Fallback: OpenAI with compatibility fix
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if openai_key:
+            try:
+                # Use basic client initialization to avoid httpx conflicts
+                self.openai_client = OpenAI(
+                    api_key=openai_key,
+                    timeout=60.0
+                )
+            except Exception as e:
+                print(f"⚠️ OpenAI client initialization failed: {e}")
+                self.openai_client = None
+        else:
+            self.openai_client = None
         
         # ElevenLabs configuration
         self.elevenlabs_url = "https://api.elevenlabs.io/v1/text-to-speech"
