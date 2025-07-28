@@ -3,6 +3,10 @@
 
 A modular AI-driven platform for crafting high-conversion short-form promo videos — fast, polished, and brand-ready.
 
+<p align="center">
+  <img src="assets/relicon_potential_logo.png" alt="Relicon Logo" width="200">
+</p>
+
 ## Architecture
 
 ```
