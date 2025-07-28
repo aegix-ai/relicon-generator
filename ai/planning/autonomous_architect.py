@@ -16,11 +16,19 @@ class AutonomousVideoArchitect:
             raise ValueError("OPENAI_API_KEY environment variable is required")
         try:
             # Use basic client initialization to avoid httpx conflicts
-            self.client = OpenAI(
-                api_key=api_key,
-                timeout=60.0,
-                max_retries=2
-            )
+            # Compatibility fix for Python 3.13 and GitHub Actions
+            self.client = OpenAI(api_key=api_key)
+        except TypeError as e:
+            if "proxies" in str(e):
+                # Fallback for version conflicts
+                try:
+                    self.client = OpenAI(api_key=api_key)
+                except:
+                    import openai
+                    openai.api_key = api_key
+                    self.client = openai
+            else:
+                raise e
         except Exception as e:
             print(f"⚠️ OpenAI client initialization failed: {e}")
             raise ValueError(f"Failed to initialize OpenAI client: {e}")
