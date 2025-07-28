@@ -1,11 +1,12 @@
-# Relicon - AI Video Ad Generation Platform
+# Relicon - Self-improving AI-driven short-form video ad creator system.
+**Version** => **[`0.6.4`]**
 
-A clean, modular AI-powered video generation platform that creates professional short-form promotional videos.
+A modular AI-driven platform for crafting high-conversion short-form promo videos — fast, polished, and brand-ready.
 
 ## Architecture
 
 ```
-relicon/
+relicon/ [v0.6.4]
 .
 ├── ai/
 │   ├── generation/
@@ -76,7 +77,7 @@ relicon/
 
 - AI-powered video concept and script generation
 - Professional voiceover synthesis
-- Luma AI video generation
+- AI video generation
 - Automatic video assembly with FFmpeg
 - Real-time progress tracking
 - Cost-optimized generation
@@ -87,24 +88,39 @@ relicon/
 - **Backend**: FastAPI + Python
 - **AI**: OpenAI GPT-4o + LangChain
 - **Video**: Luma AI + FFmpeg
-- **Audio**: OpenAI TTS / ElevenLabs
+- **Audio**: ElevenLabs / OpenAI TTS
 - **Database**: PostgreSQL + Drizzle ORM
 - **Queue**: Celery + Redis
 
 ## Quick Start
 
-1. **Set API Keys**: Copy `config/env.example` to `.env` and add your API keys
-2. **Install Dependencies**: `pip install -r backend/requirements.txt`
-3. **Test System**: `python scripts/simple_test.py`
+1. **Add API Keys**:Add your API keys to `.env`
+2. **Install**: `pip install -r requirements.txt`
+3. **Quick Test**: `python scripts/simple_test.py`
 4. **Full Test**: `python tests/test_complete_system.py`
-5. **Start Development**: `python scripts/start_dev.py`
+5. **Start**: `python scripts/start_dev.py` → `http://localhost:5000`
+
+## Changelog
+
+```
+## [1.0.0] - 2025-07-30
+- AI Ad Creator (v1.0)
+
+## [2.0.0] - YYYY-MM-DD
+- Feedback Loop Integration (v2.0)
+
+## [3.0.0] - YYYY-MM-DD
+- Self-Improvement (v3.0)
+
+## [4.0.0] - YYYY-MM-DD
+- AI Chat Workspace (v4.0)
+```
 
 ## Cost Optimization
 
 - Intelligent segment limiting based on duration
 - Efficient prompt engineering  
-- Cost per video: $2.42-4.80
-- Successfully tested: 10-second video for $2.64
+- Cost per video: $2.00 - $4.00
 
 ## Verified Features ✅
 
