@@ -108,7 +108,7 @@ relicon/ [v0.6.4]
 
 ```
 ## [1.0.0] - 2025-07-30
-- AI Ad Creator (v1.0)
+- AI Ad Creator (v1.0) **current_version**
 
 ## [2.0.0] - YYYY-MM-DD
 - Feedback Loop Integration (v2.0)
