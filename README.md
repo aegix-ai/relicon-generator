@@ -17,11 +17,9 @@ relicon/
 ├── CHANGELOG.md
 ├── config/
 │   ├── env.example
-│   └── settings.py
+│   ├── settings.py
+│   └── version.py
 ├── database/
-├── docker-compose.yml
-├── Dockerfile
-├── docker-test.sh
 ├── docs/
 │   ├── COMPATIBILITY_FIX.md
 │   ├── LEARNING_ROADMAP.md
@@ -29,9 +27,13 @@ relicon/
 │   ├── SETUP_GUIDE.md
 │   └── VERIFICATION.md
 ├── frontend/
+│   ├── index.html
 │   ├── package.json
 │   └── src/
-│   └── index.html
+├── infra/
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   └── docker-test.sh
 ├── main_clean.py
 ├── outputs/
 │   ├── clean_system_test.mp4
@@ -67,7 +69,7 @@ relicon/
     ├── lib64/ -> lib/
     └── pyvenv.cfg
 
-25 directories, 35 files
+26 directories, 36 files
 ```
 
 ## Key Features
