@@ -5,15 +5,69 @@ A clean, modular AI-powered video generation platform that creates professional 
 ## Architecture
 
 ```
-relicon-rewrite/
-├── frontend/          # React frontend application
-├── backend/           # FastAPI backend services
-├── ai/               # AI planning and generation services
-├── services/         # External service integrations
-├── database/         # Database models and migrations
-├── tests/            # Comprehensive test suite
-├── config/           # Configuration files
-└── scripts/          # Utility scripts
+relicon/
+.
+├── ai/
+│   ├── generation/
+│   └── planning/
+├── backend/
+│   ├── api/
+│   ├── core/
+│   └── requirements.txt
+├── CHANGELOG.md
+├── config/
+│   ├── env.example
+│   └── settings.py
+├── database/
+├── docker-compose.yml
+├── Dockerfile
+├── docker-test.sh
+├── docs/
+│   ├── COMPATIBILITY_FIX.md
+│   ├── LEARNING_ROADMAP.md
+│   ├── LOCAL_SETUP.md
+│   ├── SETUP_GUIDE.md
+│   └── VERIFICATION.md
+├── frontend/
+│   ├── package.json
+│   └── src/
+│   └── index.html
+├── main_clean.py
+├── outputs/
+│   ├── clean_system_test.mp4
+│   ├── job_1753431371_64a397cc.mp4
+│   ├── job_1753431990_e738ecd8.mp4
+│   ├── job_1753432616_b90820bf.mp4
+│   ├── job_1753433048_7dfb41f2.mp4
+│   ├── job_1753436032_9a236ea8.mp4
+│   └── job_1753529630_69b4d0de.mp4
+├── package.json
+├── README.md
+├── requirements.txt
+├── scripts/
+│   ├── simple_test.py
+│   └── start_dev.py
+├── services/
+│   ├── audio/
+│   ├── luma/
+│   └── video/
+├── setup/
+│   ├── fix_final_local.sh
+│   ├── PYTHON313_FIX.sh
+│   ├── run_clean_system.sh
+│   ├── setup_quick.sh
+│   └── start_local.sh
+├── simple_server.py
+├── tests/
+│   └── test_complete_system.py
+└── venv/
+    ├── bin/
+    ├── include/
+    ├── lib/
+    ├── lib64/ -> lib/
+    └── pyvenv.cfg
+
+25 directories, 35 files
 ```
 
 ## Key Features
