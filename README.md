@@ -134,3 +134,15 @@ relicon/ [v0.6.4]
 - **Video Assembly**: FFmpeg-based final compilation
 - **Real Testing**: Successfully generated 4.84MB test video
 - **Clean Architecture**: Fully modular, readable codebase
+
+---
+
+## Contact Us
+
+**Website:** [relicon.co](https://relicon.co)  
+**Email:** [contact@relicon.co](mailto:contact@relicon.co)  
+**Twitter:** [@reliconAI](https://twitter.com/reliconAI)
+
+---
+
+© Aegix, 2025
