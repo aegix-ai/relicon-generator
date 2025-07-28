@@ -1,7 +1,7 @@
 {
-  "name": "relicon-clean-system",
-  "version": "1.0.0",
-  "description": "Clean Relicon AI Video Generation System",
+  "name": "relicon",
+  "version": "0.6.4",
+  "description": "Clean Relicon AI Video Creation System",
   "main": "backend/api/main.py",
   "scripts": {
     "dev": "cd relicon-rewrite && python3 backend/api/main.py",
