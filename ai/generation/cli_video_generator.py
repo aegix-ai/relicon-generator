@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Command Line Interface for Relicon Video Generator
-Allows the clean system to be called from the old frontend
+    Command Line Interface for Relicon Video Generator
+    Allows the clean system to be called from the old frontend
 """
+
 import sys
 import argparse
 import json

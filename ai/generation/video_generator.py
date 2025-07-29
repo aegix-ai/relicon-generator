@@ -1,7 +1,8 @@
 """
-Complete AI Video Generation System
-Orchestrates the entire video creation pipeline from planning to final output
+    Complete AI Video Generation System
+    Orchestrates the entire video creation pipeline from planning to final output
 """
+
 import os
 import sys
 import json
@@ -9,7 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Any
 
-# Add the relicon-rewrite directory to the path for imports
+# Add the relicon directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from ai.planning.autonomous_architect import AutonomousVideoArchitect

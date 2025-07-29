@@ -1,8 +1,9 @@
 """
-Autonomous AI Video Architect
-Revolutionary AI system that designs everything from first principles
-Full control over timing, visuals, audio, colors, voice, and every creative decision
+    Autonomous AI Video Architect
+    Revolutionary AI system that designs everything from first principles
+    Full control over timing, visuals, audio, colors, voice, and every creative decision
 """
+
 import os
 import json
 from typing import Dict, List, Any
