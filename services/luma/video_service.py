@@ -1,7 +1,8 @@
 """
-Luma AI Video Generation Service
-Handles video generation using Luma AI API
+    Luma AI Video Generation Service
+    Handles video generation using Luma AI API
 """
+
 import os
 import requests
 import time
@@ -50,7 +51,7 @@ class LumaVideoService:
             "model": "ray-1-6"  # Latest model
         }
         
-        print(f"🎬 Starting Luma generation with prompt: {prompt[:100]}...")
+        print(f"Starting Luma generation with prompt: {prompt[:100]}...")
         
         response = requests.post(self.base_url, json=payload, headers=self.headers)
         
@@ -60,7 +61,7 @@ class LumaVideoService:
         generation_data = response.json()
         generation_id = generation_data["id"]
         
-        print(f"✓ Generation started with ID: {generation_id}")
+        print(f"Generation started with ID: {generation_id}")
         
         # Poll for completion
         max_attempts = 60  # 10 minutes max
@@ -80,12 +81,12 @@ class LumaVideoService:
             status_data = status_response.json()
             state = status_data.get("state", "unknown")
             
-            print(f"🔄 Generation {generation_id} status: {state} (attempt {attempt}/{max_attempts})")
+            print(f"Generation {generation_id} status: {state} (attempt {attempt}/{max_attempts})")
             
             if state == "completed":
                 video_url = status_data.get("assets", {}).get("video")
                 if video_url:
-                    print(f"✅ Video generation completed! URL: {video_url}")
+                    print(f"Video generation completed! URL: {video_url}")
                     return video_url
                 else:
                     raise Exception("Generation completed but no video URL found")
@@ -101,7 +102,7 @@ class LumaVideoService:
         Download video from URL to local file
         """
         try:
-            print(f"📥 Downloading video from {video_url}")
+            print(f"Downloading video from {video_url}")
             response = requests.get(video_url, stream=True)
             response.raise_for_status()
             
@@ -109,9 +110,9 @@ class LumaVideoService:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
-            print(f"✅ Video downloaded to {output_path}")
+            print(f"Video downloaded to {output_path}")
             return True
             
         except Exception as e:
-            print(f"❌ Download failed: {e}")
+            print(f"Download failed: {e}")
             return False

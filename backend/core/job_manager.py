@@ -1,7 +1,8 @@
 """
-Job Manager for Clean Relicon System
-Handles video generation job tracking and status updates
+    Job Manager for Clean Relicon System
+    Handles video generation job tracking and status updates
 """
+
 import uuid
 import time
 from typing import Dict, Any, Optional

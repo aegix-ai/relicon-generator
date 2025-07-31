@@ -1,7 +1,8 @@
 """
-Video Assembly Service
-Combines multiple video segments with audio using FFmpeg
+    Video Assembly Service
+    Combines multiple video segments with audio using FFmpeg
 """
+
 import os
 import subprocess
 import tempfile
@@ -19,7 +20,7 @@ class VideoAssemblyService:
         This ensures no audio jumps and exact duration control
         """
         try:
-            print(f"🎬 Assembling {len(video_files)} video segments with unified {target_duration}s audio...")
+            print(f"Assembling {len(video_files)} video segments with unified {target_duration}s audio...")
             
             # Step 1: Concatenate videos first (without audio)
             temp_video_only = os.path.join(self.temp_dir, "concatenated_video_silent.mp4")
@@ -35,7 +36,7 @@ class VideoAssemblyService:
             
             # Step 2: Get video duration and trim/extend if needed
             actual_video_duration = self.get_video_duration(temp_video_only)
-            print(f"📏 Video duration: {actual_video_duration:.1f}s, Target: {target_duration}s")
+            print(f"Video duration: {actual_video_duration:.1f}s, Target: {target_duration}s")
             
             # Step 3: Trim or extend video to exact target duration
             temp_video_exact = os.path.join(self.temp_dir, "video_exact_duration.mp4")
@@ -46,11 +47,11 @@ class VideoAssemblyService:
             if not self.add_unified_audio_overlay(temp_video_exact, unified_audio_file, output_path, target_duration):
                 return False
             
-            print(f"✅ Final video assembled: {output_path} ({target_duration}s)")
+            print(f"Final video assembled: {output_path} ({target_duration}s)")
             return True
             
         except Exception as e:
-            print(f"❌ Video assembly failed: {e}")
+            print(f"Video assembly failed: {e}")
             return False
     
     def get_video_duration(self, video_file: str) -> float:
@@ -135,7 +136,7 @@ class VideoAssemblyService:
         Combine multiple video segments with corresponding audio files
         """
         try:
-            print(f"🎬 Assembling {len(video_files)} video segments with audio...")
+            print(f"Assembling {len(video_files)} video segments with audio...")
             
             if len(video_files) != len(audio_files):
                 print(f"Warning: Video count ({len(video_files)}) != Audio count ({len(audio_files)})")
@@ -159,11 +160,11 @@ class VideoAssemblyService:
                 # Multiple segments, concatenate
                 self.concatenate_videos(video_with_audio_files, output_path)
             
-            print(f"✅ Final video assembled: {output_path}")
+            print(f"Final video assembled: {output_path}")
             return True
             
         except Exception as e:
-            print(f"❌ Video assembly failed: {e}")
+            print(f"Video assembly failed: {e}")
             return False
     
     def add_audio_to_video(self, video_file: str, audio_file: str, output_file: str) -> bool:
@@ -230,7 +231,7 @@ class VideoAssemblyService:
         Optimize video for social media platforms
         """
         try:
-            print(f"📱 Optimizing video for social media ({aspect_ratio})...")
+            print(f"Optimizing video for social media ({aspect_ratio})...")
             
             cmd = [
                 'ffmpeg', '-y',
@@ -249,7 +250,7 @@ class VideoAssemblyService:
                 print(f"Social media optimization error: {result.stderr}")
                 return False
             
-            print(f"✅ Video optimized for social media: {output_file}")
+            print(f"Video optimized for social media: {output_file}")
             return True
             
         except Exception as e:

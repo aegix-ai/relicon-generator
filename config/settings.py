@@ -1,7 +1,8 @@
 """
-Configuration Settings
-Centralized configuration management
+    Configuration Settings
+    Centralized configuration management
 """
+
 import os
 from typing import Optional
 

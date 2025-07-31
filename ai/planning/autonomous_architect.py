@@ -31,7 +31,7 @@ class AutonomousVideoArchitect:
             else:
                 raise e
         except Exception as e:
-            print(f"⚠️ OpenAI client initialization failed: {e}")
+            print(f"OpenAI client initialization failed: {e}")
             raise ValueError(f"Failed to initialize OpenAI client: {e}")
     
     def architect_complete_video(self, brand_info: Dict[str, Any]) -> Dict[str, Any]:

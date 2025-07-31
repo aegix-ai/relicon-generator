@@ -1,7 +1,8 @@
 """
-Text-to-Speech Service using ElevenLabs with OpenAI fallback
-Generates professional, ultra-realistic voiceovers for advertisements
+    Text-to-Speech Service using ElevenLabs with OpenAI fallback
+    Generates professional, ultra-realistic voiceovers for advertisements
 """
+
 import os
 import subprocess
 import shutil
@@ -24,7 +25,7 @@ class TTSService:
                     timeout=60.0
                 )
             except Exception as e:
-                print(f"⚠️ OpenAI client initialization failed: {e}")
+                print(f"OpenAI client initialization failed: {e}")
                 self.openai_client = None
         else:
             self.openai_client = None
@@ -86,17 +87,17 @@ class TTSService:
             
             # Try ElevenLabs first (primary)
             if self.elevenlabs_api_key:
-                print(f"🎙️ Generating ultra-realistic audio with ElevenLabs ({voice_gender}, {voice_tone})")
+                print(f"Generating ultra-realistic audio with ElevenLabs ({voice_gender}, {voice_tone})")
                 if self._generate_elevenlabs_audio(energetic_text, output_path, voice_gender, voice_tone):
                     return True
-                print("⚠️ ElevenLabs failed, falling back to OpenAI TTS...")
+                print("ElevenLabs failed, falling back to OpenAI TTS...")
             
             # Fallback to OpenAI TTS
-            print(f"🎙️ Generating audio with OpenAI TTS fallback ({voice_gender}, {voice_tone})")
+            print(f"Generating audio with OpenAI TTS fallback ({voice_gender}, {voice_tone})")
             return self._generate_openai_audio(energetic_text, output_path, voice_gender, voice_tone)
             
         except Exception as e:
-            print(f"❌ TTS generation failed: {e}")
+            print(f"TTS generation failed: {e}")
             return False
     
     def _generate_elevenlabs_audio(self, text: str, output_path: str, voice_gender: str, voice_tone: str) -> bool:
@@ -138,14 +139,14 @@ class TTSService:
             if response.status_code == 200:
                 with open(output_path, 'wb') as f:
                     f.write(response.content)
-                print(f"✅ ElevenLabs audio generated: {output_path}")
+                print(f"ElevenLabs audio generated: {output_path}")
                 return True
             else:
-                print(f"❌ ElevenLabs API error: {response.status_code} - {response.text}")
+                print(f"ElevenLabs API error: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            print(f"❌ ElevenLabs generation failed: {e}")
+            print(f"ElevenLabs generation failed: {e}")
             return False
     
     def _generate_openai_audio(self, text: str, output_path: str, voice_gender: str, voice_tone: str) -> bool:
@@ -175,11 +176,11 @@ class TTSService:
             # Save to file
             response.stream_to_file(output_path)
             
-            print(f"✅ OpenAI TTS audio generated: {output_path}")
+            print(f"OpenAI TTS audio generated: {output_path}")
             return True
             
         except Exception as e:
-            print(f"❌ OpenAI TTS generation failed: {e}")
+            print(f"OpenAI TTS generation failed: {e}")
             return False
 
     def enhance_autonomous_audio(self, input_file: str, output_file: str, audio_config: Dict[str, Any]):
@@ -197,7 +198,7 @@ class TTSService:
                 volume_boost = '4dB'
                 compand_settings = 'attacks=0.5:decays=1.0:points=-80/-900|-45/-18|-27/-12:gain=3'
             
-            print(f"🔊 Enhancing audio with {energy_level} energy profile...")
+            print(f"Enhancing audio with {energy_level} energy profile...")
             
             cmd = [
                 'ffmpeg', '-y', '-i', input_file,
@@ -211,7 +212,7 @@ class TTSService:
                 print(f"Warning: Audio enhancement failed: {result.stderr}")
                 shutil.copy2(input_file, output_file)
             else:
-                print(f"✅ Audio enhanced: {output_file}")
+                print(f"Audio enhanced: {output_file}")
                 
         except Exception as e:
             print(f"Warning: Audio enhancement failed: {e}")
@@ -221,14 +222,14 @@ class TTSService:
         """Create unified 15-second audio track from segments"""
         try:
             if not audio_segments:
-                print("❌ No audio segments provided")
+                print("No audio segments provided")
                 return False
             
             # Calculate total duration of segments
             total_duration = sum(seg.get('duration', 0) for seg in audio_segments)
             
             if total_duration == 0:
-                print("❌ Total audio duration is 0")
+                print("Total audio duration is 0")
                 return False
             
             # Create filter complex for concatenation and timing
@@ -262,17 +263,17 @@ class TTSService:
                 output_path
             ]
             
-            print(f"🎵 Creating unified {target_duration}s audio from {len(audio_segments)} segments...")
+            print(f"Creating unified {target_duration}s audio from {len(audio_segments)} segments...")
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                print(f"✅ Unified audio created: {output_path}")
+                print(f"Unified audio created: {output_path}")
                 return True
             else:
-                print(f"❌ Audio unification failed: {result.stderr}")
+                print(f"Audio unification failed: {result.stderr}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Audio unification error: {e}")
+            print(f"Audio unification error: {e}")
             return False

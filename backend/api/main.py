@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
 """
-Clean Relicon API Server
-Main FastAPI application for the clean relicon-rewrite system
+    Clean Relicon API Server
+    Main FastAPI application for the clean relicon-rewrite system
 """
+
 import sys
 import os
 from pathlib import Path
@@ -94,8 +94,8 @@ async def serve_frontend():
     return FileResponse(project_root / "index.html")
 
 if __name__ == "__main__":
-    print("🚀 Starting Relicon Clean System API Server")
-    print("📁 Running from relicon-rewrite directory")
-    print("🌐 Frontend available at http://localhost:5000")
-    print("🔥 Clean system frontend will be served")
+    print("Starting Relicon Clean System API Server")
+    print("Running from relicon-rewrite directory")
+    print("Frontend available at http://localhost:5000")
+    print("Clean system frontend will be served")
     uvicorn.run(app, host="0.0.0.0", port=5000)

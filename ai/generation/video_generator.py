@@ -38,12 +38,12 @@ class CompleteVideoGenerator:
         Returns generation results with video path and metadata
         """
         try:
-            self.progress_update(5, "🚀 Autonomous AI architect designing revolutionary video...")
+            self.progress_update(5, "Autonomous AI architect designing revolutionary video...")
             
             # Step 1: Autonomous architectural design
             architecture = self.architect.architect_complete_video(brand_info)
             
-            print("🎨 AUTONOMOUS ARCHITECTURE CREATED:")
+            print("AUTONOMOUS ARCHITECTURE CREATED:")
             print(f"  Vision: {architecture.get('creative_vision', {}).get('overall_concept', 'N/A')[:50]}...")
             print(f"  Style: {architecture.get('creative_vision', {}).get('visual_style', 'N/A')}")
             print(f"  Voice: {architecture.get('audio_architecture', {}).get('voice_gender', 'N/A')} {architecture.get('audio_architecture', {}).get('voice_tone', 'N/A')}")
@@ -52,11 +52,11 @@ class CompleteVideoGenerator:
             # Step 2: Generate cutting-edge scene prompts
             enhanced_scenes = self.architect.create_cutting_edge_prompts(architecture)
             
-            self.progress_update(15, f"🎬 AI architected {len(enhanced_scenes)} revolutionary scenes")
+            self.progress_update(15, f"AI architected {len(enhanced_scenes)} revolutionary scenes")
             
             # Step 3: Generate autonomous audio with AI-selected voice
             target_duration = brand_info.get('duration', 15)
-            self.progress_update(20, f"🎙️ Creating AI-designed {target_duration}s voiceover")
+            self.progress_update(20, f"Creating AI-designed {target_duration}s voiceover")
             
             unified_audio_file = os.path.join(self.temp_dir, "unified_audio.mp3")
             unified_script = architecture.get('unified_script', 'Default script')
@@ -72,7 +72,7 @@ class CompleteVideoGenerator:
                 scene_num = scene.get('scene_number', i + 1)
                 progress = 30 + (i * 35 // len(enhanced_scenes))
                 
-                self.progress_update(progress, f"🎬 Creating revolutionary scene {int(scene_num)}: {scene.get('purpose', 'scene')}")
+                self.progress_update(progress, f"Creating revolutionary scene {int(scene_num)}: {scene.get('purpose', 'scene')}")
                 
                 # Use ultra-realistic advertisement prompt with uniqueness
                 ultra_realistic_prompt = scene.get('luma_prompt', 'Default prompt')
@@ -84,9 +84,9 @@ class CompleteVideoGenerator:
                     raise Exception(f"Failed to download video for scene {int(scene_num)}")
                 
                 video_files.append(video_file)
-                print(f"✅ Revolutionary scene {int(scene_num)} completed")
+                print(f"Revolutionary scene {int(scene_num)} completed")
             
-            self.progress_update(70, "🎬 Assembling revolutionary video with AI-designed audio")
+            self.progress_update(70, "Assembling revolutionary video with AI-designed audio")
             
             # Step 5: Assemble final video with unified audio
             temp_final = os.path.join(self.temp_dir, "assembled_video.mp4")
@@ -95,7 +95,7 @@ class CompleteVideoGenerator:
             if not self.assembly_service.combine_videos_with_unified_audio(video_files, unified_audio_file, temp_final, target_duration):
                 raise Exception("Failed to assemble final video with unified audio")
             
-            self.progress_update(85, "✨ Finalizing revolutionary video")
+            self.progress_update(85, "Finalizing revolutionary video")
             
             # Step 6: Optimize for cutting-edge quality
             if not self.assembly_service.optimize_for_social_media(temp_final, output_path, "9:16"):
@@ -103,13 +103,13 @@ class CompleteVideoGenerator:
                 import shutil
                 shutil.copy2(temp_final, output_path)
             
-            self.progress_update(95, "🎯 AI video architecture complete")
+            self.progress_update(95, "AI video architecture complete")
             
             # Step 7: Final output
             file_size = os.path.getsize(output_path) / (1024 * 1024)  # MB
             scene_count = len(enhanced_scenes)
             
-            self.progress_update(100, f"🚀 Revolutionary AI video created!")
+            self.progress_update(100, f"Revolutionary AI video created!")
             
             return {
                 'success': True,
@@ -124,7 +124,7 @@ class CompleteVideoGenerator:
             
         except Exception as e:
             error_msg = f"Video generation failed: {str(e)}"
-            self.progress_update(0, f"❌ {error_msg}")
+            self.progress_update(0, f"{error_msg}")
             return {
                 'success': False,
                 'error': error_msg
@@ -207,14 +207,14 @@ def main():
     result = generator.generate_complete_video(brand_info, args.output)
     
     if result['success']:
-        print(f"\n🎉 Video generation completed successfully!")
-        print(f"📁 Output: {result['output_path']}")
-        print(f"📊 File size: {result['file_size_mb']}MB")
-        print(f"⏱️ Duration: {result['duration']}s")
-        print(f"🎬 Scenes: {result['scenes']}")
-        print(f"💰 Estimated cost: ${result['cost_breakdown']['total_estimated']}")
+        print(f"\nVideo generation completed successfully!")
+        print(f"Output: {result['output_path']}")
+        print(f"File size: {result['file_size_mb']}MB")
+        print(f"Duration: {result['duration']}s")
+        print(f"Scenes: {result['scenes']}")
+        print(f"Estimated cost: ${result['cost_breakdown']['total_estimated']}")
     else:
-        print(f"\n❌ Generation failed: {result['error']}")
+        print(f"\nGeneration failed: {result['error']}")
         sys.exit(1)
 
 if __name__ == "__main__":
