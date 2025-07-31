@@ -1,4 +1,4 @@
-# Relicon Backend Dependencies
+## Relicon Backend Dependencies
 
 # Core framework
 fastapi==0.104.1

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Simple working server for clean relicon-rewrite system
+    Simple working server for clean relicon-rewrite system
 """
+
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import json
 import uuid
@@ -15,20 +16,20 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    print("✅ Environment loaded from .env file")
+    print("Environment loaded from .env file")
 except ImportError:
-    print("⚠️  python-dotenv not installed. Using system environment variables only.")
+    print("python-dotenv not installed. Using system environment variables only.")
 except Exception as e:
-    print(f"⚠️  Could not load .env file: {e}")
+    print(f"Could not load .env file: {e}")
 
 # Verify critical API keys are available
 required_keys = ['OPENAI_API_KEY', 'LUMA_API_KEY']
 missing_keys = [key for key in required_keys if not os.getenv(key)]
 if missing_keys:
-    print(f"❌ Missing required environment variables: {missing_keys}")
+    print(f"Missing required environment variables: {missing_keys}")
     print("Please set these in your .env file or environment")
 else:
-    print("✅ All required API keys found")
+    print("All required API keys found")
 
 # In-memory job storage
 jobs = {}
@@ -111,8 +112,8 @@ class ReliconHandler(SimpleHTTPRequestHandler):
         </div>
         
         <div class="mt-8 text-center text-white/60 text-sm">
-            <p>🚀 Powered by Clean Relicon-Rewrite Architecture</p>
-            <p>📁 Organized: ai/, backend/, services/, config/, tests/, scripts/</p>
+            <p>Powered by Clean Relicon-Rewrite Architecture</p>
+            <p>Organized: ai/, backend/, services/, config/, tests/, scripts/</p>
         </div>
     </div>
     
@@ -301,7 +302,7 @@ class ReliconHandler(SimpleHTTPRequestHandler):
                         jobs[job_id].update({
                             "status": "completed",
                             "progress": 100,
-                            "message": f"✅ Professional video generated! {result['file_size_mb']}MB, {result['scenes']} scenes",
+                            "message": f"Professional video generated! {result['file_size_mb']}MB, {result['scenes']} scenes",
                             "video_url": f"/outputs/{job_id}.mp4",
                             "result": result
                         })
@@ -309,7 +310,7 @@ class ReliconHandler(SimpleHTTPRequestHandler):
                         jobs[job_id].update({
                             "status": "failed",
                             "progress": 0,
-                            "message": f"❌ Generation failed: {result.get('error', 'Unknown error')}"
+                            "message": f"Generation failed: {result.get('error', 'Unknown error')}"
                         })
                         
                 except Exception as e:
@@ -319,7 +320,7 @@ class ReliconHandler(SimpleHTTPRequestHandler):
                     jobs[job_id].update({
                         "status": "failed",
                         "progress": 0,
-                        "message": f"❌ System error: {str(e)}"
+                        "message": f"System error: {str(e)}"
                     })
             
             thread = threading.Thread(target=generate_real_video)
@@ -343,10 +344,10 @@ class ReliconHandler(SimpleHTTPRequestHandler):
 def run_server():
     server_address = ('0.0.0.0', 5000)
     httpd = HTTPServer(server_address, ReliconHandler)
-    print("🚀 Starting Relicon Clean System Server")
-    print("📁 Running from relicon-rewrite directory")
-    print("🌐 Frontend available at http://localhost:5000")
-    print("✨ Clean system frontend active")
+    print("Starting Relicon Clean System Server")
+    print("Running from relicon-rewrite directory")
+    print("Frontend available at http://localhost:5000")
+    print("Clean system frontend active")
     httpd.serve_forever()
 
 if __name__ == "__main__":
