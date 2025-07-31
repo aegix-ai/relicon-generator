@@ -10,37 +10,40 @@ A modular AI-driven platform for crafting high-conversion short-form promo video
 ## Architecture
 
 ```
-relicon/ [v0.6.4]
+relicon/ [v0.6.6]
 .
-├── ai/
-│   ├── generation/
-│   └── planning/
-├── backend/
-│   ├── api/
-│   ├── core/
-│   └── requirements.txt
-├── CHANGELOG.md
-├── config/
-│   ├── env.example
-│   ├── settings.py
+├── ai
+│   ├── generation
+│   └── planning
+├── archived
+│   ├── cli_video_generator.py
+│   ├── main_clean.py
 │   └── version.py
-├── database/
-├── docs/
+├── assets
+│   └── relicon_potential_logo.png
+├── backend
+│   ├── api
+│   └── core
+├── config
+│   ├── env.example
+│   └── settings.py
+├── database
+├── docs
+│   ├── CHANGELOG.md
 │   ├── COMPATIBILITY_FIX.md
 │   ├── LEARNING_ROADMAP.md
 │   ├── LOCAL_SETUP.md
 │   ├── SETUP_GUIDE.md
 │   └── VERIFICATION.md
-├── frontend/
+├── frontend
 │   ├── index.html
 │   ├── package.json
-│   └── src/
-├── infra/
+│   └── src
+├── infra
 │   ├── docker-compose.yml
 │   ├── Dockerfile
 │   └── docker-test.sh
-├── main_clean.py
-├── outputs/
+├── outputs
 │   ├── clean_system_test.mp4
 │   ├── job_1753431371_64a397cc.mp4
 │   ├── job_1753431990_e738ecd8.mp4
@@ -51,30 +54,30 @@ relicon/ [v0.6.4]
 ├── package.json
 ├── README.md
 ├── requirements.txt
-├── scripts/
+├── scripts
 │   ├── simple_test.py
 │   └── start_dev.py
-├── services/
-│   ├── audio/
-│   ├── luma/
-│   └── video/
-├── setup/
+├── services
+│   ├── audio
+│   ├── luma
+│   └── video
+├── setup
 │   ├── fix_final_local.sh
 │   ├── PYTHON313_FIX.sh
 │   ├── run_clean_system.sh
 │   ├── setup_quick.sh
 │   └── start_local.sh
 ├── simple_server.py
-├── tests/
+├── tests
 │   └── test_complete_system.py
-└── venv/
-    ├── bin/
-    ├── include/
-    ├── lib/
-    ├── lib64/ -> lib/
+└── venv
+    ├── bin
+    ├── include
+    ├── lib
+    ├── lib64 -> lib
     └── pyvenv.cfg
 
-26 directories, 36 files
+28 directories, 37 files
 ```
 
 ## Key Features
