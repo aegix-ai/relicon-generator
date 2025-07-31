@@ -43,15 +43,6 @@ relicon/ [v0.6.6]
 │   ├── docker-compose.yml
 │   ├── Dockerfile
 │   └── docker-test.sh
-├── outputs
-│   ├── clean_system_test.mp4
-│   ├── job_1753431371_64a397cc.mp4
-│   ├── job_1753431990_e738ecd8.mp4
-│   ├── job_1753432616_b90820bf.mp4
-│   ├── job_1753433048_7dfb41f2.mp4
-│   ├── job_1753436032_9a236ea8.mp4
-│   └── job_1753529630_69b4d0de.mp4
-├── package.json
 ├── README.md
 ├── requirements.txt
 ├── scripts
