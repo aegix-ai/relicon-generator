@@ -37,11 +37,12 @@ Relicon leverages advanced AI to streamline the creation of engaging short-form 
 
 | Area           | Technology                               |
 | -------------- | ---------------------------------------- |
-| **Frontend**   | React, TypeScript, Tailwind CSS          |
+| **Frontend**   | Next.js, React, TypeScript, Tailwind CSS |
 | **Backend**    | FastAPI, Python, PostgreSQL, Drizzle ORM |
-| **AI & ML**    | GPT-4o, LangChain                        |
-| **Video**      | Luma AI, FFmpeg                          |
+| **AI & ML**    | GPT-4o, LangChain, Claude                |
+| **Video**      | Hailuo AI, Luma AI, FFmpeg               |
 | **Audio**      | ElevenLabs, OpenAI TTS                   |
+| **Music**      | Artlist, Mubert AI                       |
 | **Task Queue** | Celery, Redis                            |
 | **Deployment** | Docker, Docker Compose                   |
 
@@ -50,35 +51,35 @@ Relicon leverages advanced AI to streamline the creation of engaging short-form 
 ```
 relicon/ [v0.6.6]
 .
-├── ai
-│   ├── generation
-│   └── planning
-├── assets
+├── ai/
+│   ├── generation/
+│   └── planning/
+├── assets/
 │   └── relicon_potential_logo.png
-├── backend
-│   ├── api
-│   └── core
-├── frontend
+├── backend/
+│   ├── api/
+│   └── core/
+├── frontend/
 │   ├── index.html
-│   └── src
-├── infra
+│   └── src/
+├── infra/
 │   ├── docker-compose.yml
 │   └── Dockerfile
-├── scripts
+├── scripts/
 │   ├── simple_test.py
 │   └── start_dev.py
-├── services
-│   ├── audio
-│   ├── luma
-│   └── video
-├── setup
+├── services/
+│   ├── audio/
+│   ├── luma/
+│   └── video/
+├── setup/
 │   ├── fix_final_local.sh
 │   └── setup_quick.sh
-├── tests
+├── tests/
 │   └── test_complete_system.py
 ├── README.md
 ├── requirements.txt
-└── venv
+└── venv/
 ```
 
 ## Quick Start
@@ -86,7 +87,7 @@ relicon/ [v0.6.6]
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/your-org/relicon.git
+git clone https://github.com/aegix-ai/relicon.git
 cd relicon
 ```
 
@@ -119,7 +120,7 @@ python scripts/start_dev.py
 | 1.0.0   | 2025-07-30   | AI Ad Creator (**current**)       |
 | 2.0.0   | TBD          | Feedback Loop Integration         |
 | 3.0.0   | TBD          | Self-Improvement and Optimization |
-| 4.0.0   | TBD          | AI Chat Workspace                 |
+| 4.0.0   | TBD          | Synapsite Implementation          |
 
 ## Verified Functionality
 
