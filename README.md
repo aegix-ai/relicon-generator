@@ -1,5 +1,5 @@
 # Relicon - Self-improving AI-driven short-form video ad creator system.
-**Version** => **[`0.6.4`]**
+**Version** => **[`0.6.6`]**
 
 A modular AI-driven platform for crafting high-conversion short-form promo videos — fast, polished, and brand-ready.
 
