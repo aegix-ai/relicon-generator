@@ -15,7 +15,7 @@ A powerful and modular AI-driven platform designed to rapidly create high-conver
 ---
 
 <p align="center">
-  <img src="assets/relicon_potential_logo.png" alt="Relicon Logo" width="400">
+  <img src="assets/relicon_full_logo.png" alt="Relicon Logo" width="400">
 </p>
 
 ---
