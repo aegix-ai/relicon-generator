@@ -44,47 +44,56 @@ Relicon is an enterprise-grade AI-powered video generation platform that creates
 ## Project Structure
 
 ```
-relicon/ [v1.0.0]
+relicon/ [v0.9.0]
 .
-├── backend/
-│   ├── api/
-│   │   └── main.py
-│   └── core/
-│       └── job_manager.py
-├── config/
-│   ├── env.example
-│   └── settings.py
-├── core/
-│   ├── assembly_service.py
-│   ├── audio_service.py
-│   ├── cost_tracker.py
-│   ├── logger.py
-│   ├── music_service.py
-│   ├── orchestrator.py
-│   ├── planning_service.py
-│   ├── provider_manager.py
-│   └── video_service.py
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   └── components/
-│   ├── index.html
-│   └── package.json
-├── interfaces/
-│   ├── audio_generator.py
-│   ├── text_generator.py
-│   └── video_generator.py
-├── outputs/
-│   ├── collected_videos/
-│   └── logs/
-├── providers/
-│   ├── elevenlabs.py
-│   ├── hailuo.py
-│   ├── luma.py
-│   └── openai.py
-├── 
+├── assets
+│   ├── relicon-full-logo.png
+│   └── relicon-logo.png
+├── backend
+│   ├── api
+│   └── core
+├── config
+│   ├── env.example
+│   ├── __pycache__
+│   └── settings.py
+├── core
+│   ├── assembly_service.py
+│   ├── audio_service.py
+│   ├── cost_tracker.py
+│   ├── __init__.py
+│   ├── logger.py
+│   ├── music_service.py
+│   ├── orchestrator.py
+│   ├── planning_service.py
+│   ├── provider_manager.py
+│   ├── __pycache__
+│   └── video_service.py
+├── frontend
+│   ├── index.html
+│   ├── package.json
+│   └── src
+├── __init__.py
+├── interfaces
+│   ├── audio_generator.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   ├── text_generator.py
+│   └── video_generator.py
+├── outputs
+├── package.json
+├── providers
+│   ├── elevenlabs.py
+│   ├── hailuo.py
+│   ├── __init__.py
+│   ├── luma.py
+│   ├── openai.py
+│   └── __pycache__
+├── README.md
 ├── requirements.txt
-└── test_logging.py
+├── test
+│   └── test_logging.py
+└── utils
+    └── __pycache__
 ```
 
 ## Quick Start
