@@ -1,8 +1,8 @@
 # [Relicon](https://www.relicon.co)
 
-### **Self-Improving AI-Driven Short-Form Video Ad Creator System**
+### **Cost-Optimized AI-Driven Short-Form Video Ad Creator System**
 
-![GitHub version](https://img.shields.io/badge/version-0.6.6-blue.svg)
+![GitHub version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![FastAPI](https://img.shields.io/badge/framework-FastAPI-teal.svg)
@@ -10,28 +10,23 @@
 ![AI Integration](https://img.shields.io/badge/AI-GPT--4o%20%2B%20LangChain-orange.svg)
 ![CI](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 
-A powerful and modular AI-driven platform designed to rapidly create high-conversion, polished, and brand-ready short-form promotional videos.
-
----
-
-<p align="center">
-  <img src="assets/relicon-full-logo.png" alt="Relicon Logo" width="400">
-</p>
+A cost-optimized AI-driven platform that autonomously generates high-conversion, brand-ready promotional videos. The platform leverages advanced AI to automate the entire video creation pipeline from ideation to final delivery, producing professional-quality 720p advertisement videos at $1.2-1.6 per video with minimal human intervention.
 
 ---
 
 ## Overview
 
-Relicon leverages advanced AI to streamline the creation of engaging short-form video advertisements, automating the process from ideation to final delivery.
+Relicon is an enterprise-grade AI-powered video generation platform that creates 15-20 second promotional videos using modern commercial ad structure (Hook → Problem/Solution → Resolution/CTA). The system processes brand information through product-focused visuals, ElevenLabs voiceover and background music at 720p resolution for cost optimization.
 
 ## Key Features
 
-* **AI-Powered Video Planning:** Automatic generation of engaging video concepts and scripts.
-* **Professional Voiceover:** Integrated, high-quality AI voice synthesis.
-* **AI-Generated Visuals:** Cutting-edge video rendering powered by Luma AI.
-* **Seamless Assembly:** Automatic and precise video compilation with FFmpeg.
-* **Continuous Improvement:** Real-time feedback and optimization loops for video performance.
-* **Cost Efficiency:** Optimized for budget-conscious video generation (\$2-\$4 per video).
+* **Cost-Optimized Architecture:** Generates 12-16 videos per $20 budget (vs 4-5 previously)
+* **Modern Ad Structure:** Hook → Problem/Solution → Resolution/CTA format with 3 scenes, 6 seconds each
+* **Product-Focused Visuals:** Modern commercial advertisements prioritizing product demonstration over talking heads  
+* **Professional Audio:** ElevenLabs TTS with mandatory background music at 15% volume
+* **Enterprise Logging:** ECS-compliant JSON logging with trace correlation across all services
+* **Real-Time Progress:** Enhanced progress tracking with 4-step visual indicators and percentage updates
+* **Provider Resilience:** Hailuo-02 (MiniMax) primary, Luma AI fallback for 720p video generation
 
 ## Technology Stack
 
@@ -39,47 +34,57 @@ Relicon leverages advanced AI to streamline the creation of engaging short-form 
 | -------------- | ---------------------------------------- |
 | **Frontend**   | Next.js, React, TypeScript, Tailwind CSS |
 | **Backend**    | FastAPI, Python, PostgreSQL, Drizzle ORM |
-| **AI & ML**    | GPT-4o, LangChain, Claude                |
-| **Video**      | Hailuo AI, Luma AI, FFmpeg               |
+| **AI & ML**    | GPT-4o, LangChain                       |
+| **Video**      | Hailuo-02 (MiniMax), Luma AI, FFmpeg    |
 | **Audio**      | ElevenLabs, OpenAI TTS                   |
-| **Music**      | Artlist, Mubert AI                       |
+| **Music**      | ElevenLabs Music Generation              |
 | **Task Queue** | Celery, Redis                            |
-| **Deployment** | Docker, Docker Compose                   |
+| **Logging**    | Structured JSON, ECS-compliant           |
 
 ## Project Structure
 
 ```
-relicon/ [v0.6.6]
+relicon/ [v1.0.0]
 .
-├── ai/
-│   ├── generation/
-│   └── planning/
-├── assets/
-│   └── relicon_potential_logo.png
 ├── backend/
 │   ├── api/
+│   │   └── main.py
 │   └── core/
+│       └── job_manager.py
+├── config/
+│   ├── env.example
+│   └── settings.py
+├── core/
+│   ├── assembly_service.py
+│   ├── audio_service.py
+│   ├── cost_tracker.py
+│   ├── logger.py
+│   ├── music_service.py
+│   ├── orchestrator.py
+│   ├── planning_service.py
+│   ├── provider_manager.py
+│   └── video_service.py
 ├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   └── components/
 │   ├── index.html
-│   └── src/
-├── infra/
-│   ├── docker-compose.yml
-│   └── Dockerfile
-├── scripts/
-│   ├── simple_test.py
-│   └── start_dev.py
-├── services/
-│   ├── audio/
-│   ├── luma/
-│   └── video/
-├── setup/
-│   ├── fix_final_local.sh
-│   └── setup_quick.sh
-├── tests/
-│   └── test_complete_system.py
-├── README.md
+│   └── package.json
+├── interfaces/
+│   ├── audio_generator.py
+│   ├── text_generator.py
+│   └── video_generator.py
+├── outputs/
+│   ├── collected_videos/
+│   └── logs/
+├── providers/
+│   ├── elevenlabs.py
+│   ├── hailuo.py
+│   ├── luma.py
+│   └── openai.py
+├── 
 ├── requirements.txt
-└── venv/
+└── test_logging.py
 ```
 
 ## Quick Start
@@ -99,17 +104,16 @@ cp config/env.example .env
 # Add your API keys in .env
 ```
 
-3. **Run Tests:**
+3. **Test Structured Logging:**
 
 ```bash
-python scripts/simple_test.py
-python tests/test_complete_system.py
+python test_logging.py
 ```
 
 4. **Launch Development Server:**
 
 ```bash
-python scripts/start_dev.py
+npm run dev
 # Server running at http://localhost:5000
 ```
 
@@ -117,28 +121,38 @@ python scripts/start_dev.py
 
 | Version | Release Date | Major Features                    |
 | ------- | ------------ | --------------------------------- |
-| 1.0.0   | 2025-07-30   | AI Ad Creator (**current**)       |
-| 2.0.0   | TBD          | Feedback Loop Integration         |
-| 3.0.0   | TBD          | Self-Improvement and Optimization |
-| 4.0.0   | TBD          | Synapsite Implementation          |
+| 1.0.0   | 2025-08-18   | Cost-Optimized AI Ad Creator      |
+| 2.0.0   | TBD          | Advanced Progress Tracking        |
+| 3.0.0   | TBD          | Multi-Provider Optimization       |
+| 4.0.0   | TBD          | Enterprise Analytics Dashboard    |
 
 ## Verified Functionality
 
-* **AI Planning:** Video strategy and scene breakdown via GPT-4o
-* **Video Rendering:** Integrated with Luma AI models
-* **Audio Production:** Professional voice enhancements via OpenAI
-* **Video Compilation:** Automated assembly using FFmpeg
-* **Robust Testing:** Verified through comprehensive system tests
-* **Modularity:** Clear, structured, and maintainable codebase
+* **Cost Optimization:** 720p resolution targeting $1.2-1.6 per 18-second video
+* **Modern Ad Structure:** Hook → Problem/Solution → Resolution/CTA with product focus
+* **AI Planning:** Autonomous creative decision-making using GPT-4o AutonomousVideoArchitect
+* **Video Generation:** Dual-service approach with Hailuo-02 primary, Luma AI fallback
+* **Audio Processing:** ElevenLabs TTS + mandatory background music at optimized volume levels
+* **Enterprise Logging:** Single-line JSON objects with trace correlation and ECS compliance
+* **Real-Time Progress:** 4-step visual indicators with accurate percentage tracking
+* **Video Assembly:** FFmpeg-based assembly with precise 18-second duration control
+
+## Architecture Features
+
+* **Single Ad Focus:** ALWAYS creates exactly ONE advertisement with 3 scenes of 6 seconds each
+* **No Branching:** No multiple variations or alternative versions - one cohesive 18-second story
+* **Cost Controls:** $3 maximum, $2 warning threshold with budget validation
+* **Progress Tracking:** Real-time updates every 2 seconds with smooth transitions
+* **Service Redundancy:** Primary/fallback pattern for video generation resilience
+* **Structured Logging:** Domain-specific fields (video.*, audio.*, cost.*, job.*, orchestration.*)
 
 ## Documentation
 
-* [Local Setup](docs/LOCAL_SETUP.md)
-* [Setup Guide](docs/SETUP_GUIDE.md)
-* [Compatibility & Fixes](docs/COMPATIBILITY_FIX.md)
-* [Learning Roadmap](docs/LEARNING_ROADMAP.md)
-* [Verification](docs/VERIFICATION.md)
-* [Changelog](docs/CHANGELOG.md)
+* [Architecture Overview](replit.md)
+* [Cost Optimization Guide](replit.md#cost-optimization)
+* [Progress Tracking System](replit.md#progress-tracking)
+* [Structured Logging](replit.md#structured-logging)
+* [Provider Management](replit.md#ai-services)
 
 ## Contact & Community
 
@@ -149,4 +163,3 @@ python scripts/start_dev.py
 ---
 
 > © 2025 Relicon by Aegix Group. All rights reserved.
-> 
