@@ -30,12 +30,10 @@ jobs:
     
     - name: Run comprehensive CI tests
       run: |
-        cd relicon
         python test_ci.py
     
     - name: Test structured logging demo
       run: |
-        cd relicon
         python test_logging.py
     
     - name: Test with API keys (if available)
@@ -44,7 +42,6 @@ jobs:
         HAILUO_API_KEY: ${{ secrets.HAILUO_API_KEY }}
         ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
       run: |
-        cd relicon
         if [ -n "$OPENAI_API_KEY" ]; then
           echo "🔑 API keys available - running enhanced tests"
           python -c "
