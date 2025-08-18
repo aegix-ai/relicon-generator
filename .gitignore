@@ -32,12 +32,12 @@ tmp/
 temp/
 
 # === Output media ===
-outputs/
-*.mp4
-*.wav
-*.jpg
-*.png
-*.webm
+#outputs/
+#*.mp4
+#*.wav
+#*.jpg
+#*.png
+#*.webm
 
 # === Uploads (non-versioned assets) ===
 assets/uploads/

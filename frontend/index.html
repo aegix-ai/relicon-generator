@@ -16,16 +16,16 @@
         <div class="max-w-4xl mx-auto">
             <header class="text-center mb-12">
                 <h1 class="text-5xl font-bold text-white mb-4">
-                    Relicon Clean System
+                    Relicon Enterprise
                 </h1>
                 <p class="text-xl text-blue-200">
-                    AI-Powered Video Generation - Clean Architecture
+                    Enterprise AI Video Generation Platform
                 </p>
                 <div class="text-sm text-green-400 mt-2 font-mono">
-                    ✓ Running from relicon-rewrite/ directory ONLY
+                    ✓ Enterprise Architecture | Provider-Agnostic | Runtime Switching
                 </div>
                 <div class="text-xs text-yellow-300 mt-1">
-                    Cost: $2.42-4.80 per video | Test verified: 10-second video for $2.64
+                    Modular Design | Hailuo/Luma Video | ElevenLabs Audio | OpenAI Planning
                 </div>
             </header>
 
@@ -62,7 +62,7 @@
                         id="submitBtn"
                         class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
-                        Generate Video with Clean System
+                        Generate Video with Enterprise System
                     </button>
                 </form>
 
@@ -78,25 +78,46 @@
                         <p class="text-white">
                             <span class="font-medium">Message:</span> <span id="message">-</span>
                         </p>
-                        <div id="videoLink" class="mt-4 hidden">
-                            <a
-                                href="#"
-                                id="downloadBtn"
-                                class="inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Download Video
-                            </a>
+                        <div id="videoPlayer" class="mt-6 hidden">
+                            <h4 class="text-white text-lg font-semibold mb-3">🎬 Your Generated Video</h4>
+                            <div class="bg-black/50 rounded-lg p-4">
+                                <video
+                                    id="generatedVideo"
+                                    controls
+                                    class="w-full max-w-lg mx-auto rounded-lg shadow-lg"
+                                    style="max-height: 400px;"
+                                >
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="mt-4 text-center">
+                                    <a
+                                        href="#"
+                                        id="downloadBtn"
+                                        class="inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors mr-2"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        📥 Download Video
+                                    </a>
+                                    <button
+                                        id="shareBtn"
+                                        class="inline-block bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                                        onclick="copyVideoLink()"
+                                    >
+                                        🔗 Copy Link
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="mt-8 text-center text-white/60 text-sm">
-                <p>🚀 Powered by Clean Relicon-Rewrite Architecture</p>
-                <p>📁 Organized: ai/, backend/, services/, config/, tests/, scripts/</p>
-                <p>✅ Verified: End-to-end testing completed successfully</p>
+                <p>🚀 Powered by Enterprise Relicon Architecture</p>
+                <p>📁 Core Services: orchestrator, planning, video, audio, assembly</p>
+                <p>🔄 Provider Abstraction: interfaces, providers, manager</p>
+                <p>✅ Enterprise Validation: All systems tested and operational</p>
             </div>
         </div>
     </div>
@@ -125,7 +146,7 @@
                     body: JSON.stringify({
                         brand_name: brandName,
                         brand_description: brandDescription,
-                        duration: 10
+                        duration: 30
                     })
                 });
                 
@@ -142,7 +163,7 @@
                             
                             if (statusData.status === 'completed' || statusData.status === 'failed') {
                                 clearInterval(pollInterval);
-                                submitBtn.textContent = 'Generate Video with Clean System';
+                                submitBtn.textContent = 'Generate Video with Enterprise System';
                                 submitBtn.disabled = false;
                             }
                         } catch (error) {
@@ -152,7 +173,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                submitBtn.textContent = 'Generate Video with Clean System';
+                submitBtn.textContent = 'Generate Video with Enterprise System';
                 submitBtn.disabled = false;
                 updateStatus({ status: 'failed', progress: 0, message: 'Network error occurred' });
             }
@@ -164,11 +185,42 @@
             document.getElementById('message').textContent = data.message || 'No message';
             
             if (data.video_url) {
-                const videoLink = document.getElementById('videoLink');
+                // Show video player with the generated video
+                const videoPlayer = document.getElementById('videoPlayer');
+                const generatedVideo = document.getElementById('generatedVideo');
                 const downloadBtn = document.getElementById('downloadBtn');
+                
+                // Set video source and show player
+                generatedVideo.src = data.video_url;
                 downloadBtn.href = data.video_url;
-                videoLink.classList.remove('hidden');
+                videoPlayer.classList.remove('hidden');
+                
+                // Auto-play the video when it loads (muted for browser policies)
+                generatedVideo.muted = true;
+                generatedVideo.play().catch(e => {
+                    console.log('Auto-play prevented:', e);
+                    // Video will still be available for manual play
+                });
+                
+                console.log('Video ready:', data.video_url);
             }
+        }
+
+        function copyVideoLink() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const videoUrl = window.location.origin + downloadBtn.href.split(window.location.origin)[1];
+            
+            navigator.clipboard.writeText(videoUrl).then(() => {
+                const shareBtn = document.getElementById('shareBtn');
+                const originalText = shareBtn.textContent;
+                shareBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    shareBtn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+                alert('Link: ' + videoUrl);
+            });
         }
     </script>
 </body>

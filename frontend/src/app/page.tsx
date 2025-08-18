@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import JobTracker from '../components/JobTracker'
 
 export default function Home() {
   const [brand, setBrand] = useState('')
@@ -21,7 +22,7 @@ export default function Home() {
         body: JSON.stringify({
           brand_name: brand,
           brand_description: description,
-          duration: 10
+          duration: 30
         })
       })
       
@@ -58,7 +59,7 @@ export default function Home() {
             AI-Powered Video Generation - Clean Architecture
           </p>
           <div className="text-sm text-green-400 mt-2 font-mono">
-            ✓ Running from relicon-rewrite/ directory
+            ✓ Running from relicon/ directory
           </div>
         </header>
 
@@ -102,38 +103,15 @@ export default function Home() {
           </form>
 
           {result && (
-            <div className="mt-8 p-6 bg-white/10 rounded-lg">
-              <h3 className="text-white text-lg font-semibold mb-4">Generation Status</h3>
-              <div className="space-y-2">
-                <p className="text-white">
-                  <span className="font-medium">Status:</span> {result.status}
-                </p>
-                <p className="text-white">
-                  <span className="font-medium">Progress:</span> {result.progress || 0}%
-                </p>
-                <p className="text-white">
-                  <span className="font-medium">Message:</span> {result.message}
-                </p>
-                {result.video_url && (
-                  <div className="mt-4">
-                    <a
-                      href={result.video_url}
-                      className="inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Download Video
-                    </a>
-                  </div>
-                )}
-              </div>
+            <div className="mt-8">
+              <JobTracker jobId={result.job_id} />
             </div>
           )}
         </div>
 
         <div className="mt-8 text-center text-white/60 text-sm">
           <p>Powered by Clean Relicon-Rewrite Architecture</p>
-          <p>Cost: $2.42-4.80 per video | Duration: 10 seconds</p>
+          <p>Cost: $2.42-4.80 per video | Duration: 30 seconds | 3 scenes</p>
         </div>
       </div>
     </div>

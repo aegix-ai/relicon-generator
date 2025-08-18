@@ -76,16 +76,28 @@ export function JobTracker({ jobId, onCompleted }: JobTrackerProps) {
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-white">{status.progress}%</div>
-          <div className="text-sm text-blue-200">Complete</div>
+          <div className="text-sm text-blue-200">
+            {status.status === 'completed' ? 'Completed' : 
+             status.status === 'failed' ? 'Failed' : 
+             status.status === 'processing' ? 'In Progress' : 'Queued'}
+          </div>
         </div>
       </div>
       
       {/* Progress Bar */}
-      <div className="w-full bg-white/10 rounded-full h-3">
-        <div 
-          className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${status.progress}%` }}
-        ></div>
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium text-blue-200">Progress</span>
+          <span className="text-sm font-bold text-white">{status.progress}% Complete</span>
+        </div>
+        <div className="w-full bg-white/10 rounded-full h-4 shadow-inner">
+          <div 
+            className="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-500 ease-out shadow-lg"
+            style={{ width: `${status.progress}%` }}
+          >
+            <div className="w-full h-full bg-white/20 rounded-full animate-pulse"></div>
+          </div>
+        </div>
       </div>
       
       {/* Current Message */}
@@ -98,22 +110,22 @@ export function JobTracker({ jobId, onCompleted }: JobTrackerProps) {
         <StatusStep 
           title="Planning" 
           active={status.progress >= 10}
-          completed={status.progress >= 40}
+          completed={status.progress >= 20}
         />
         <StatusStep 
           title="Generating" 
-          active={status.progress >= 40}
+          active={status.progress >= 20}
+          completed={status.progress >= 70}
+        />
+        <StatusStep 
+          title="Audio + Music" 
+          active={status.progress >= 70}
           completed={status.progress >= 85}
         />
         <StatusStep 
-          title="Assembling" 
+          title="Final Assembly" 
           active={status.progress >= 85}
-          completed={status.progress >= 95}
-        />
-        <StatusStep 
-          title="Complete" 
-          active={status.progress >= 95}
-          completed={status.status === 'completed'}
+          completed={status.progress >= 100}
         />
       </div>
       
