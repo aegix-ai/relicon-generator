@@ -1,4 +1,4 @@
-# [Relicon](https://relicon.co)
+# [Relicon](https://www.relicon.co)
 
 ### **Self-Improving AI-Driven Short-Form Video Ad Creator System**
 
