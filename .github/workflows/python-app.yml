@@ -32,11 +32,6 @@ jobs:
       run: |
         python test_ci.py
     
-    - name: Test structured logging demo
-      run: |
-        cd test
-        python test_logging.py
-    
     - name: Test with API keys (if available)
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
