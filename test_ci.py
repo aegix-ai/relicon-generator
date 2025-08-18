@@ -2,13 +2,14 @@
 """
 CI/CD test script for GitHub Actions.
 Tests core functionality without requiring external API keys.
+Root-level version for GitHub repository structure.
 """
 
 import sys
 import os
 from pathlib import Path
 
-# Add relicon to path
+# Add current directory to path for root-level repository structure
 sys.path.append(str(Path(__file__).parent))
 
 def test_imports():
