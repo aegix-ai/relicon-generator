@@ -40,11 +40,7 @@ jobs:
       run: |
         if [ -n "$OPENAI_API_KEY" ]; then
           echo "🔑 API keys available - running enhanced tests"
-          python -c "
-          from core.orchestrator import VideoOrchestrator
-          orchestrator = VideoOrchestrator()
-          print('✅ Orchestrator with API keys initialized')
-          "
+          python -c "from core.orchestrator import VideoOrchestrator; orchestrator = VideoOrchestrator(); print('✅ Orchestrator with API keys initialized')"
         else
           echo "⚠️ No API keys - skipping enhanced tests"
         fi
