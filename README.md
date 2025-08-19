@@ -14,6 +14,13 @@ A cost-optimized AI-driven platform that autonomously generates high-conversion,
 
 ---
 
+<div align="center">
+  <img src="assets/relicon-full-logo.png" width="800" alt="Screenshot 1"><br><br>
+  <LeftMouse>
+</div>
+
+---
+
 ## Overview
 
 Relicon is an enterprise-grade AI-powered video generation platform that creates 15-20 second promotional videos using modern commercial ad structure (Hook → Problem/Solution → Resolution/CTA). The system processes brand information through product-focused visuals, ElevenLabs voiceover and background music at 720p resolution for cost optimization.
