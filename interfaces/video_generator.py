@@ -1,5 +1,5 @@
 """
-Abstract base class for video generation providers.
+  Abstract base class for video generation providers.
 """
 
 from abc import ABC, abstractmethod

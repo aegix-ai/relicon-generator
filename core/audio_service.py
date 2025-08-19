@@ -1,6 +1,6 @@
 """
-High-level audio generation service.
-Orchestrates audio creation using abstracted providers.
+  High-level audio generation service.
+  Orchestrates audio creation using abstracted providers.
 """
 
 import os
@@ -42,7 +42,7 @@ class AudioService:
             
             # Get target duration - ensure it's 18s
             target_duration = architecture.get('scene_architecture', {}).get('total_duration', 18)
-            print(f"🔍 DEBUG: Audio service target_duration = {target_duration}s")
+            print(f"DEBUG: Audio service target_duration = {target_duration}s")
             
             # Generate audio segments for each scene
             scenes = architecture.get('scene_architecture', {}).get('scenes', [])
@@ -72,9 +72,9 @@ class AudioService:
                             'duration': scene.get('duration', 5),
                             'scene_number': i + 1
                         })
-                        print(f"✅ Generated audio segment {i + 1}")
+                        print(f"Generated audio segment {i + 1}")
                     else:
-                        print(f"❌ Failed to generate audio segment {i + 1}")
+                        print(f"Failed to generate audio segment {i + 1}")
                 
                 # Create unified audio track
                 if audio_segments:
@@ -85,7 +85,7 @@ class AudioService:
                     )
                     
                     if voice_success:
-                        print(f"✅ Unified voice audio created: {temp_voice_path}")
+                        print(f"Unified voice audio created: {temp_voice_path}")
                         
                         # Add background music to voice
                         tone = audio_config.get('voice_tone', 'friendly')
@@ -94,17 +94,17 @@ class AudioService:
                         )
                         
                         if music_success:
-                            print(f"✅ Complete audio with background music: {output_path}")
+                            print(f"Complete audio with background music: {output_path}")
                             return True
                         else:
-                            print("❌ CRITICAL: Music mixing failed - this should not happen!")
+                            print("CRITICAL: Music mixing failed - this should not happen!")
                             # Force music integration - don't fallback to voice only
                             raise Exception("Background music integration failed - all ads must have music")
                     else:
-                        print("❌ Failed to create unified audio")
+                        print("Failed to create unified audio")
                         return False
                 else:
-                    print("❌ No audio segments generated")
+                    print("No audio segments generated")
                     return False
                     
             finally:
@@ -182,7 +182,7 @@ class AudioService:
         """
         try:
             self.provider_manager.set_audio_provider(provider_name)
-            print(f"✅ Switched to {provider_name} audio provider")
+            print(f"Switched to {provider_name} audio provider")
         except Exception as e:
-            print(f"❌ Failed to switch to {provider_name}: {e}")
+            print(f"Failed to switch to {provider_name}: {e}")
             raise

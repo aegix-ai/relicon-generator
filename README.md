@@ -34,8 +34,8 @@ Relicon is an enterprise-grade AI-powered video generation platform that creates
 | -------------- | ---------------------------------------- |
 | **Frontend**   | Next.js, React, TypeScript, Tailwind CSS |
 | **Backend**    | FastAPI, Python, PostgreSQL, Drizzle ORM |
-| **AI & ML**    | GPT-4o, LangChain                       |
-| **Video**      | Hailuo-02 (MiniMax), Luma AI, FFmpeg    |
+| **AI & ML**    | GPT-4o, LangChain                        |
+| **Video**      | Hailuo-02 (MiniMax), Luma AI, FFmpeg     |
 | **Audio**      | ElevenLabs, OpenAI TTS                   |
 | **Music**      | ElevenLabs Music Generation              |
 | **Task Queue** | Celery, Redis                            |
@@ -46,17 +46,17 @@ Relicon is an enterprise-grade AI-powered video generation platform that creates
 ```
 relicon/ [v0.9.0]
 .
-├── assets
+├── assets/
 │   ├── relicon-full-logo.png
 │   └── relicon-logo.png
-├── backend
-│   ├── api
-│   └── core
-├── config
+├── backend/
+│   ├── api/
+│   └── core/
+├── config/
 │   ├── env.example
-│   ├── __pycache__
+│   ├── __pycache__/
 │   └── settings.py
-├── core
+├── core/
 │   ├── assembly_service.py
 │   ├── audio_service.py
 │   ├── cost_tracker.py
@@ -66,34 +66,34 @@ relicon/ [v0.9.0]
 │   ├── orchestrator.py
 │   ├── planning_service.py
 │   ├── provider_manager.py
-│   ├── __pycache__
+│   ├── __pycache__/
 │   └── video_service.py
-├── frontend
+├── frontend/
 │   ├── index.html
 │   ├── package.json
-│   └── src
+│   └── src/
 ├── __init__.py
-├── interfaces
+├── interfaces/
 │   ├── audio_generator.py
 │   ├── __init__.py
 │   ├── __pycache__
 │   ├── text_generator.py
 │   └── video_generator.py
-├── outputs
+├── outputs/
 ├── package.json
-├── providers
+├── providers/
 │   ├── elevenlabs.py
 │   ├── hailuo.py
 │   ├── __init__.py
 │   ├── luma.py
 │   ├── openai.py
-│   └── __pycache__
+│   └── __pycache__/
 ├── README.md
 ├── requirements.txt
-├── test
+├── test/
 │   └── test_logging.py
-└── utils
-    └── __pycache__
+└── utils/
+    └── __pycache__/
 ```
 
 ## Quick Start
@@ -113,13 +113,7 @@ cp config/env.example .env
 # Add your API keys in .env
 ```
 
-3. **Test Structured Logging:**
-
-```bash
-python test_logging.py
-```
-
-4. **Launch Development Server:**
+3. **Launch Development Server:**
 
 ```bash
 npm run dev
@@ -128,12 +122,12 @@ npm run dev
 
 ## Development Roadmap
 
-| Version | Release Date | Major Features                    |
-| ------- | ------------ | --------------------------------- |
-| 1.0.0   | 2025-08-18   | Cost-Optimized AI Ad Creator      |
-| 2.0.0   | TBD          | Advanced Progress Tracking        |
-| 3.0.0   | TBD          | Multi-Provider Optimization       |
-| 4.0.0   | TBD          | Enterprise Analytics Dashboard    |
+| Version | Release Date | Major Features                                      |
+| ------- | ------------ | --------------------------------------------------- |
+| 1.0.0   | 2025-08-18   | Cost-Optimized AI Ad Creator                        |
+| 2.0.0   | TBD          | Advanced Feedback Loop & Performance Tracking       |
+| 3.0.0   | TBD          | Multi-Provider Optimization & Self-Improvement      |
+| 4.0.0   | TBD          | Enterprise Analytics Dashboard & AI Chat Interface  |
 
 ## Verified Functionality
 
@@ -155,17 +149,9 @@ npm run dev
 * **Service Redundancy:** Primary/fallback pattern for video generation resilience
 * **Structured Logging:** Domain-specific fields (video.*, audio.*, cost.*, job.*, orchestration.*)
 
-## Documentation
-
-* [Architecture Overview](replit.md)
-* [Cost Optimization Guide](replit.md#cost-optimization)
-* [Progress Tracking System](replit.md#progress-tracking)
-* [Structured Logging](replit.md#structured-logging)
-* [Provider Management](replit.md#ai-services)
-
 ## Contact & Community
 
-* **Website:** [relicon.co](https://relicon.co)
+* **Website:** [www.relicon.co](https://www.relicon.co)
 * **Email:** [contact@relicon.co](mailto:contact@relicon.co)
 * **Twitter:** [@reliconAI](https://twitter.com/reliconAI)
 

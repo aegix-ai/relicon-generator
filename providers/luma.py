@@ -1,5 +1,5 @@
 """
-Luma AI video generation provider implementation.
+  Luma AI video generation provider implementation.
 """
 
 import os
@@ -138,10 +138,10 @@ class LumaProvider(VideoGenerator):
                 print(f"Downloaded {total_size:,} bytes")
                 
                 if total_size > 100000:  # Basic validation
-                    print(f"✅ Video download successful!")
+                    print(f"Video download successful!")
                     return True
                 else:
-                    print(f"⚠️ Downloaded file too small, retrying...")
+                    print(f"Downloaded file too small, retrying...")
                     continue
                 
             except Exception as e:
@@ -150,7 +150,7 @@ class LumaProvider(VideoGenerator):
                     time.sleep(2)
                     continue
         
-        print(f"❌ All {max_retries} download attempts failed")
+        print(f"All {max_retries} download attempts failed")
         return False
     
     def text_to_video(self, prompt: str, aspect_ratio: str = "9:16") -> str:

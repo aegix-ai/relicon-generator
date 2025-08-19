@@ -1,6 +1,6 @@
 """
-Central provider manager for AI service abstraction.
-Enables seamless switching between providers via configuration.
+  Central provider manager for AI service abstraction.
+  Enables seamless switching between providers via configuration.
 """
 
 import os

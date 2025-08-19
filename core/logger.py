@@ -1,6 +1,6 @@
 """
-Enterprise-grade structured JSON logging system.
-Implements ECS-compliant single-line JSON logging with trace correlation.
+  Enterprise-grade structured JSON logging system.
+  Implements ECS-compliant single-line JSON logging with trace correlation.
 """
 
 import json

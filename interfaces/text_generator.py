@@ -1,5 +1,5 @@
 """
-Abstract base class for text generation providers.
+  Abstract base class for text generation providers.
 """
 
 from abc import ABC, abstractmethod

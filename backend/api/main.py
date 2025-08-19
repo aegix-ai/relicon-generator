@@ -1,6 +1,6 @@
 """
-    Clean Relicon API Server
-    Main FastAPI application for the clean relicon system
+  Clean Relicon API Server
+  Main FastAPI application for the clean relicon system
 """
 
 import sys
@@ -92,7 +92,7 @@ async def cost_analysis():
         "luma_pricing_compliance": {
             "luma_cost_per_5s_720p": "$0.40",
             "our_cost_per_scene": f"${cost_estimate.video_cost_per_scene:.2f}",
-            "compliance_status": "✅ Optimized" if cost_estimate.video_cost_per_scene <= 0.40 else "❌ Over budget"
+            "compliance_status": "Optimized" if cost_estimate.video_cost_per_scene <= 0.40 else "Over budget"
         }
     }
 

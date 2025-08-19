@@ -1,5 +1,5 @@
 """
-Abstract base class for audio generation providers.
+  Abstract base class for audio generation providers.
 """
 
 from abc import ABC, abstractmethod

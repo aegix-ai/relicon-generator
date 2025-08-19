@@ -1,6 +1,6 @@
 """
-Cost tracking and optimization service for enterprise video generation.
-Provides real-time cost estimates and prevents budget overruns.
+  Cost tracking and optimization service for enterprise video generation.
+  Provides real-time cost estimates and prevents budget overruns.
 """
 
 from typing import Dict, Any, List
@@ -157,7 +157,7 @@ class CostTracker:
         }
         
         self.cost_history.append(cost_entry)
-        print(f"💰 Cost logged: {job_id} - ${actual_cost:.2f} ({scenes_generated} scenes @ {resolution})")
+        print(f"Cost logged: {job_id} - ${actual_cost:.2f} ({scenes_generated} scenes @ {resolution})")
     
     def get_cost_analytics(self) -> Dict[str, Any]:
         """

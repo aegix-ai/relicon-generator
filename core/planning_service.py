@@ -1,6 +1,6 @@
 """
-High-level planning service for video architecture.
-Orchestrates creative planning using abstracted providers.
+  High-level planning service for video architecture.
+  Orchestrates creative planning using abstracted providers.
 """
 
 from typing import Dict, List, Any
@@ -19,7 +19,7 @@ class PlanningService:
         DEPRECATED: Use create_enterprise_blueprint() for new implementations.
         Legacy method maintained for backward compatibility.
         """
-        print("⚠️ Using deprecated method. Consider switching to create_enterprise_blueprint()")
+        print("Using deprecated method. Consider switching to create_enterprise_blueprint()")
         return self.create_enterprise_blueprint(brand_info)
     
     def validate_architecture(self, architecture: Dict[str, Any]) -> Dict[str, Any]:
@@ -50,7 +50,7 @@ class PlanningService:
             # Validate 30-second precision timing
             actual_total = sum(scene.get('duration', 0) for scene in scenes)
             if actual_total != target_duration:
-                print(f"⚠️ Duration precision error: expected {target_duration}s, got {actual_total}s - auto-correcting")
+                print(f"Duration precision error: expected {target_duration}s, got {actual_total}s - auto-correcting")
                 architecture = self._correct_scene_timing(architecture, target_duration)
             
             # Validate enterprise scene requirements
@@ -60,33 +60,33 @@ class PlanningService:
                 
                 for field in required_scene_fields:
                     if not scene.get(field):
-                        print(f"⚠️ Scene {scene_id} missing required field: {field}")
+                        print(f"Scene {scene_id} missing required field: {field}")
                 
                 # Ensure visual prompts exist (luma_prompt is primary)
                 if not scene.get('luma_prompt') and not scene.get('visual_concept'):
-                    print(f"⚠️ Scene {scene_id} missing visual prompts")
+                    print(f"Scene {scene_id} missing visual prompts")
                 
                 # Validate scene duration precision
                 duration = scene.get('duration', 0)
                 if duration <= 0 or duration > target_duration:
-                    print(f"⚠️ Scene {scene_id} invalid duration: {duration}s")
+                    print(f"Scene {scene_id} invalid duration: {duration}s")
             
             # Validate audio architecture
             audio_arch = architecture.get('audio_architecture', {})
             if audio_arch.get('total_duration', 0) != target_duration:
                 audio_arch['total_duration'] = target_duration
-                print(f"✅ Corrected audio duration to {target_duration}s")
+                print(f"Corrected audio duration to {target_duration}s")
             
             # Validate unified script quality
             script = architecture.get('unified_script', '').strip()
             if len(script) < 20:
-                print("⚠️ Script too short - may not fill 30 seconds")
+                print("Script too short - may not fill 30 seconds")
             
-            print(f"✅ Architecture validated: {len(scenes)} scenes, {target_duration}s precision")
+            print(f"Architecture validated: {len(scenes)} scenes, {target_duration}s precision")
             return architecture
             
         except Exception as e:
-            print(f"❌ Architecture validation failed: {e}")
+            print(f"Architecture validation failed: {e}")
             raise
     
     def _correct_scene_timing(self, architecture: Dict[str, Any], target_duration: int) -> Dict[str, Any]:
@@ -102,7 +102,7 @@ class PlanningService:
         
         # Force exactly 3 scenes for optimal 18s structure  
         if scene_count != 3:
-            print(f"⚠️ Adjusting from {scene_count} to exactly 3 scenes for 18s structure")
+            print(f"Adjusting from {scene_count} to exactly 3 scenes for 18s structure")
             # Take first 3 scenes if more than 3, or duplicate if less than 3
             if scene_count > 3:
                 scenes = scenes[:3]
@@ -126,7 +126,7 @@ class PlanningService:
         architecture['scene_architecture']['total_duration'] = target_duration
         
         actual_total = sum(scene.get('duration', 0) for scene in scenes)
-        print(f"✅ Applied narrative-optimized timing: {scene_count} scenes, {actual_total}s total")
+        print(f"Applied narrative-optimized timing: {scene_count} scenes, {actual_total}s total")
         return architecture
     
     def create_enterprise_blueprint(self, brand_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -168,11 +168,11 @@ class PlanningService:
                 'enterprise_grade': True
             }
             
-            print(f"✅ Enterprise blueprint created: {blueprint['production_metadata']['scene_count']} scenes, {blueprint['production_metadata']['target_duration']}s")
+            print(f"Enterprise blueprint created: {blueprint['production_metadata']['scene_count']} scenes, {blueprint['production_metadata']['target_duration']}s")
             return blueprint
             
         except Exception as e:
-            print(f"❌ Enterprise blueprint creation failed: {e}")
+            print(f"Enterprise blueprint creation failed: {e}")
             raise
     
     def switch_provider(self, provider_name: str) -> None:
@@ -184,7 +184,7 @@ class PlanningService:
         """
         try:
             self.provider_manager.set_text_provider(provider_name)
-            print(f"✅ Switched to {provider_name} planning provider")
+            print(f"Switched to {provider_name} planning provider")
         except Exception as e:
-            print(f"❌ Failed to switch to {provider_name}: {e}")
+            print(f"Failed to switch to {provider_name}: {e}")
             raise

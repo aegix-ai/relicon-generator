@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-CI/CD test script for GitHub Actions.
-Tests core functionality without requiring external API keys.
-Root-level version for GitHub repository structure.
+  CI/CD test script for GitHub Actions.
+  Tests core functionality without requiring external API keys.
+  Root-level version for GitHub repository structure.
 """
 
 import sys
@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent))
 
 def test_imports():
     """Test that all core modules can be imported."""
-    print("🧪 Testing core module imports...")
+    print("Testing core module imports...")
     
     try:
         from core.orchestrator import VideoOrchestrator
@@ -33,15 +33,15 @@ def test_imports():
         from backend.core.job_manager import JobManager
         from config.settings import settings
         
-        print("✅ All core modules imported successfully")
+        print("All core modules imported successfully")
         return True
     except Exception as e:
-        print(f"❌ Import failed: {e}")
+        print(f"Import failed: {e}")
         return False
 
 def test_cost_tracker():
     """Test cost estimation functionality."""
-    print("🧪 Testing cost tracker...")
+    print("Testing cost tracker...")
     
     try:
         from core.cost_tracker import cost_tracker
@@ -55,15 +55,15 @@ def test_cost_tracker():
         budget_check = cost_tracker.validate_budget(1.5)
         assert "within_budget" in budget_check, "Budget check should return status"
         
-        print(f"✅ Cost estimation working: ${estimate.total_estimated_cost:.2f}")
+        print(f"Cost estimation working: ${estimate.total_estimated_cost:.2f}")
         return True
     except Exception as e:
-        print(f"❌ Cost tracker test failed: {e}")
+        print(f"Cost tracker test failed: {e}")
         return False
 
 def test_structured_logging():
     """Test structured logging system."""
-    print("🧪 Testing structured logging...")
+    print("Testing structured logging...")
     
     try:
         from core.logger import get_logger, set_trace_context
@@ -78,15 +78,15 @@ def test_structured_logging():
         logger.info("CI test log entry", "ci.test.info")
         logger.warning("CI test warning", "ci.test.warning", **{"test.param": "value"})
         
-        print("✅ Structured logging working")
+        print("Structured logging working")
         return True
     except Exception as e:
-        print(f"❌ Structured logging test failed: {e}")
+        print(f"Structured logging test failed: {e}")
         return False
 
 def test_job_manager():
     """Test job management system."""
-    print("🧪 Testing job manager...")
+    print("Testing job manager...")
     
     try:
         from backend.core.job_manager import JobManager
@@ -105,15 +105,15 @@ def test_job_manager():
         status = job_manager.get_job_status(job_id)
         assert status is not None, "Job status should be available"
         
-        print(f"✅ Job manager working: created job {job_id}")
+        print(f"Job manager working: created job {job_id}")
         return True
     except Exception as e:
-        print(f"❌ Job manager test failed: {e}")
+        print(f"Job manager test failed: {e}")
         return False
 
 def test_settings():
     """Test configuration settings."""
-    print("🧪 Testing settings configuration...")
+    print("Testing settings configuration...")
     
     try:
         from config.settings import settings
@@ -123,15 +123,15 @@ def test_settings():
         assert hasattr(settings, 'MAX_CONCURRENT_JOBS'), "Max concurrent jobs should be configured"
         assert settings.MAX_CONCURRENT_JOBS > 0, "Max concurrent jobs should be positive"
         
-        print(f"✅ Settings loaded: output_dir={settings.OUTPUT_DIR}, max_jobs={settings.MAX_CONCURRENT_JOBS}")
+        print(f"Settings loaded: output_dir={settings.OUTPUT_DIR}, max_jobs={settings.MAX_CONCURRENT_JOBS}")
         return True
     except Exception as e:
-        print(f"❌ Settings test failed: {e}")
+        print(f"Settings test failed: {e}")
         return False
 
 def main():
     """Run all CI tests."""
-    print("🚀 Running Relicon CI Tests")
+    print("Running Relicon CI Tests")
     print("=" * 50)
     
     tests = [
@@ -152,17 +152,17 @@ def main():
             else:
                 failed += 1
         except Exception as e:
-            print(f"❌ Test {test.__name__} crashed: {e}")
+            print(f"Test {test.__name__} crashed: {e}")
             failed += 1
         print("-" * 30)
     
-    print(f"📊 Results: {passed} passed, {failed} failed")
+    print(f"Results: {passed} passed, {failed} failed")
     
     if failed == 0:
-        print("🎉 All tests passed! Relicon is ready for deployment.")
+        print("All tests passed! Relicon is ready for deployment.")
         return 0
     else:
-        print("💥 Some tests failed. Please check the output above.")
+        print("Some tests failed. Please check the output above.")
         return 1
 
 if __name__ == "__main__":

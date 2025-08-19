@@ -1,16 +1,16 @@
 """
-Relicon - Enterprise AI Video Generation Platform
-
-A modular, provider-agnostic video generation system with enterprise-grade
-architecture and seamless provider switching capabilities.
+  Relicon - Enterprise AI Video Generation Platform
+  
+  A modular, provider-agnostic video generation system with enterprise-grade
+  architecture and seamless provider switching capabilities.
 """
 
 from .core.orchestrator import VideoOrchestrator
 from .core.provider_manager import provider_manager
 from .config.settings import settings
 
-__version__ = "1.0.0"
-__author__ = "Relicon Team"
+__version__ = "0.9.0"
+__author__ = "Relicon"
 
 # Main entry points
 def create_video(brand_info, output_path):

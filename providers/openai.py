@@ -1,5 +1,5 @@
 """
-OpenAI text generation provider implementation.
+  OpenAI text generation provider implementation.
 """
 
 import os
@@ -32,7 +32,7 @@ class OpenAIProvider(TextGenerator):
 
 Your mission: Create a blueprint for **one single modern advertisement** that showcases the product brilliantly with minimal talking heads.
 
-⚠️ Critical rules:
+Critical rules:
 - The ad must follow: Hook → Pain → Solution → Call to Action structure
 - Exactly **3 scenes**, each **5-6 seconds long** (total 15-18 seconds)
 - Focus on PRODUCT DEMONSTRATION and lifestyle integration
@@ -48,28 +48,28 @@ Brand Information:
 
 MODERN AD STRUCTURE REQUIREMENTS:
 
-🎯 Scene 1 - HOOK (5-6s): Eye-catching product introduction or lifestyle moment
+Scene 1 - HOOK (5-6s): Eye-catching product introduction or lifestyle moment
 - Show product in action, stunning environment, or intriguing situation
 - Focus on visual impact, not faces - wide shots, product close-ups, lifestyle context
 - Create immediate curiosity about the product/service
 
-😟 Scene 2 - PAIN/PROBLEM (5-6s): Show the problem your product solves
+Scene 2 - PAIN/PROBLEM (5-6s): Show the problem your product solves
 - Demonstrate frustration, inefficiency, or limitation WITHOUT close-up faces
 - Focus on situations, environments, actions that show the pain point
 - Show hands, body language, problematic situations, environmental challenges
 
-✨ Scene 3 - SOLUTION + CTA (5-6s): Product solving the problem + clear call to action
+Scene 3 - SOLUTION + CTA (5-6s): Product solving the problem + clear call to action
 - Demonstrate product benefits through action, results, transformation
 - Show the product working, environment improving, lifestyle enhancing
 - End with strong product branding and clear call to action
 
 VISUAL DIRECTION REQUIREMENTS:
-📱 Product Focus: Always show the actual product, its features, and benefits in action
-🏠 Lifestyle Integration: Show how product fits into real life scenarios
-🎬 Cinematic Quality: Professional lighting, camera movement, composition
-🌍 Environmental Storytelling: Use settings and situations to tell the story
-✋ Action-Oriented: Show hands using product, situations changing, results happening
-📸 Visual Variety: Mix wide shots, product close-ups, environmental shots, action sequences
+ Product Focus: Always show the actual product, its features, and benefits in action
+ Lifestyle Integration: Show how product fits into real life scenarios
+ Cinematic Quality: Professional lighting, camera movement, composition
+ Environmental Storytelling: Use settings and situations to tell the story
+ Action-Oriented: Show hands using product, situations changing, results happening
+ Visual Variety: Mix wide shots, product close-ups, environmental shots, action sequences
 
 For each scene, generate complete modern commercial architecture:
 - scene_id: numeric index (1, 2, 3)
@@ -161,7 +161,7 @@ Respond in JSON format:
         
         architecture = json.loads(content)
         
-        print(f"🔍 DEBUG: OpenAI raw response total_duration = {architecture.get('scene_architecture', {}).get('total_duration', 'MISSING')}")
+        print(f"DEBUG: OpenAI raw response total_duration = {architecture.get('scene_architecture', {}).get('total_duration', 'MISSING')}")
         
         # CRITICAL: Force exactly 18s architecture regardless of OpenAI response
         scenes = architecture.get('scene_architecture', {}).get('scenes', [])
@@ -189,7 +189,7 @@ Respond in JSON format:
         architecture['scene_architecture']['total_duration'] = 18
         architecture['audio_architecture']['total_duration'] = 18
         
-        print(f"🔍 DEBUG: OpenAI forced total_duration = {architecture['scene_architecture']['total_duration']}")
+        print(f"DEBUG: OpenAI forced total_duration = {architecture['scene_architecture']['total_duration']}")
         
         return architecture
     

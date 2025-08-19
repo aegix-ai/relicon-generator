@@ -1,5 +1,5 @@
 """
-ElevenLabs audio generation provider implementation.
+  ElevenLabs audio generation provider implementation.
 """
 
 import os
@@ -38,7 +38,7 @@ class ElevenLabsProvider(AudioGenerator):
             else:
                 energetic_text = text
             
-            print(f"🎤 Generating ElevenLabs voice ({voice_gender}, {voice_tone})")
+            print(f"Generating ElevenLabs voice ({voice_gender}, {voice_tone})")
             return self._generate_elevenlabs_audio(energetic_text, output_path, voice_gender, voice_tone)
             
         except Exception as e:
@@ -89,7 +89,7 @@ class ElevenLabsProvider(AudioGenerator):
             }
             
             prompt = music_prompts.get(tone, music_prompts["friendly"])
-            print(f"🎵 Generating ElevenLabs background music: {tone} tone for {duration}s")
+            print(f"Generating ElevenLabs background music: {tone} tone for {duration}s")
             
             # ElevenLabs Music Generation API
             music_url = "https://api.elevenlabs.io/v1/sound-generation"
@@ -105,7 +105,7 @@ class ElevenLabsProvider(AudioGenerator):
                 "prompt_influence": 0.3
             }
             
-            print(f"🎵 Calling ElevenLabs Music API with prompt: {prompt}")
+            print(f"Calling ElevenLabs Music API with prompt: {prompt}")
             response = requests.post(
                 music_url,
                 json=music_data,
@@ -116,14 +116,14 @@ class ElevenLabsProvider(AudioGenerator):
             if response.status_code == 200:
                 with open(output_path, 'wb') as f:
                     f.write(response.content)
-                print(f"✅ ElevenLabs background music generated: {output_path}")
+                print(f"ElevenLabs background music generated: {output_path}")
                 return True
             else:
-                print(f"❌ ElevenLabs Music API error: {response.status_code} - {response.text}")
+                print(f"ElevenLabs Music API error: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            print(f"❌ ElevenLabs music generation failed: {e}")
+            print(f"ElevenLabs music generation failed: {e}")
             return False
     
     def _generate_elevenlabs_audio(self, text: str, output_path: str, voice_gender: str, voice_tone: str) -> bool:

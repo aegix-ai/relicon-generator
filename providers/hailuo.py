@@ -1,5 +1,5 @@
 """
-Hailuo (MiniMax) video generation provider implementation.
+  Hailuo (MiniMax) video generation provider implementation.
 """
 
 import os
@@ -298,10 +298,10 @@ class HailuoProvider(VideoGenerator):
                     print(f"Downloaded {total_size:,} bytes")
                     
                     if self._validate_video_file(output_path, total_size):
-                        print(f"✅ Video download and validation successful!")
+                        print(f"Video download and validation successful!")
                         return True
                     else:
-                        print(f"⚠️ Video validation failed, retrying...")
+                        print(f"Video validation failed, retrying...")
                         continue
                         
                 else:
@@ -323,7 +323,7 @@ class HailuoProvider(VideoGenerator):
                     time.sleep(2)
                     continue
         
-        print(f"❌ All {max_retries} download attempts failed")
+        print(f"All {max_retries} download attempts failed")
         return False
     
     def _validate_video_file(self, file_path: str, file_size: int) -> bool:

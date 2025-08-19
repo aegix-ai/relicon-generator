@@ -1,6 +1,6 @@
 """
-High-level video generation service.
-Orchestrates video creation using abstracted providers.
+  High-level video generation service.
+  Orchestrates video creation using abstracted providers.
 """
 
 import os
@@ -86,17 +86,17 @@ class VideoService:
                         'prompt': prompt,
                         'url': video_url
                     })
-                    print(f"✅ Scene {scene_number} completed: {output_filename}")
+                    print(f"Scene {scene_number} completed: {output_filename}")
                     
                     # Update progress after scene completion
                     scene_complete_progress = 25 + int((45 / len(scenes)) * (i + 1))
                     if progress_callback:
                         progress_callback(scene_complete_progress, f"Scene {scene_number}/{len(scenes)} completed")
                 else:
-                    print(f"❌ Failed to download scene {scene_number}")
+                    print(f"Failed to download scene {scene_number}")
                     
             except Exception as e:
-                print(f"❌ Scene {scene_number} generation failed: {e}")
+                print(f"Scene {scene_number} generation failed: {e}")
                 
                 # Try fallback to Luma if primary provider fails or times out
                 if provider_name == 'hailuo':
@@ -124,11 +124,11 @@ class VideoService:
                                     'url': video_url,
                                     'provider': 'luma_fallback'
                                 })
-                                print(f"✅ Scene {scene_number} completed with Luma fallback: {output_filename}")
+                                print(f"Scene {scene_number} completed with Luma fallback: {output_filename}")
                             else:
-                                print(f"❌ Fallback also failed to download scene {scene_number}")
+                                print(f"Fallback also failed to download scene {scene_number}")
                     except Exception as fallback_error:
-                        print(f"❌ Fallback to Luma also failed: {fallback_error}")
+                        print(f"Fallback to Luma also failed: {fallback_error}")
                 continue
         
         return {
@@ -175,7 +175,7 @@ class VideoService:
         """
         try:
             self.provider_manager.set_video_provider(provider_name)
-            print(f"✅ Switched to {provider_name} video provider")
+            print(f"Switched to {provider_name} video provider")
         except Exception as e:
-            print(f"❌ Failed to switch to {provider_name}: {e}")
+            print(f"Failed to switch to {provider_name}: {e}")
             raise

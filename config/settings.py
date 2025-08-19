@@ -1,6 +1,6 @@
 """
-    Configuration Settings
-    Centralized configuration management
+  Configuration Settings
+  Centralized configuration management
 """
 
 import os

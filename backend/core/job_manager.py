@@ -1,6 +1,6 @@
 """
-Job Manager for Enterprise Relicon System
-Handles video generation job tracking and status updates
+  Job Manager for Enterprise Relicon System
+  Handles video generation job tracking and status updates
 """
 
 import uuid

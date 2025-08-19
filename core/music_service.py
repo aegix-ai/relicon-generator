@@ -1,6 +1,6 @@
 """
-Background music service for enterprise video generation.
-Provides professional background music tracks for commercial ads.
+  Background music service for enterprise video generation.
+  Provides professional background music tracks for commercial ads.
 """
 
 import os
@@ -71,18 +71,18 @@ class MusicService:
                 success = elevenlabs.generate_background_music(duration, tone, output_path)
                 
                 if success and os.path.exists(output_path):
-                    print(f"✅ ElevenLabs background music generated: {output_path}")
+                    print(f"ElevenLabs background music generated: {output_path}")
                     return output_path
                 else:
-                    print(f"❌ ElevenLabs music generation failed")
+                    print(f"ElevenLabs music generation failed")
                     return None
                     
             except Exception as elevenlabs_error:
-                print(f"❌ ElevenLabs music generation failed: {elevenlabs_error}")
+                print(f"ElevenLabs music generation failed: {elevenlabs_error}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Music generation error: {e}")
+            print(f"Music generation error: {e}")
             return None
     
     def mix_audio_with_music(self, voice_path: str, music_path: str, 
@@ -107,8 +107,8 @@ class MusicService:
             # Verify input audio levels first using correct FFmpeg syntax
             voice_probe = subprocess.run(['ffmpeg', '-i', voice_path, '-af', 'volumedetect', '-f', 'null', '-'], capture_output=True, text=True)
             music_probe = subprocess.run(['ffmpeg', '-i', music_path, '-af', 'volumedetect', '-f', 'null', '-'], capture_output=True, text=True)
-            print(f"🔍 DEBUG Voice levels: {voice_probe.stderr.split('volumedetect')[1] if 'volumedetect' in voice_probe.stderr else 'No volume data'}")
-            print(f"🔍 DEBUG Music levels: {music_probe.stderr.split('volumedetect')[1] if 'volumedetect' in music_probe.stderr else 'No volume data'}")
+            print(f"DEBUG Voice levels: {voice_probe.stderr.split('volumedetect')[1] if 'volumedetect' in voice_probe.stderr else 'No volume data'}")
+            print(f"DEBUG Music levels: {music_probe.stderr.split('volumedetect')[1] if 'volumedetect' in music_probe.stderr else 'No volume data'}")
             
             cmd = [
                 'ffmpeg', '-y',
@@ -126,15 +126,15 @@ class MusicService:
             if result.returncode == 0:
                 # Verify final mixed audio levels
                 final_probe = subprocess.run(['ffmpeg', '-i', output_path, '-af', 'volumedetect', '-f', 'null', '-'], capture_output=True, text=True)
-                print(f"🔍 DEBUG Final mixed levels: {final_probe.stderr.split('volumedetect')[1] if 'volumedetect' in final_probe.stderr else 'No volume data'}")
-                print(f"✅ Audio mixed with background music: {output_path}")
+                print(f"DEBUG Final mixed levels: {final_probe.stderr.split('volumedetect')[1] if 'volumedetect' in final_probe.stderr else 'No volume data'}")
+                print(f"Audio mixed with background music: {output_path}")
                 return True
             else:
-                print(f"❌ Audio mixing failed: {result.stderr}")
+                print(f"Audio mixing failed: {result.stderr}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Audio mixing error: {e}")
+            print(f"Audio mixing error: {e}")
             return False
     
     def create_audio_with_music(self, voice_audio_path: str, duration: float, 
@@ -157,7 +157,7 @@ class MusicService:
             music_path = os.path.join(temp_dir, "bg_music.mp3")
             
             if not self.generate_background_music(duration, tone, music_path):
-                print("❌ CRITICAL: Background music generation failed!")
+                print("CRITICAL: Background music generation failed!")
                 raise Exception("Background music generation failed - all ads must have music")
             
             # Mix voice with background music (50% music volume as requested)
@@ -172,7 +172,7 @@ class MusicService:
             return success
             
         except Exception as e:
-            print(f"❌ Complete audio creation failed: {e}")
+            print(f"Complete audio creation failed: {e}")
             # NO FALLBACK - music is mandatory
             raise Exception(f"Audio with music creation failed: {e}")
 

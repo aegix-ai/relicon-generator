@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script to demonstrate the new structured JSON logging format.
-Run this to see the enterprise-grade logging in action.
+  Test script to demonstrate the new structured JSON logging format.
+  Run this to see the enterprise-grade logging in action.
 """
 
 import sys
@@ -60,11 +60,11 @@ def test_structured_logging():
     test_logger.info("Structured logging test completed", "test.complete")
 
 if __name__ == "__main__":
-    print("🧪 Testing Relicon Structured JSON Logging System")
+    print("Testing Relicon Structured JSON Logging System")
     print("=" * 60)
     test_structured_logging()
     print("=" * 60)
-    print("✅ All logs above are single-line JSON objects suitable for:")
+    print("All logs above are single-line JSON objects suitable for:")
     print("   • Machine parsing (JSON structured)")
     print("   • Terminal tailing (single-line streaming)")
     print("   • Log aggregation systems (ECS compliant)")

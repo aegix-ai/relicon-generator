@@ -1,6 +1,6 @@
 """
-Main orchestration service for complete video generation pipeline.
-Enterprise-grade coordination of all services and providers.
+  Main orchestration service for complete video generation pipeline.
+  Enterprise-grade coordination of all services and providers.
 """
 
 import os
@@ -66,11 +66,11 @@ class VideoOrchestrator:
             )
             budget_check = cost_tracker.validate_budget(cost_estimate.total_estimated_cost)
             
-            print(f"💰 Estimated cost: ${cost_estimate.total_estimated_cost:.2f} "
+            print(f"Estimated cost: ${cost_estimate.total_estimated_cost:.2f} "
                   f"(3 scenes × ${cost_estimate.video_cost_per_scene} + audio ${cost_estimate.audio_cost} + planning ${cost_estimate.planning_cost})")
             
             if not budget_check["within_budget"]:
-                print(f"⚠️ Budget warning: {budget_check.get('warning', 'Cost exceeds limits')}")
+                print(f"Budget warning: {budget_check.get('warning', 'Cost exceeds limits')}")
             
             # Ensure output directory exists
             os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else ".", exist_ok=True)
@@ -78,17 +78,17 @@ class VideoOrchestrator:
             # Step 1: Create enterprise video blueprint (10-20%)
             if progress_callback:
                 progress_callback(10, "Creating video blueprint...")
-            print("📋 Creating enterprise video blueprint...")
+            print("Creating enterprise video blueprint...")
             architecture = self.planning_service.create_enterprise_blueprint(brand_info)
             
             target_duration = architecture.get('scene_architecture', {}).get('total_duration', 18)
-            print(f"🔍 DEBUG: Orchestrator target_duration = {target_duration}s from architecture")
+            print(f"DEBUG: Orchestrator target_duration = {target_duration}s from architecture")
             
             if progress_callback:
                 progress_callback(20, "Blueprint created, starting video generation...")
             
             # Step 2: Generate video scenes (20-70%)
-            print("🎥 Generating video scenes...")
+            print("Generating video scenes...")
             with tempfile.TemporaryDirectory() as temp_dir:
                 if progress_callback:
                     progress_callback(25, "Generating Scene 1/3...")
@@ -106,7 +106,7 @@ class VideoOrchestrator:
                 # Step 3: Generate audio track (70-85%)
                 if progress_callback:
                     progress_callback(75, "Generating voiceover and background music...")
-                print("🎤 Generating audio track...")
+                print("Generating audio track...")
                 audio_path = os.path.join(temp_dir, "audio_track.mp3")
                 audio_success = self.audio_service.generate_audio_from_architecture(
                     architecture, audio_path
@@ -121,7 +121,7 @@ class VideoOrchestrator:
                 # Step 4: Assemble final video (85-95%)
                 if progress_callback:
                     progress_callback(88, "Assembling final video with audio...")
-                print("🔧 Assembling final video...")
+                print("Assembling final video...")
                 video_files = [video['file_path'] for video in video_results['videos']]
                 assembly_success = self.assembly_service.assemble_final_video(
                     video_files, audio_path, output_path, target_duration
@@ -136,7 +136,7 @@ class VideoOrchestrator:
             # Step 5: Validate final output (95-100%)
             if progress_callback:
                 progress_callback(98, "Validating final video...")
-            print("✅ Validating final video...")
+            print("Validating final video...")
             validation = self.assembly_service.validate_video_output(
                 output_path, target_duration
             )
@@ -185,7 +185,7 @@ class VideoOrchestrator:
                 }
             }
             
-            print(f"🎉 Video generation completed in {total_time:.1f}s: {output_path}")
+            print(f"Video generation completed in {total_time:.1f}s: {output_path}")
             return results
             
         except Exception as e:
@@ -204,7 +204,7 @@ class VideoOrchestrator:
                 }
             }
             
-            print(f"❌ Video generation failed after {total_time:.1f}s: {e}")
+            print(f"Video generation failed after {total_time:.1f}s: {e}")
             return error_results
     
     def create_video_from_simple_prompt(self, prompt: str, output_path: str, 
@@ -250,10 +250,10 @@ class VideoOrchestrator:
             if text_provider:
                 self.planning_service.switch_provider(text_provider)
             
-            print("✅ Provider switching completed")
+            print("Provider switching completed")
             
         except Exception as e:
-            print(f"❌ Provider switching failed: {e}")
+            print(f"Provider switching failed: {e}")
             raise
     
     def get_system_status(self) -> Dict[str, Any]:

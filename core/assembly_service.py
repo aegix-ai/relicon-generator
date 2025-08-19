@@ -1,5 +1,5 @@
 """
-Video assembly service for combining video and audio components.
+  Video assembly service for combining video and audio components.
 """
 
 import os
@@ -76,11 +76,11 @@ class AssemblyService:
                 if not self._combine_video_audio(duration_adjusted_path, audio_file, output_path, target_duration):
                     return False
                 
-                print(f"✅ Final video assembled: {output_path}")
+                print(f"Final video assembled: {output_path}")
                 return True
                 
         except Exception as e:
-            print(f"❌ Video assembly failed: {e}")
+            print(f"Video assembly failed: {e}")
             return False
     
     def _concatenate_videos(self, video_files: List[str], output_path: str) -> bool:
@@ -117,14 +117,14 @@ class AssemblyService:
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                print(f"✅ Videos concatenated successfully")
+                print(f"Videos concatenated successfully")
                 return True
             else:
-                print(f"❌ Video concatenation failed: {result.stderr}")
+                print(f"Video concatenation failed: {result.stderr}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Video concatenation error: {e}")
+            print(f"Video concatenation error: {e}")
             return False
     
     def _adjust_video_duration(self, input_path: str, output_path: str, target_duration: float) -> bool:
@@ -139,7 +139,7 @@ class AssemblyService:
             probe_result = subprocess.run(probe_cmd, capture_output=True, text=True)
             
             if probe_result.returncode != 0:
-                print(f"❌ Failed to probe video duration")
+                print(f"Failed to probe video duration")
                 return False
             
             import json
@@ -171,14 +171,14 @@ class AssemblyService:
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                print(f"✅ Video duration adjusted to {target_duration}s")
+                print(f"Video duration adjusted to {target_duration}s")
                 return True
             else:
-                print(f"❌ Duration adjustment failed: {result.stderr}")
+                print(f"Duration adjustment failed: {result.stderr}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Duration adjustment error: {e}")
+            print(f"Duration adjustment error: {e}")
             return False
     
     def _combine_video_audio(self, video_path: str, audio_path: str, output_path: str, duration: float) -> bool:
@@ -207,14 +207,14 @@ class AssemblyService:
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                print(f"✅ Video and audio combined successfully")
+                print(f"Video and audio combined successfully")
                 return True
             else:
-                print(f"❌ Video-audio combination failed: {result.stderr}")
+                print(f"Video-audio combination failed: {result.stderr}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Video-audio combination error: {e}")
+            print(f"Video-audio combination error: {e}")
             return False
     
     def validate_video_output(self, video_path: str, expected_duration: float = 18.0) -> Dict[str, Any]:
