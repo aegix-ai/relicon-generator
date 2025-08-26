@@ -6,11 +6,18 @@
 import sys
 import os
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 import uvicorn
+import uuid
+import shutil
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Ensure we're running from relicon directory
 relicon_root = Path(__file__).parent.parent.parent
@@ -39,12 +46,8 @@ app = FastAPI(title="Relicon Clean API", version="1.0.0")
 job_manager = JobManager()
 
 class VideoRequest(BaseModel):
-    brand_name: str
-    brand_description: str
-    target_audience: str = "general audience"
-    tone: str = "friendly"
-    duration: int = 18
-    call_to_action: str = "Take action now"
+    brand_name: str = Field(..., description="Name of the brand/company")
+    brand_description: str = Field(..., description="Description of the brand, product, or service")
 
 @app.get("/api/health")
 async def health_check():
@@ -96,18 +99,41 @@ async def cost_analysis():
         }
     }
 
+
 @app.post("/api/generate")
-async def generate_video(request: VideoRequest):
-    """Generate video using clean system"""
+async def generate_video(
+    brand_name: str = Form(...), 
+    brand_description: str = Form(...),
+    logo: Optional[UploadFile] = File(None)
+):
+    """Generate professional dynamic video ad with optional logo integration.
+    Supports logo upload for brand color extraction and dynamic integration."""
     try:
-        # Create job with full request data
+        # Handle logo upload if provided
+        logo_path = None
+        if logo and logo.filename:
+            # Validate file type
+            allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+            file_ext = Path(logo.filename).suffix.lower()
+            
+            if file_ext not in allowed_extensions:
+                raise HTTPException(status_code=400, detail="Invalid logo file format")
+            
+            # Save uploaded logo
+            logo_filename = f"logo_{int(time.time())}_{logo.filename}"
+            logo_path = f"outputs/{logo_filename}"
+            
+            with open(logo_path, "wb") as buffer:
+                content = await logo.read()
+                buffer.write(content)
+            
+            print(f"Logo uploaded: {logo_path}")
+        
+        # Request data with logo integration
         request_data = {
-            "brand_name": request.brand_name,
-            "brand_description": request.brand_description,
-            "target_audience": request.target_audience,
-            "tone": request.tone,
-            "duration": request.duration,
-            "call_to_action": request.call_to_action
+            "brand_name": brand_name,
+            "brand_description": brand_description,
+            "logo_path": logo_path
         }
         
         job_id = job_manager.create_job(request_data)
@@ -148,13 +174,13 @@ app.mount("/outputs", StaticFiles(directory=str(outputs_dir)), name="outputs")
 # Serve the frontend HTML file
 @app.get("/")
 async def serve_frontend():
-    """Serve the clean system frontend"""
-    # Frontend is in relicon directory
+    """Serve the simple GPT-4o powered frontend"""
+    # Serve simple frontend with only brand name and description
     frontend_path = Path.cwd() / "frontend" / "index.html"
     if frontend_path.exists():
         return FileResponse(frontend_path)
     else:
-        return {"error": "Frontend not found", "path": str(frontend_path), "cwd": str(Path.cwd())}
+        return {"error": "Simple frontend not found", "path": str(frontend_path), "cwd": str(Path.cwd())}
 
 if __name__ == "__main__":
     print("Starting Relicon Enterprise API Server")

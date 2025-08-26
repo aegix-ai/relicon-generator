@@ -12,12 +12,13 @@ class Settings:
     
     # API Keys
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
+    RUNWAY_API_KEY: str = os.environ.get("RUNWAY_API_KEY", "")
     LUMA_API_KEY: str = os.environ.get("LUMA_API_KEY", "")
     ELEVENLABS_API_KEY: str = os.environ.get("ELEVENLABS_API_KEY", "")
     HAILUO_API_KEY: str = os.environ.get("HAILUO_API_KEY", "")
     
     # Provider Configuration
-    VIDEO_PROVIDER: str = os.environ.get("VIDEO_PROVIDER", "hailuo")  # hailuo, luma
+    VIDEO_PROVIDER: str = os.environ.get("VIDEO_PROVIDER", "hailuo")  # hailuo, luma, runway
     AUDIO_PROVIDER: str = os.environ.get("AUDIO_PROVIDER", "elevenlabs")  # elevenlabs
     TEXT_PROVIDER: str = os.environ.get("TEXT_PROVIDER", "openai")  # openai
     
@@ -61,7 +62,9 @@ class Settings:
             errors.append("OPENAI_API_KEY is required for OpenAI text provider")
         
         # Video provider validation
-        if self.VIDEO_PROVIDER == "luma" and not self.LUMA_API_KEY:
+        if self.VIDEO_PROVIDER == "runway" and not self.RUNWAY_API_KEY:
+            errors.append("RUNWAY_API_KEY is required for Runway video provider")
+        elif self.VIDEO_PROVIDER == "luma" and not self.LUMA_API_KEY:
             errors.append("LUMA_API_KEY is required for Luma video provider")
         elif self.VIDEO_PROVIDER == "hailuo" and not self.HAILUO_API_KEY:
             errors.append("HAILUO_API_KEY is required for Hailuo video provider")

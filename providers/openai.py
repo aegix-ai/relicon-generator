@@ -1,16 +1,35 @@
 """
-  OpenAI text generation provider implementation.
+  OpenAI text generation provider implementation with professional prompt engineering.
+  Enhanced with ML-powered brand intelligence, quality validation, and monitoring.
 """
 
 import os
 import json
-from typing import Dict, List, Any
+import time
+from typing import Dict, List, Any, Optional, Tuple
 from openai import OpenAI
 from interfaces.text_generator import TextGenerator
+from core.enhanced_planning_service import EnhancedPlanningService
+from core.brand_intelligence import brand_intelligence
+from core.validators import validator
+from core.monitoring import monitoring
+from core.cache import cache
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class OpenAIProvider(TextGenerator):
-    """OpenAI GPT text generation service implementation."""
+    """
+    Enhanced OpenAI GPT text generation service with ML-powered capabilities.
+    
+    Features:
+    - Neural brand intelligence integration
+    - ML-powered quality validation
+    - Real-time performance monitoring
+    - Intelligent caching with ML optimization
+    - Professional prompt engineering with brand alignment
+    """
     
     def __init__(self):
         api_key = os.environ.get("OPENAI_API_KEY")
@@ -19,12 +38,237 @@ class OpenAIProvider(TextGenerator):
         
         try:
             self.client = OpenAI(api_key=api_key)
+            self.enhanced_planner = EnhancedPlanningService()
+            
+            # Performance metrics tracking
+            self.performance_metrics = {
+                'total_requests': 0,
+                'successful_requests': 0,
+                'failed_requests': 0,
+                'average_response_time': 0.0,
+                'cache_hits': 0,
+                'ml_enhancement_usage': 0,
+                'quality_validation_runs': 0
+            }
+            
+            logger.info(
+                "Enhanced OpenAI Provider initialized successfully",
+                action="openai.provider.init",
+                ml_capabilities_available=True,
+                brand_intelligence_enabled=True,
+                quality_validation_enabled=True
+            )
+            
         except Exception as e:
-            print(f"OpenAI client initialization failed: {e}")
+            logger.error(f"OpenAI client initialization failed: {e}", exc_info=True)
             raise ValueError(f"Failed to initialize OpenAI client: {e}")
     
-    def architect_complete_video(self, brand_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Create complete video architecture from brand information."""
+    def architect_complete_video(
+        self, 
+        brand_info: Dict[str, Any], 
+        enable_ml_enhancements: bool = True,
+        enable_quality_validation: bool = True,
+        logo_file_path: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Create complete video architecture with ML-powered enhancements.
+        
+        Features:
+        - Neural brand intelligence and competitive analysis
+        - ML-powered prompt optimization
+        - Quality validation with scoring
+        - Performance monitoring and caching
+        - Brand archetype classification
+        
+        Args:
+            brand_info: Brand information dictionary
+            enable_ml_enhancements: Enable ML-powered brand intelligence
+            enable_quality_validation: Enable quality validation network
+            logo_file_path: Optional logo file for visual analysis
+            
+        Returns:
+            Enhanced video architecture with quality metrics
+        """
+        import time
+        start_time = time.time()
+        
+        try:
+            # Update metrics
+            self.performance_metrics['total_requests'] += 1
+            
+            # Step 1: Input validation with quality scoring
+            logger.info("Starting ML-enhanced video architecture creation", 
+                       action="openai.architect.start",
+                       brand_name=brand_info.get('brand_name', 'unknown'),
+                       ml_enabled=enable_ml_enhancements,
+                       quality_validation=enable_quality_validation)
+            
+            validation_result, quality_score = validator.validate_with_quality_scoring(
+                {'brand_info': brand_info, 'logo_file_path': logo_file_path},
+                enable_quality_validation
+            )
+            
+            if not validation_result.is_valid:
+                raise ValueError(f"Input validation failed: {'; '.join(validation_result.errors)}")
+            
+            sanitized_brand_info = validation_result.sanitized_value.get('brand_info', {})
+            
+            if quality_score and enable_quality_validation:
+                self.performance_metrics['quality_validation_runs'] += 1
+                logger.info("Input quality assessment completed",
+                           action="openai.quality.input",
+                           quality_score=quality_score.overall_score,
+                           quality_level=quality_score.details.get('quality_level', 'unknown'))
+            
+            # Step 2: Check cache first
+            cache_key = f"video_architecture:{hash(str(sanitized_brand_info))}"
+            cached_result = cache.get(cache_key)
+            
+            if cached_result:
+                self.performance_metrics['cache_hits'] += 1
+                logger.info("Architecture retrieved from cache",
+                           action="openai.cache.hit",
+                           cache_key=cache_key[:16])
+                return cached_result
+            
+            # Step 3: ML-powered brand intelligence (if enabled)
+            brand_analysis = None
+            if enable_ml_enhancements:
+                try:
+                    self.performance_metrics['ml_enhancement_usage'] += 1
+                    
+                    # Get brand intelligence analysis
+                    brand_analysis = brand_intelligence.analyze_brand_comprehensive(
+                        brand_name=sanitized_brand_info.get('brand_name', ''),
+                        brand_description=sanitized_brand_info.get('brand_description', ''),
+                        logo_file_path=logo_file_path
+                    )
+                    
+                    logger.info("Brand intelligence analysis completed",
+                               action="openai.brand_intelligence.complete",
+                               niche=brand_analysis.get('niche_classification', {}).get('primary_niche', 'unknown'),
+                               archetype=brand_analysis.get('brand_archetype', 'unknown'),
+                               competitive_position=brand_analysis.get('competitive_intelligence', {}).get('market_position', 'unknown'))
+                    
+                except Exception as e:
+                    logger.warning(f"Brand intelligence analysis failed, continuing without: {e}")
+                    brand_analysis = None
+            
+            target_duration = min(sanitized_brand_info.get('duration', 30), 30)
+            
+            # Step 4: Create architecture using enhanced planning service
+            try:
+                professional_blueprint = self.enhanced_planner.create_professional_video_blueprint(
+                    brand_info=sanitized_brand_info,
+                    target_duration=target_duration,
+                    service_type="luma",
+                    logo_file_path=logo_file_path,
+                    enable_quality_validation=enable_quality_validation,
+                    enable_prompt_optimization=enable_ml_enhancements
+                )
+                
+                # Step 5: Integrate brand intelligence results
+                if brand_analysis:
+                    professional_blueprint['brand_intelligence'] = brand_analysis
+                    
+                    # Enhance scenes with brand insights
+                    scenes = professional_blueprint.get('scene_architecture', {}).get('scenes', [])
+                    for scene in scenes:
+                        # Add brand alignment hints to prompts
+                        if brand_analysis.get('brand_archetype'):
+                            archetype = brand_analysis['brand_archetype']
+                            scene['brand_archetype_alignment'] = archetype
+                        
+                        # Add competitive positioning context
+                        competitive_info = brand_analysis.get('competitive_intelligence', {})
+                        if competitive_info.get('market_position'):
+                            scene['market_positioning'] = competitive_info['market_position']
+                
+                # Step 6: Quality validation of complete architecture
+                if enable_quality_validation:
+                    arch_validation, quality_details = validator.validate_architecture_with_quality(
+                        professional_blueprint, 
+                        enable_quality_validation
+                    )
+                    
+                    if quality_details:
+                        professional_blueprint['quality_validation'] = quality_details
+                        
+                        logger.info("Architecture quality validation completed",
+                                   action="openai.quality.architecture",
+                                   overall_quality=quality_details.get('overall_quality_level', 'unknown'))
+                
+                # Step 7: Cache the successful result
+                cache.set(cache_key, professional_blueprint, ttl_seconds=3600)  # Cache for 1 hour
+                
+                # Step 8: Update performance metrics
+                processing_time = time.time() - start_time
+                self._update_performance_metrics(processing_time, True)
+                
+                # Step 9: Monitor quality and performance
+                monitoring.track_quality_metrics({
+                    'provider': 'openai',
+                    'architecture_quality': quality_details.get('overall_quality_level', 'unknown') if quality_details else 'not_assessed',
+                    'processing_time': processing_time,
+                    'ml_enhanced': enable_ml_enhancements,
+                    'brand_intelligence_used': brand_analysis is not None,
+                    'cache_used': False
+                })
+                
+                logger.info("ML-enhanced video architecture created successfully",
+                           action="openai.architect.success",
+                           brand_name=sanitized_brand_info.get('brand_name'),
+                           processing_time=processing_time,
+                           ml_enhanced=enable_ml_enhancements,
+                           quality_validated=enable_quality_validation)
+                
+                return professional_blueprint
+                
+            except Exception as enhanced_error:
+                logger.error(f"Enhanced planning failed: {enhanced_error}",
+                           action="openai.enhanced.error",
+                           exc_info=True)
+                
+                # Fallback to legacy method
+                logger.info("Falling back to legacy architecture method")
+                legacy_result = self._legacy_architect_complete_video(sanitized_brand_info)
+                
+                # Still perform quality validation on legacy result if requested
+                if enable_quality_validation:
+                    try:
+                        arch_validation, quality_details = validator.validate_architecture_with_quality(
+                            legacy_result, enable_quality_validation
+                        )
+                        if quality_details:
+                            legacy_result['quality_validation'] = quality_details
+                    except Exception as quality_error:
+                        logger.warning(f"Quality validation of legacy result failed: {quality_error}")
+                
+                # Add fallback metadata
+                legacy_result['production_metadata'] = {
+                    'fallback_mode': True,
+                    'enhanced_planning_error': str(enhanced_error),
+                    'ml_enhanced': False
+                }
+                
+                processing_time = time.time() - start_time
+                self._update_performance_metrics(processing_time, False)
+                
+                return legacy_result
+        
+        except Exception as e:
+            processing_time = time.time() - start_time
+            self.performance_metrics['failed_requests'] += 1
+            
+            logger.error(f"Video architecture creation failed: {e}",
+                        action="openai.architect.error",
+                        processing_time=processing_time,
+                        exc_info=True)
+            
+            raise
+    
+    def _legacy_architect_complete_video(self, brand_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Legacy video architecture method (fallback only)."""
         target_duration = brand_info.get('duration', 30)
         
         # Expert modern advertising strategist prompt - product-focused commercial direction
@@ -268,3 +512,29 @@ Respond in JSON format:
             optimized_scenes.append(scene)
         
         return optimized_scenes
+    
+    def _update_performance_metrics(self, response_time: float, success: bool = True):
+        """Update performance metrics for monitoring."""
+        try:
+            # Simple performance tracking
+            if not hasattr(self, 'performance_metrics'):
+                self.performance_metrics = {
+                    'total_requests': 0,
+                    'successful_requests': 0,
+                    'average_response_time': 0.0,
+                    'last_updated': time.time()
+                }
+            
+            self.performance_metrics['total_requests'] += 1
+            if success:
+                self.performance_metrics['successful_requests'] += 1
+            
+            # Update average response time
+            current_avg = self.performance_metrics['average_response_time']
+            total_requests = self.performance_metrics['total_requests']
+            new_avg = ((current_avg * (total_requests - 1)) + response_time) / total_requests
+            self.performance_metrics['average_response_time'] = new_avg
+            self.performance_metrics['last_updated'] = time.time()
+            
+        except Exception as e:
+            logger.warning(f"Performance metrics update failed: {e}")

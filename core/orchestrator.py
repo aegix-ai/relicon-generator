@@ -29,13 +29,17 @@ class VideoOrchestrator:
         self.assembly_service = AssemblyService()
     
     def create_complete_video(self, brand_info: Dict[str, Any], output_path: str, 
-                           progress_callback: callable = None) -> Dict[str, Any]:
+                           progress_callback: callable = None, video_provider: Optional[str] = None,
+                           logo_path: Optional[str] = None) -> Dict[str, Any]:
         """
         Create a complete video from brand information.
         
         Args:
             brand_info: Dictionary containing brand information
             output_path: Path to save the final video
+            progress_callback: Optional progress callback function
+            video_provider: Optional video provider override
+            logo_path: Optional path to logo file for integration
             
         Returns:
             Dictionary with generation results and metadata
@@ -75,11 +79,34 @@ class VideoOrchestrator:
             # Ensure output directory exists
             os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else ".", exist_ok=True)
             
-            # Step 1: Create enterprise video blueprint (10-20%)
+            # Step 1: Create logo integration plan if logo provided (5-15%)
+            logo_integration_plan = None
+            if logo_path and os.path.exists(logo_path):
+                if progress_callback:
+                    progress_callback(5, "Analyzing logo and creating integration plan...")
+                print("Creating logo integration plan...")
+                
+                from core.logo_integration_service import logo_integration_service
+                logo_integration_plan = logo_integration_service.create_logo_integration_plan(
+                    logo_path, {'scene_architecture': {'scenes': [], 'total_duration': 18}}
+                )
+            
+            # Step 2: Create enterprise video blueprint (10-20%)
             if progress_callback:
-                progress_callback(10, "Creating video blueprint...")
+                progress_callback(15, "Creating video blueprint...")
             print("Creating enterprise video blueprint...")
-            architecture = self.planning_service.create_enterprise_blueprint(brand_info)
+            architecture = self.planning_service.create_enterprise_blueprint(
+                brand_info, 
+                video_provider=video_provider,
+                logo_file_path=logo_path,
+                creative_brief_mode="professional"  # Use maximum professional GPT-4o creativity
+            )
+            
+            # Update logo integration plan with final architecture
+            if logo_integration_plan and not logo_integration_plan.get('fallback'):
+                logo_integration_plan = logo_integration_service.create_logo_integration_plan(
+                    logo_path, architecture
+                )
             
             target_duration = architecture.get('scene_architecture', {}).get('total_duration', 18)
             print(f"DEBUG: Orchestrator target_duration = {target_duration}s from architecture")
@@ -87,14 +114,14 @@ class VideoOrchestrator:
             if progress_callback:
                 progress_callback(20, "Blueprint created, starting video generation...")
             
-            # Step 2: Generate video scenes (20-70%)
+            # Step 3: Generate video scenes (20-70%)
             print("Generating video scenes...")
             with tempfile.TemporaryDirectory() as temp_dir:
                 if progress_callback:
                     progress_callback(25, "Generating Scene 1/3...")
                 
                 video_results = self.video_service.generate_video_from_architecture(
-                    architecture, temp_dir, progress_callback
+                    architecture, temp_dir, progress_callback, logo_integration_plan
                 )
                 
                 if video_results['generated_scenes'] == 0:
@@ -103,7 +130,7 @@ class VideoOrchestrator:
                 if progress_callback:
                     progress_callback(70, "All video scenes generated successfully")
                 
-                # Step 3: Generate audio track (70-85%)
+                # Step 4: Generate audio track with subtitle alignment (70-80%)
                 if progress_callback:
                     progress_callback(75, "Generating voiceover and background music...")
                 print("Generating audio track...")
@@ -115,16 +142,27 @@ class VideoOrchestrator:
                 if not audio_success:
                     raise Exception("Audio generation failed")
                 
+                # Step 5: Generate synchronized subtitles (80-85%)
                 if progress_callback:
-                    progress_callback(85, "Audio with background music generated")
+                    progress_callback(80, "Generating synchronized subtitles...")
+                print("Generating synchronized subtitles...")
                 
-                # Step 4: Assemble final video (85-95%)
+                from core.subtitle_service import subtitle_service
+                subtitle_segments = subtitle_service.generate_subtitles_from_script(architecture)
+                
                 if progress_callback:
-                    progress_callback(88, "Assembling final video with audio...")
-                print("Assembling final video...")
+                    progress_callback(85, "Subtitles and audio generated")
+                
+                # Step 6: Assemble final video with overlays (85-95%)
+                if progress_callback:
+                    progress_callback(88, "Assembling final video with subtitles and logo...")
+                print("Assembling final video with overlays...")
                 video_files = [video['file_path'] for video in video_results['videos']]
+                
+                # Assemble with subtitle and logo overlays
                 assembly_success = self.assembly_service.assemble_final_video(
-                    video_files, audio_path, output_path, target_duration
+                    video_files, audio_path, output_path, target_duration,
+                    subtitle_segments, logo_integration_plan
                 )
                 
                 if not assembly_success:
@@ -133,7 +171,7 @@ class VideoOrchestrator:
                 if progress_callback:
                     progress_callback(95, "Video assembly completed")
             
-            # Step 5: Validate final output (95-100%)
+            # Step 7: Validate final output (95-100%)
             if progress_callback:
                 progress_callback(98, "Validating final video...")
             print("Validating final video...")

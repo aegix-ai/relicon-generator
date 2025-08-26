@@ -19,12 +19,19 @@ class ProviderManager:
         self._audio_provider: Optional[AudioGenerator] = None
         self._text_provider: Optional[TextGenerator] = None
     
-    def get_video_generator(self) -> VideoGenerator:
+    def get_video_generator(self, provider_name: Optional[str] = None) -> VideoGenerator:
         """Get the configured video generation provider."""
-        if self._video_provider is None:
-            provider_name = getattr(settings, 'VIDEO_PROVIDER', 'hailuo').lower()
-            self._video_provider = self._create_video_provider(provider_name)
+        if self._video_provider is None or (provider_name and provider_name != self._video_provider.__class__.__name__.lower().replace('provider', '')):
+            if provider_name:
+                self._video_provider = self._create_video_provider(provider_name)
+            else:
+                provider_name = getattr(settings, 'VIDEO_PROVIDER', 'hailuo').lower()
+                self._video_provider = self._create_video_provider(provider_name)
         return self._video_provider
+    
+    def get_video_provider(self) -> VideoGenerator:
+        """Alias for get_video_generator for compatibility."""
+        return self.get_video_generator()
     
     def get_audio_generator(self) -> AudioGenerator:
         """Get the configured audio generation provider."""
@@ -42,7 +49,10 @@ class ProviderManager:
     
     def _create_video_provider(self, provider_name: str) -> VideoGenerator:
         """Create video provider instance based on configuration."""
-        if provider_name == 'hailuo':
+        if provider_name == 'runway':
+            from providers.runway import RunwayProvider
+            return RunwayProvider()
+        elif provider_name == 'hailuo':
             from providers.hailuo import HailuoProvider
             return HailuoProvider()
         elif provider_name == 'luma':

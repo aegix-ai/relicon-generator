@@ -1,53 +1,113 @@
-## Relicon Backend Dependencies
+# Relicon Phase 2 Enhanced Monolith Dependencies
 
-# Core framework
+# Core Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# AI and ML
+# AI and ML Core
 openai==1.30.5
 langchain==0.0.340
 
-# HTTP and async
+# ML Enhancement Libraries
+numpy>=1.24.0
+scikit-learn>=1.3.0
+pandas>=2.0.0
+scipy>=1.11.0
+
+# Neural Network and Deep Learning (optional)
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+
+# Feature Engineering and NLP
+nltk>=3.8.0
+spacy>=3.6.0
+textblob>=0.17.0
+
+# HTTP and Async
 httpx==0.24.1
 aiofiles==23.2.1
 requests==2.31.0
+aiohttp>=3.8.0
 
-# Data validation
+# Data Validation and Configuration
 pydantic==2.5.0
 pydantic-settings==2.1.0
+pyyaml>=6.0
+toml>=0.10.2
+jsonschema>=4.17.0
 
-# Database (optional)
+# Database and Storage
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
+alembic>=1.11.0
 
-# Cache and queues
-redis==5.0.1
+# Cache and Message Queues
+redis>=3.5.0,<4.0.0
+redis-py-cluster>=2.1.0
 celery==5.3.4
+kombu>=5.3.0
 
-# Utilities
-python-multipart==0.0.6
-python-dotenv==1.0.0
+# Monitoring and Logging
+structlog>=23.1.0
+prometheus-client>=0.17.0
+statsd>=3.3.0
+sentry-sdk[fastapi]>=1.28.0
 
-# Development
-pytest==7.4.3
-pytest-asyncio==0.21.1
-aiofiles==23.2.1
-fastapi==0.104.1
-httpx==0.24.1
-openai==1.30.5
-pydantic==2.5.0
+# Performance and Profiling
+psutil>=5.9.0
+memory-profiler>=0.60.0
+py-spy>=0.3.14
+line-profiler>=4.0.0
+
+# Security and Authentication
+cryptography>=41.0.0
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
 python-multipart==0.0.6
-requests==2.31.0
-uvicorn[standard]==0.24.0
-aiofiles==23.2.1
-fastapi==0.104.1
-httpx==0.24.1
-langchain==0.0.340
-openai==1.30.5
-pydantic==2.5.0
-pydantic-settings==2.1.0
+
+# Utilities and Helpers
 python-dotenv==1.0.0
-python-multipart==0.0.6
-requests==2.31.0
-uvicorn[standard]==0.24.0
+click>=8.1.0
+rich>=13.4.0
+typer>=0.9.0
+
+# Image Processing (for logo analysis)
+pillow>=10.0.0
+opencv-python>=4.8.0
+imageio>=2.31.0
+scipy>=1.11.0
+
+# Data Processing and Analysis
+polars>=0.18.0  # Fast DataFrame library
+pyarrow>=12.0.0  # Columnar data format
+joblib>=1.3.0    # Parallel processing
+
+# API Documentation
+jinja2>=3.1.0
+
+# Development and Testing (moved from separate file)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0
+pytest-timeout>=2.1.0
+pytest-benchmark>=4.0.0
+
+# Mock and Testing Utilities
+responses>=0.23.0
+freezegun>=1.2.0
+factory-boy>=3.3.0
+fakeredis>=2.16.0
+
+# Debugging and Development
+ipdb>=0.13.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.4.0
+
+# Environment and Deployment
+gunicorn>=21.0.0
+supervisor>=4.2.0

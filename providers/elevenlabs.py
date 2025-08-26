@@ -12,7 +12,7 @@ from interfaces.audio_generator import AudioGenerator
 
 
 class ElevenLabsProvider(AudioGenerator):
-    """ElevenLabs text-to-speech service implementation."""
+    """ElevenLabs text-to-speech service implementation with subtitle alignment support."""
     
     def __init__(self):
         self.api_key = os.environ.get("ELEVENLABS_API_KEY")
@@ -25,6 +25,9 @@ class ElevenLabsProvider(AudioGenerator):
             "Content-Type": "application/json",
             "xi-api-key": self.api_key
         }
+        
+        # Store alignment data for subtitle generation
+        self.last_alignment_data = None
     
     def generate_audio(self, text: str, output_path: str, audio_config: Dict[str, Any]) -> bool:
         """Generate audio from text using ElevenLabs."""
@@ -215,7 +218,20 @@ class ElevenLabsProvider(AudioGenerator):
                 print("No audio segments provided")
                 return False
             
-            total_duration = sum(seg.get('duration', 0) for seg in audio_segments)
+            total_duration = 0
+            for seg in audio_segments:
+                try:
+                    probe_cmd = [
+                        'ffprobe', '-v', 'quiet', '-print_format', 'json',
+                        '-show_format', seg['file']
+                    ]
+                    probe_result = subprocess.run(probe_cmd, capture_output=True, text=True)
+                    if probe_result.returncode == 0:
+                        import json
+                        probe_data = json.loads(probe_result.stdout)
+                        total_duration += float(probe_data['format']['duration'])
+                except Exception as e:
+                    print(f"Could not get duration of audio segment: {e}")
             
             if total_duration == 0:
                 print("Total audio duration is 0")
@@ -265,4 +281,92 @@ class ElevenLabsProvider(AudioGenerator):
                 
         except Exception as e:
             print(f"Audio unification error: {e}")
+            return False
+    
+    def generate_audio_with_alignment(self, text: str, output_path: str, audio_config: Dict[str, Any]) -> bool:
+        """Generate audio with word-level alignment data for subtitle synchronization."""
+        try:
+            voice_gender = audio_config.get('voice_gender', 'male')
+            voice_tone = audio_config.get('voice_tone', 'energetic')
+            
+            # Make text more energetic if needed
+            if audio_config.get('energy_level') == 'high':
+                energetic_text = self._make_text_energetic(text)
+            else:
+                energetic_text = text
+            
+            print(f"Generating ElevenLabs audio with alignment data ({voice_gender}, {voice_tone})")
+            
+            # Generate alignment data
+            alignment_success = self._generate_alignment_data(energetic_text, voice_gender, voice_tone)
+            
+            # Generate actual audio
+            audio_success = self._generate_elevenlabs_audio(energetic_text, output_path, voice_gender, voice_tone)
+            
+            return audio_success and alignment_success
+            
+        except Exception as e:
+            print(f"TTS with alignment generation failed: {e}")
+            return False
+    
+    def _generate_alignment_data(self, text: str, voice_gender: str, voice_tone: str) -> bool:
+        """Generate word-level timing alignment data."""
+        try:
+            # Split text into words for timing estimation
+            words = text.split()
+            if not words:
+                return False
+            
+            # Estimate timing based on word length and speech rate
+            # Average speech rate: 150 words per minute = 2.5 words per second
+            speech_rate = 2.2  # Slightly slower for better clarity
+            
+            alignment_data = {
+                'text': text,
+                'words': []
+            }
+            
+            current_time = 0.0
+            
+            for word in words:
+                # Estimate word duration based on length and complexity
+                word_chars = len(word)
+                
+                # Base duration calculation
+                if word_chars <= 3:
+                    word_duration = 0.3
+                elif word_chars <= 6:
+                    word_duration = 0.4
+                elif word_chars <= 9:
+                    word_duration = 0.5
+                else:
+                    word_duration = 0.6
+                
+                # Adjust for punctuation (longer pause)
+                if word.endswith(('.', '!', '?')):
+                    word_duration += 0.2
+                elif word.endswith((',', ';')):
+                    word_duration += 0.1
+                
+                # Add small pause between words
+                pause_duration = 0.1
+                
+                # Store word timing
+                alignment_data['words'].append({
+                    'word': word,
+                    'start': round(current_time, 2),
+                    'end': round(current_time + word_duration, 2)
+                })
+                
+                current_time += word_duration + pause_duration
+            
+            # Store alignment data for subtitle service
+            self.last_alignment_data = alignment_data
+            
+            print(f"Generated alignment data for {len(words)} words")
+            return True
+            
+        except Exception as e:
+            print(f"Alignment data generation failed: {e}")
+            self.last_alignment_data = None
             return False

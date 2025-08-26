@@ -19,13 +19,15 @@ class VideoService:
         self.provider_manager = provider_manager
     
     def generate_video_from_architecture(self, architecture: Dict[str, Any], output_dir: str, 
-                                       progress_callback: callable = None) -> Dict[str, Any]:
+                                       progress_callback: callable = None, logo_integration_plan: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Generate complete video from architectural plan.
+        Generate complete video from architectural plan with logo integration support.
         
         Args:
             architecture: Video architecture from planning service
             output_dir: Directory to save generated videos
+            progress_callback: Progress update callback
+            logo_integration_plan: Optional logo integration plan for enhanced prompts
             
         Returns:
             Dictionary with generation results and file paths
@@ -55,23 +57,41 @@ class VideoService:
             if progress_callback:
                 progress_callback(scene_progress, f"Generating Scene {scene_number}/{len(scenes)}...")
             
-            # Get appropriate prompt based on provider
+            # Get appropriate prompt based on provider, with logo enhancement
             provider_name = getattr(settings, 'VIDEO_PROVIDER', 'hailuo').lower()
-            if provider_name == 'hailuo':
-                prompt = scene.get('hailuo_prompt', scene.get('visual_concept', ''))
-            else:
-                prompt = scene.get('luma_prompt', scene.get('visual_concept', ''))
+            
+            # Use logo-enhanced prompt if available
+            if logo_integration_plan and 'enhanced_scene_prompts' in logo_integration_plan:
+                enhanced_prompts = logo_integration_plan['enhanced_scene_prompts']
+                prompt = enhanced_prompts.get(f'scene_{scene_number}')
+            
+            # Fallback to original prompts
+            if not prompt:
+                if provider_name == 'hailuo':
+                    prompt = scene.get('hailuo_prompt', scene.get('visual_concept', ''))
+                else:
+                    prompt = scene.get('luma_prompt', scene.get('visual_concept', ''))
             
             if not prompt:
                 print(f"Warning: No prompt found for scene {scene_number}")
                 continue
             
+            # Add logo integration metadata to scene result
+            logo_metadata = None
+            if logo_integration_plan and 'logo_placements' in logo_integration_plan:
+                for placement in logo_integration_plan['logo_placements']:
+                    if placement.get('scene_number') == scene_number:
+                        logo_metadata = placement
+                        break
+            
             try:
                 # Generate video with primary provider
+                scene_duration = scene.get('duration', 10)  # Use scene duration from planning
                 video_url = video_generator.generate_video(
                     prompt=prompt,
                     aspect_ratio="9:16",
-                    force_unique=True
+                    force_unique=True,
+                    duration=scene_duration
                 )
                 
                 # Download video
@@ -79,13 +99,20 @@ class VideoService:
                 output_path = os.path.join(output_dir, output_filename)
                 
                 if video_generator.download_video(video_url, output_path):
-                    generated_videos.append({
+                    scene_result = {
                         'scene_number': scene_number,
                         'file_path': output_path,
                         'duration': scene.get('duration', 5),
                         'prompt': prompt,
-                        'url': video_url
-                    })
+                        'url': video_url,
+                        'logo_enhanced': bool(logo_integration_plan)
+                    }
+                    
+                    # Add logo metadata if available
+                    if logo_metadata:
+                        scene_result['logo_placement'] = logo_metadata
+                    
+                    generated_videos.append(scene_result)
                     print(f"Scene {scene_number} completed: {output_filename}")
                     
                     # Update progress after scene completion

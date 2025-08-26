@@ -93,8 +93,13 @@ class JobManager:
                 def progress_callback(progress: int, message: str):
                     self.update_job_status(job_id, "processing", progress, message)
                 
-                # Generate video using enterprise system
-                result = orchestrator.create_complete_video(brand_info, output_path, progress_callback)
+                # Extract logo path if provided
+                logo_path = brand_info.get('logo_path')
+                
+                # Generate video using enterprise system with logo integration
+                result = orchestrator.create_complete_video(
+                    brand_info, output_path, progress_callback, logo_path=logo_path
+                )
                 
                 if result['success']:
                     # Video generated successfully

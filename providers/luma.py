@@ -27,6 +27,14 @@ class LumaProvider(VideoGenerator):
                       image_url: Optional[str] = None, force_unique: bool = False, **kwargs) -> str:
         """Generate video using Luma AI with enhanced prompts."""
         
+        # Get duration from kwargs, default to 9s (Luma only supports 5s or 9s)
+        duration = kwargs.get('duration', 9)
+        # Luma API only accepts '5s' or '9s' duration
+        if duration <= 5:
+            scene_duration = 5
+        else:
+            scene_duration = 9
+        
         # Enhance prompt for cinematic quality if force_unique is True
         if force_unique:
             # Modern commercial elements for Luma
@@ -62,7 +70,7 @@ class LumaProvider(VideoGenerator):
             "aspect_ratio": aspect_ratio,
             "model": "ray-2",  # Highest quality model for cinematic results
             "resolution": "720p",  # Cost-optimized resolution: 720p = $0.4 vs 1080p = $0.9 per 5s
-            "duration": "5s"  # Optimal duration for 3-scene structure (compatible with both Luma and Hailuo)
+            "duration": f"{scene_duration}s"  # Dynamic duration based on target
         }
         
         if image_url:
@@ -85,12 +93,18 @@ class LumaProvider(VideoGenerator):
         
         print(f"Luma generation started with ID: {generation_id}")
         
-        # Poll for completion - Luma is typically faster than MiniMax
-        max_attempts = 30  # Luma usually completes in 2-5 minutes
+        # Poll for completion with exponential backoff
+        max_attempts = 60  # Allow more attempts but with smarter timing
         attempt = 0
         
         while attempt < max_attempts:
-            time.sleep(8)  # Faster polling for better UX
+            # Exponential backoff: 3s, 5s, 8s, 10s, then 10s intervals
+            if attempt < 5:
+                sleep_time = 3 + attempt * 1.5  # 3s, 4.5s, 6s, 7.5s, 9s
+            else:
+                sleep_time = 10  # 10s for later attempts
+            
+            time.sleep(sleep_time)
             attempt += 1
             
             status_url = f"{self.base_url}/{generation_id}"

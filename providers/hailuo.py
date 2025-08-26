@@ -131,6 +131,18 @@ class HailuoProvider(VideoGenerator):
                 "realistic product physics and natural interaction"
             ]
             
+            # Anti-text rendering elements to prevent overlays
+            no_text_elements = [
+                "no text overlays", 
+                "no written words", 
+                "no typography",
+                "no captions", 
+                "no subtitles",
+                "no on-screen text",
+                "clean video without text elements",
+                "pure visual content only"
+            ]
+            
             # Select elements for maximum modern commercial impact
             selected_elements = [
                 random.choice(cinematography_elements),
@@ -138,7 +150,7 @@ class HailuoProvider(VideoGenerator):
                 random.choice(environment_lifestyle),
                 random.choice(action_demonstration),
                 random.choice(technical_quality),
-                f"seed_{random.randint(10000, 99999)}",
+                random.choice(no_text_elements),
                 "modern commercial advertisement with product focus"
             ]
             

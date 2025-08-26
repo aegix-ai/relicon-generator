@@ -14,6 +14,11 @@ interface FormData {
   call_to_action: string
 }
 
+interface LogoUpload {
+  file: File | null
+  preview: string | null
+}
+
 export function VideoForm({ onJobCreated, disabled = false }: VideoFormProps) {
   const [formData, setFormData] = useState<FormData>({
     brand_name: '',
@@ -22,6 +27,11 @@ export function VideoForm({ onJobCreated, disabled = false }: VideoFormProps) {
     tone: 'friendly',
     duration: 30,
     call_to_action: 'Take action now'
+  })
+  
+  const [logo, setLogo] = useState<LogoUpload>({
+    file: null,
+    preview: null
   })
   
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,12 +49,19 @@ export function VideoForm({ onJobCreated, disabled = false }: VideoFormProps) {
     setError(null)
     
     try {
+      // Create FormData for multipart request (supports logo upload)
+      const submitData = new FormData()
+      submitData.append('brand_name', formData.brand_name)
+      submitData.append('brand_description', formData.brand_description)
+      
+      // Add logo file if selected
+      if (logo.file) {
+        submitData.append('logo', logo.file)
+      }
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+        body: submitData // No Content-Type header needed for FormData
       })
       
       if (!response.ok) {
@@ -63,6 +80,37 @@ export function VideoForm({ onJobCreated, disabled = false }: VideoFormProps) {
   
   const handleChange = (field: keyof FormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+  
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file')
+      return
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Logo file size must be less than 10MB')
+      return
+    }
+    
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file)
+    setLogo({ file, preview: previewUrl })
+    
+    // Clear any previous errors
+    if (error) setError(null)
+  }
+  
+  const removeLogo = () => {
+    if (logo.preview) {
+      URL.revokeObjectURL(logo.preview)
+    }
+    setLogo({ file: null, preview: null })
   }
   
   return (
@@ -119,6 +167,67 @@ export function VideoForm({ onJobCreated, disabled = false }: VideoFormProps) {
           disabled={disabled}
           required
         />
+      </div>
+      
+      {/* Logo Upload Section */}
+      <div>
+        <label className="block text-sm font-medium text-blue-200 mb-2">
+          Brand Logo (Optional)
+        </label>
+        <div className="space-y-4">
+          {/* File Input */}
+          <div className="flex items-center justify-center w-full">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/20 border-dashed rounded-lg cursor-pointer bg-white/5 hover:bg-white/10 transition-colors">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <svg className="w-8 h-8 mb-4 text-blue-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                </svg>
+                <p className="mb-2 text-sm text-blue-300">
+                  <span className="font-semibold">Click to upload logo</span>
+                </p>
+                <p className="text-xs text-blue-400">PNG, JPG, or SVG (max 10MB)</p>
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                disabled={disabled}
+              />
+            </label>
+          </div>
+          
+          {/* Logo Preview */}
+          {logo.preview && (
+            <div className="relative bg-white/5 border border-white/20 rounded-lg p-4">
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  <img
+                    src={logo.preview}
+                    alt="Logo preview"
+                    className="w-16 h-16 object-contain bg-white/10 rounded border border-white/20"
+                  />
+                </div>
+                <div className="flex-grow">
+                  <p className="text-sm text-white font-medium">{logo.file?.name}</p>
+                  <p className="text-xs text-blue-300">
+                    {logo.file ? `${(logo.file.size / (1024 * 1024)).toFixed(2)} MB` : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={removeLogo}
+                  disabled={disabled}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -25,11 +25,18 @@ class CostEstimate:
 class CostTracker:
     """Real-time cost tracking and optimization service."""
     
-    # Luma AI pricing (per 5-second scene)
+    # Runway AI Gen-3 Alpha Turbo pricing (per second)
+    RUNWAY_COSTS = {
+        "720p": 0.05,   # $0.05 per second (all resolutions same price)
+        "1080p": 0.05,  # $0.05 per second 
+        "4K": 0.05      # $0.05 per second
+    }
+    
+    # Legacy pricing for comparison
     LUMA_COSTS = {
         "720p": 0.40,   # $0.40 per 5s 720p scene
-        "1080p": 0.90,  # $0.90 per 5s 1080p scene (2.25x more expensive)
-        "4K": 2.00      # $2.00 per 5s 4K scene (not recommended)
+        "1080p": 0.90,  # $0.90 per 5s 1080p scene 
+        "4K": 2.00      # $2.00 per 5s 4K scene
     }
     
     # Other service costs
@@ -53,9 +60,23 @@ class CostTracker:
         Returns:
             Detailed cost breakdown
         """
-        # Video generation costs
-        cost_per_scene = self.LUMA_COSTS.get(resolution, self.LUMA_COSTS["720p"])
-        total_video_cost = scene_count * cost_per_scene
+        # Get current video provider
+        from config.settings import settings
+        provider = getattr(settings, 'VIDEO_PROVIDER', 'luma').lower()
+        
+        if provider == 'runway':
+            # Runway pricing per second
+            cost_per_second = self.RUNWAY_COSTS.get(resolution, self.RUNWAY_COSTS["720p"])
+            total_video_cost = duration * cost_per_second
+            cost_per_scene = total_video_cost / scene_count if scene_count > 0 else cost_per_second * 5
+        elif provider == 'luma':
+            # Luma pricing per scene (regardless of 5s or 10s within their limits)
+            cost_per_scene = self.LUMA_COSTS.get(resolution, self.LUMA_COSTS["720p"])
+            total_video_cost = scene_count * cost_per_scene
+        else:
+            # Hailuo or other providers
+            cost_per_scene = self.HAILUO_COST_PER_SCENE
+            total_video_cost = scene_count * cost_per_scene
         
         # Audio and planning costs
         audio_cost = self.ELEVENLABS_COST_PER_AUDIO
