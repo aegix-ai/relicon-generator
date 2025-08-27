@@ -8,6 +8,52 @@ from dataclasses import dataclass
 from core.brand_intelligence import BusinessNiche, BrandElements, BusinessType
 import openai
 import json
+import re
+
+def safe_parse_json_response(response_content: str, context: str) -> Dict[str, Any]:
+    """
+    Safely parse JSON response with robust error handling and extraction.
+    
+    Args:
+        response_content: Raw response content from AI
+        context: Context for error messages
+        
+    Returns:
+        Parsed JSON dictionary
+        
+    Raises:
+        ValueError: If JSON parsing fails
+    """
+    try:
+        if not response_content or not response_content.strip():
+            raise ValueError(f"Empty {context}")
+        
+        response_content = response_content.strip()
+        
+        # Handle markdown-wrapped JSON
+        if response_content.startswith("```"):
+            # Extract JSON from markdown code block
+            json_match = re.search(r"```(?:json)?\s*({.*?})\s*```", response_content, re.DOTALL)
+            if json_match:
+                response_content = json_match.group(1)
+            else:
+                raise ValueError(f"No valid JSON found in {context}")
+        
+        # Try to extract JSON object if response contains other text
+        if not response_content.startswith('{'):
+            json_match = re.search(r"\{.*\}", response_content, re.DOTALL)
+            if json_match:
+                response_content = json_match.group()
+            else:
+                raise ValueError(f"No valid JSON found in {context}")
+        
+        return json.loads(response_content)
+        
+    except json.JSONDecodeError as e:
+        raise ValueError(f"JSON parsing error in {context}: {e}")
+    except Exception as e:
+        raise ValueError(f"Failed to parse {context} JSON: {e}")
+
 
 @dataclass
 class SceneTemplate:
@@ -786,14 +832,20 @@ class NichePromptTemplateEngine:
         """
 
         try:
-            response = openai.ChatCompletion.create(
+            from openai import OpenAI
+            client = OpenAI()
+            
+            response = client.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {"role": "system", "content": "You are a professional video content creator. Respond ONLY with valid JSON. No markdown, no explanations, no extra text. The JSON must be parseable and valid. Start with { and end with }. Do not wrap in ```json```. Only return the JSON object."},
+                    {"role": "user", "content": prompt}
+                ],
                 max_tokens=1024,
                 temperature=0.7,
             )
 
-            scene_data = json.loads(response.choices[0].message.content.strip())
+            scene_data = safe_parse_json_response(response.choices[0].message.content, "GPT-4o scene generation")
 
             return {
                 'scene_id': 0, # This will be set later
@@ -952,7 +1004,10 @@ class NichePromptTemplateEngine:
         """
 
         try:
-            response = openai.ChatCompletion.create(
+            from openai import OpenAI
+            client = OpenAI()
+            
+            response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": script_prompt}],
                 max_tokens=50,

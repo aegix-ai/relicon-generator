@@ -10,6 +10,7 @@ from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
+import openai
 import hashlib
 
 try:
@@ -1330,6 +1331,7 @@ class BrandIntelligenceService:
                 brand_name=brand_name.strip(),
                 industry=industry,
                 niche=niche,
+                business_type=business_type,
                 key_benefits=benefits,
                 unique_selling_points=usps,
                 target_demographics=demographics,
@@ -1755,7 +1757,8 @@ class BrandIntelligenceService:
         Example: increased efficiency, cost savings, improved user experience
         """
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI()
+            response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=100,
@@ -1778,7 +1781,8 @@ class BrandIntelligenceService:
         Example: patented technology, 24/7 customer support, eco-friendly materials
         """
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI()
+            response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=100,
@@ -2234,7 +2238,7 @@ class BrandIntelligenceService:
                 brand_name=brand_name.strip(),
                 industry=self._determine_industry(best_niche, text_lower),
                 niche=best_niche,
-                business_type=business_type,  # Include business type
+                business_type=business_type,
                 key_benefits=self._extract_benefits(brand_description)[:3],
                 unique_selling_points=self._extract_unique_selling_points(brand_description)[:2],
                 target_demographics=self._analyze_target_demographics(text_lower),
@@ -2243,7 +2247,7 @@ class BrandIntelligenceService:
                 visual_style_keywords=self._extract_visual_style_keywords(text_lower, best_niche),
                 competitive_advantages=self._identify_competitive_advantages(brand_description),
                 confidence_score=best_confidence,
-                quality_score=0.6,  # Conservative fallback score
+                quality_score=0.6,
                 brand_coherence_score=0.5,
                 market_viability_score=0.5
             )
@@ -2255,10 +2259,10 @@ class BrandIntelligenceService:
     def _extract_benefits(self, text: str) -> List[str]:
         """Extract key benefits from brand description."""
         benefit_patterns = [
-            r'(?:helps?|enables?|allows?|provides?|offers?|delivers?)\s+([^.]{{10,50}})',
-            r'(?:benefit|advantage|value|solution):\s*([^.]{{10,50}})',
-            r'(?:save|improve|increase|reduce|enhance|optimize)\s+([^.]{{10,50}})',
-            r'(?:experience|enjoy|get|receive)\s+([^.]{{10,50}})'
+            r'(?:helps?|enables?|allows?|provides?|offers?|delivers?)\s+([^.]{10,50})',
+            r'(?:benefit|advantage|value|solution):\s*([^.]{10,50})',
+            r'(?:save|improve|increase|reduce|enhance|optimize)\s+([^.]{10,50})',
+            r'(?:experience|enjoy|get|receive)\s+([^.]{10,50})'
         ]
         
         benefits = []
@@ -2504,6 +2508,7 @@ class BrandIntelligenceService:
         
         # Detect business niche
         niche, niche_confidence = self._detect_business_niche(text_lower)
+        business_type, _ = self._detect_business_type(brand_description, brand_name, niche)
         
         # Extract key benefits and USPs
         benefits = self._extract_benefits(brand_description)
@@ -2543,6 +2548,7 @@ class BrandIntelligenceService:
             brand_name=brand_name.strip(),
             industry=industry,
             niche=niche,
+            business_type=business_type,
             key_benefits=benefits,
             unique_selling_points=usps,
             target_demographics=demographics,
@@ -2678,17 +2684,52 @@ class BrandIntelligenceService:
             # Use the existing analyze_brand method
             analysis = self.analyze_brand(brand_name, brand_description)
             
-            # Add comprehensive analysis markers
-            analysis['comprehensive_analysis'] = True
-            analysis['neural_enhanced'] = True
-            analysis['ml_confidence'] = getattr(analysis, 'confidence_score', 0.8)
+            # Convert BrandElements object to dictionary for comprehensive analysis
+            comprehensive_analysis = {
+                'brand_name': analysis.brand_name,
+                'industry': analysis.industry,
+                'niche': analysis.niche.value if hasattr(analysis.niche, 'value') else str(analysis.niche),
+                'business_type': analysis.business_type.value if hasattr(analysis.business_type, 'value') else str(analysis.business_type),
+                'key_benefits': analysis.key_benefits,
+                'unique_selling_points': analysis.unique_selling_points,
+                'target_demographics': analysis.target_demographics,
+                'emotional_triggers': analysis.emotional_triggers,
+                'brand_personality': analysis.brand_personality,
+                'visual_style_keywords': analysis.visual_style_keywords,
+                'competitive_advantages': analysis.competitive_advantages,
+                'confidence_score': analysis.confidence_score,
+                'comprehensive_analysis': True,
+                'neural_enhanced': True,
+                'ml_confidence': getattr(analysis, 'confidence_score', 0.8)
+            }
             
-            return analysis
+            return comprehensive_analysis
             
         except Exception as e:
             logger.error(f"Comprehensive brand analysis failed: {e}")
-            # Fallback to basic analysis
-            return self.analyze_brand(brand_name, brand_description)
+            # Fallback to basic analysis as dictionary
+            try:
+                fallback_analysis = self.analyze_brand(brand_name, brand_description)
+                return {
+                    'brand_name': fallback_analysis.brand_name,
+                    'niche': fallback_analysis.niche.value if hasattr(fallback_analysis.niche, 'value') else str(fallback_analysis.niche),
+                    'confidence_score': fallback_analysis.confidence_score,
+                    'comprehensive_analysis': False,
+                    'neural_enhanced': False,
+                    'ml_confidence': 0.5,
+                    'error': str(e)
+                }
+            except Exception as fallback_error:
+                logger.error(f"Fallback analysis also failed: {fallback_error}")
+                return {
+                    'brand_name': brand_name,
+                    'niche': 'unknown',
+                    'confidence_score': 0.5,
+                    'comprehensive_analysis': False,
+                    'neural_enhanced': False,
+                    'ml_confidence': 0.5,
+                    'error': str(e)
+                }
 
     def enhance_brand_with_logo_processing(self, brand_elements: BrandElements, logo_file_path: Optional[str]) -> BrandElements:
         """Logo processing removed - GPT-4o handles all visual branding dynamically."""

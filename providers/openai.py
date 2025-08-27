@@ -140,8 +140,7 @@ class OpenAIProvider(TextGenerator):
                     # Get brand intelligence analysis
                     brand_analysis = brand_intelligence.analyze_brand_comprehensive(
                         brand_name=sanitized_brand_info.get('brand_name', ''),
-                        brand_description=sanitized_brand_info.get('brand_description', ''),
-                        logo_file_path=logo_file_path
+                        brand_description=sanitized_brand_info.get('brand_description', '')
                     )
                     
                     logger.info("Brand intelligence analysis completed",
@@ -400,10 +399,30 @@ Respond in JSON format:
         )
         
         content = response.choices[0].message.content
-        if not content:
-            raise ValueError("Empty architecture response")
         
-        architecture = json.loads(content)
+        # Use safe JSON parsing with better error messages
+        try:
+            if not content or not content.strip():
+                raise ValueError("Empty architecture response")
+            
+            content = content.strip()
+            
+            # Try to extract JSON if response contains other text
+            if not content.startswith('{'):
+                import re
+                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                if json_match:
+                    content = json_match.group()
+                else:
+                    print(f"No JSON found in OpenAI response: {content[:200]}...")
+                    raise ValueError("No valid JSON found in architecture response")
+            
+            architecture = json.loads(content)
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error from OpenAI architecture: {e}")
+            print(f"Raw response content: {content[:500] if content else 'No content'}")
+            raise ValueError(f"Failed to parse architecture JSON: {e}")
         
         print(f"DEBUG: OpenAI raw response total_duration = {architecture.get('scene_architecture', {}).get('total_duration', 'MISSING')}")
         

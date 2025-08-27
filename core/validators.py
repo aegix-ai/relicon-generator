@@ -441,10 +441,12 @@ class MLQualityValidator:
                         'ml_enhanced': True,
                         'basic_metrics': basic_metrics,
                         'ml_metrics': ml_metrics,
-                        'quality_level': self._get_quality_level(overall_score),
-                        'meets_accuracy_targets': self._check_accuracy_targets_compliance(quality_score, brand_info)
+                        'quality_level': self._get_quality_level(overall_score)
                     }
                 )
+                
+                # Add accuracy targets compliance after creating quality_score
+                quality_score.details['meets_accuracy_targets'] = self._check_accuracy_targets_compliance(quality_score, brand_info)
                 
                 # Record quality metrics in database
                 self._record_quality_assessment(
@@ -475,10 +477,12 @@ class MLQualityValidator:
                         'ml_enhanced': False,
                         'basic_metrics': basic_metrics,
                         'quality_level': self._get_quality_level(overall_score),
-                        'note': 'ML enhancements not available',
-                        'meets_accuracy_targets': self._check_accuracy_targets_compliance(quality_score, brand_info)
+                        'note': 'ML enhancements not available'
                     }
                 )
+                
+                # Add accuracy targets compliance after creating quality_score
+                quality_score.details['meets_accuracy_targets'] = self._check_accuracy_targets_compliance(quality_score, brand_info)
                 
                 # Record quality metrics in database
                 self._record_quality_assessment(

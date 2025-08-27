@@ -5,38 +5,113 @@ This module contains prompts and methods for generating hyperrealistic, cinemati
 
 from typing import Dict, Any
 
-def generate_cinematic_ad_scene_prompt(brand_info: Dict[str, Any], niche: str, target_audience: str, duration: int) -> str:
+def generate_cinematic_ad_scene_prompt(brand_info: Dict[str, Any], niche: str, target_audience: str, duration: int, 
+                                     business_type: str = None, brand_colors: list = None, scene_purpose: str = None) -> str:
     """
-    Generate a prompt for GPT-4o to create a hyperrealistic, cinematic ad scene tailored to any business niche.
+    Generate a professional, production-ready prompt for creating cinematic ad scenes with technical specifications.
     """
     brand_name = brand_info.get('name', 'the brand')
     brand_personality = brand_info.get('personality', 'innovative and professional')
     brand_values = brand_info.get('values', 'excellence and customer satisfaction')
+    
+    # Enhanced brand color integration
+    color_guidance = ""
+    if brand_colors:
+        color_hex = ", ".join(brand_colors[:3])  # Use top 3 brand colors
+        color_guidance = f"\n- **Brand Color Integration**: Incorporate brand colors ({color_hex}) naturally in lighting, backgrounds, or environmental elements"
+    
+    # Business type specific requirements
+    business_focus = {
+        'product': "product showcases with detailed close-ups, unboxing sequences, feature demonstrations",
+        'service': "professional environments, expertise demonstrations, client interaction scenarios",
+        'platform': "user interface interactions, connectivity visualizations, ecosystem demonstrations",
+        'hybrid': "integrated solution showcases combining product features with service excellence"
+    }
+    
+    focus_requirements = business_focus.get(business_type, "professional brand representation")
+    
+    # Scene purpose specific guidance
+    purpose_guidance = {
+        'hook': "attention-grabbing opening with strong visual impact and immediate brand recognition",
+        'problem': "relatable problem scenarios with emotional resonance and clear pain points",
+        'solution': "clear solution demonstration with benefit visualization and professional execution",
+        'cta': "compelling call-to-action with brand prominence and clear next steps"
+    }
+    
+    scene_specific = purpose_guidance.get(scene_purpose, "engaging brand storytelling")
 
     prompt = f"""
-You are a world-class creative director tasked with generating a cinematic, hyperrealistic advertisement scene for {brand_name}, a {niche} business. The ad must be visually stunning, emotionally engaging, and professionally crafted to resonate with {target_audience}. The scene should last approximately {duration} seconds.
+You are a world-class creative director and cinematographer creating a PRODUCTION-READY commercial advertisement scene for {brand_name}. This scene will be part of a professional video campaign targeting {target_audience} in the {niche} industry.
 
-**Brand Information:**
-- Personality: {brand_personality}
+**TECHNICAL SPECIFICATIONS:**
+- Duration: {duration} seconds (exact timing critical)
+- Resolution: 720p minimum quality for professional broadcast
+- Aspect Ratio: 9:16 vertical format (mobile-optimized)
+- Frame Rate: Smooth 24fps cinematic quality
+- Lighting: Professional three-point lighting setup with soft shadows
+- Color Grading: Cinema-quality color correction with consistent brand palette{color_guidance}
+
+**CREATIVE REQUIREMENTS:**
+- Scene Purpose: {scene_specific}
+- Business Focus: {focus_requirements}
+- Brand Personality: {brand_personality}
 - Core Values: {brand_values}
+- Visual Style: Hyperrealistic commercial photography quality
 
-**Objective:**
-Create a single, dynamic ad scene that showcases the essence of {brand_name} through a hyperrealistic and cinematic lens. The scene should:
-1. Highlight the unique aspects of a {niche} business, focusing on services or solutions rather than just products.
-2. Use vivid, detailed imagery to create a hyperrealistic experience (e.g., intricate lighting, lifelike textures, dramatic camera angles).
-3. Incorporate storytelling elements that evoke emotion and connect with the audience.
-4. Suggest background music or sound design that complements the cinematic feel.
+**MANDATORY QUALITY STANDARDS:**
+1. **Visual Excellence**: 
+   - Sharp focus with professional depth of field
+   - Consistent lighting without harsh shadows or overexposure
+   - Smooth camera movements with stabilized footage
+   - No visual artifacts, grain, or technical imperfections
 
-**Output Format:**
-Provide the scene description in a structured JSON format with the following fields:
-- 'scene_title': A short, catchy title for the scene.
-- 'visual_description': A detailed paragraph describing the visuals, including setting, characters, and actions.
-- 'dialogue_or_voiceover': Any spoken content or voiceover script for the scene.
-- 'sound_design': Description of background music or sound effects.
-- 'camera_movement': Specific instructions for camera angles or movements to enhance the cinematic effect.
-- 'emotional_impact': The intended emotional response from the audience.
-- 'niche_relevance': How the scene connects specifically to the {niche} industry.
+2. **Composition Standards**:
+   - Rule of thirds for subject placement
+   - Leading lines to guide viewer attention
+   - Balanced frame composition with breathing room
+   - Brand elements integrated naturally without obstruction
 
-Ensure the scene feels premium, professional, and tailored to {brand_name}'s identity. Avoid generic or overly product-focused content; instead, emphasize the brand's value and impact in its niche.
+3. **Technical Requirements**:
+   - No text overlays, watermarks, or burned-in captions
+   - Clean audio recording environment (if applicable)
+   - Consistent color temperature throughout scene
+   - Professional-grade motion blur and natural transitions
+
+4. **Brand Integration**:
+   - Subtle but memorable brand presence
+   - Colors that complement brand palette
+   - Professional environment appropriate for brand positioning
+   - Clear brand story progression
+
+**STRICT AVOIDANCE CRITERIA:**
+- Amateur handheld camera shake or poor stabilization
+- Harsh lighting creating unflattering shadows
+- Cluttered backgrounds or distracting elements  
+- Generic stock footage aesthetics
+- Inconsistent visual quality between shots
+- Technical artifacts or rendering issues
+
+**OUTPUT FORMAT:**
+Provide a detailed scene specification in JSON format:
+{{
+    "scene_title": "Professional scene identifier",
+    "technical_specs": {{
+        "camera_setup": "Specific camera angle, lens, and movement instructions",
+        "lighting_design": "Professional lighting setup with key, fill, and rim lights",
+        "composition_notes": "Frame composition and subject positioning"
+    }},
+    "visual_narrative": {{
+        "setting": "Detailed environment description with professional elements",
+        "subject_action": "Clear subject movements and interactions",
+        "brand_integration": "How brand elements appear naturally in scene"
+    }},
+    "quality_assurance": {{
+        "visual_checklist": ["Key quality checkpoints for this scene"],
+        "brand_consistency": "How scene maintains brand identity",
+        "production_notes": "Technical considerations for professional execution"
+    }}
+}}
+
+**FINAL REQUIREMENT:** This scene must meet broadcast television commercial standards. Every visual element should contribute to a cohesive, premium brand experience that drives viewer action while maintaining absolute technical and creative excellence.
 """
     return prompt

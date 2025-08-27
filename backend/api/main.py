@@ -5,8 +5,9 @@
 
 import sys
 import os
+import time
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -48,6 +49,10 @@ job_manager = JobManager()
 class VideoRequest(BaseModel):
     brand_name: str = Field(..., description="Name of the brand/company")
     brand_description: str = Field(..., description="Description of the brand, product, or service")
+    target_audience: Optional[str] = Field(default="general audience", description="Target audience for the video")
+    tone: Optional[str] = Field(default="friendly", description="Tone of the video")
+    duration: Optional[int] = Field(default=30, description="Duration of the video in seconds")
+    call_to_action: Optional[str] = Field(default="Take action now", description="Call to action text")
 
 @app.get("/api/health")
 async def health_check():
@@ -101,51 +106,40 @@ async def cost_analysis():
 
 
 @app.post("/api/generate")
-async def generate_video(
-    brand_name: str = Form(...), 
-    brand_description: str = Form(...),
-    logo: Optional[UploadFile] = File(None)
-):
-    """Generate professional dynamic video ad with optional logo integration.
-    Supports logo upload for brand color extraction and dynamic integration."""
+async def generate_video(request: VideoRequest, quality_mode: str = "professional"):
+    """Generate professional dynamic video ad with quality control.
+    Quality modes: professional (broadcast quality), standard (high quality), economy (cost-optimized)."""
     try:
-        # Handle logo upload if provided
-        logo_path = None
-        if logo and logo.filename:
-            # Validate file type
-            allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
-            file_ext = Path(logo.filename).suffix.lower()
-            
-            if file_ext not in allowed_extensions:
-                raise HTTPException(status_code=400, detail="Invalid logo file format")
-            
-            # Save uploaded logo
-            logo_filename = f"logo_{int(time.time())}_{logo.filename}"
-            logo_path = f"outputs/{logo_filename}"
-            
-            with open(logo_path, "wb") as buffer:
-                content = await logo.read()
-                buffer.write(content)
-            
-            print(f"Logo uploaded: {logo_path}")
+        # Validate quality mode
+        valid_quality_modes = ['professional', 'standard', 'economy']
+        if quality_mode not in valid_quality_modes:
+            quality_mode = 'professional'  # Default to professional
         
-        # Request data with logo integration
+        # Request data without logo integration
         request_data = {
-            "brand_name": brand_name,
-            "brand_description": brand_description,
-            "logo_path": logo_path
+            "brand_name": request.brand_name,
+            "brand_description": request.brand_description,
+            "target_audience": request.target_audience or "general audience",
+            "tone": request.tone or "friendly",
+            "call_to_action": request.call_to_action or "Take action now",
+            "duration": request.duration or 30,
+            "quality_mode": quality_mode
         }
         
-        job_id = job_manager.create_job(request_data)
-        
-        # Start generation process with Hailuo-first system
-        job_manager.start_generation(job_id, request_data)
-        
-        return {
-            "job_id": job_id,
-            "status": "queued",
-            "message": "Video generation started with clean system"
-        }
+        try:
+            job_id = job_manager.create_job(request_data)
+            
+            # Start generation process with enhanced system
+            job_manager.start_generation(job_id, request_data)
+            
+            return {
+                "job_id": job_id,
+                "status": "queued",
+                "message": "Professional video generation started",
+                "quality_mode": quality_mode
+            }
+        except Exception as generation_error:
+            raise HTTPException(status_code=500, detail=f"Generation startup failed: {str(generation_error)}")
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -16,6 +16,7 @@ from core.audio_service import AudioService
 from core.assembly_service import AssemblyService
 from core.cost_tracker import cost_tracker
 from core.logger import orchestrator_logger, set_trace_context
+from core.preflight_validator import PreflightValidator
 from config.settings import settings
 
 
@@ -27,22 +28,23 @@ class VideoOrchestrator:
         self.video_service = VideoService()
         self.audio_service = AudioService()
         self.assembly_service = AssemblyService()
+        self.preflight_validator = PreflightValidator()
     
     def create_complete_video(self, brand_info: Dict[str, Any], output_path: str, 
                            progress_callback: callable = None, video_provider: Optional[str] = None,
-                           logo_path: Optional[str] = None) -> Dict[str, Any]:
+                           quality_mode: str = 'professional') -> Dict[str, Any]:
         """
-        Create a complete video from brand information.
+        Create a complete video from brand information with professional quality controls.
         
         Args:
             brand_info: Dictionary containing brand information
             output_path: Path to save the final video
             progress_callback: Optional progress callback function
             video_provider: Optional video provider override
-            logo_path: Optional path to logo file for integration
+            quality_mode: Quality mode ('professional', 'standard', 'economy')
             
         Returns:
-            Dictionary with generation results and metadata
+            Dictionary with generation results and quality metrics
         """
         start_time = time.time()
         generation_id = f"gen_{int(start_time)}"
@@ -79,17 +81,25 @@ class VideoOrchestrator:
             # Ensure output directory exists
             os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else ".", exist_ok=True)
             
-            # Step 1: Create logo integration plan if logo provided (5-15%)
-            logo_integration_plan = None
-            if logo_path and os.path.exists(logo_path):
-                if progress_callback:
-                    progress_callback(5, "Analyzing logo and creating integration plan...")
-                print("Creating logo integration plan...")
-                
-                from core.logo_integration_service import logo_integration_service
-                logo_integration_plan = logo_integration_service.create_logo_integration_plan(
-                    logo_path, {'scene_architecture': {'scenes': [], 'total_duration': 18}}
-                )
+            # CRITICAL: Run preflight validation to prevent token waste
+            if progress_callback:
+                progress_callback(2, "Running preflight validation checks...")
+            print("🛡️ Running preflight validation to prevent API token waste...")
+            
+            validation_result = self.preflight_validator.validate_complete_pipeline(
+                brand_info, None, quality_mode
+            )
+            
+            if not validation_result['is_valid']:
+                error_msg = f"Preflight validation failed: {validation_result['error_message']}"
+                print(f"❌ {error_msg}")
+                for issue in validation_result.get('validation_issues', []):
+                    print(f"   • {issue}")
+                raise Exception(error_msg)
+            
+            print("✅ Preflight validation passed - proceeding with video generation")
+            
+            # Logo integration removed - proceed directly to video generation
             
             # Step 2: Create enterprise video blueprint (10-20%)
             if progress_callback:
@@ -98,15 +108,8 @@ class VideoOrchestrator:
             architecture = self.planning_service.create_enterprise_blueprint(
                 brand_info, 
                 video_provider=video_provider,
-                logo_file_path=logo_path,
                 creative_brief_mode="professional"  # Use maximum professional GPT-4o creativity
             )
-            
-            # Update logo integration plan with final architecture
-            if logo_integration_plan and not logo_integration_plan.get('fallback'):
-                logo_integration_plan = logo_integration_service.create_logo_integration_plan(
-                    logo_path, architecture
-                )
             
             target_duration = architecture.get('scene_architecture', {}).get('total_duration', 18)
             print(f"DEBUG: Orchestrator target_duration = {target_duration}s from architecture")
@@ -121,7 +124,7 @@ class VideoOrchestrator:
                     progress_callback(25, "Generating Scene 1/3...")
                 
                 video_results = self.video_service.generate_video_from_architecture(
-                    architecture, temp_dir, progress_callback, logo_integration_plan
+                    architecture, temp_dir, progress_callback, None, quality_mode
                 )
                 
                 if video_results['generated_scenes'] == 0:
@@ -148,21 +151,30 @@ class VideoOrchestrator:
                 print("Generating synchronized subtitles...")
                 
                 from core.subtitle_service import subtitle_service
+                # First try to generate subtitles from the script
                 subtitle_segments = subtitle_service.generate_subtitles_from_script(architecture)
+                
+                # If that fails, we'll generate them from the audio later in the assembly step
+                if not subtitle_segments:
+                    print("Will generate subtitles from audio in post-processing step")
                 
                 if progress_callback:
                     progress_callback(85, "Subtitles and audio generated")
                 
                 # Step 6: Assemble final video with overlays (85-95%)
                 if progress_callback:
-                    progress_callback(88, "Assembling final video with subtitles and logo...")
+                    progress_callback(88, "Assembling final video with subtitles...")
                 print("Assembling final video with overlays...")
                 video_files = [video['file_path'] for video in video_results['videos']]
                 
-                # Assemble with subtitle and logo overlays
-                assembly_success = self.assembly_service.assemble_final_video(
+                # Get quality settings for assembly
+                from core.video_service import VideoService
+                quality_settings = VideoService()._get_quality_settings(quality_mode)
+                
+                # Assemble with subtitle overlays only (no logo) - pass architecture for script access
+                assembly_success = self.assembly_service.assemble_final_video_with_script(
                     video_files, audio_path, output_path, target_duration,
-                    subtitle_segments, logo_integration_plan
+                    subtitle_segments, None, quality_settings, architecture
                 )
                 
                 if not assembly_success:
@@ -267,6 +279,20 @@ class VideoOrchestrator:
             'duration': duration
         }
         
+        # Run preflight validation before expensive operations
+        print("🛡️ Running preflight validation for simple prompt...")
+        validation_result = self.preflight_validator.validate_complete_pipeline(brand_info)
+        
+        if not validation_result['is_valid']:
+            error_msg = f"Preflight validation failed: {validation_result['error_message']}"
+            print(f"❌ {error_msg}")
+            return {
+                'success': False,
+                'error': error_msg,
+                'validation_issues': validation_result.get('validation_issues', [])
+            }
+        
+        print("✅ Preflight validation passed")
         return self.create_complete_video(brand_info, output_path)
     
     def switch_providers(self, video_provider: Optional[str] = None, 

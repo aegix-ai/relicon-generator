@@ -115,7 +115,7 @@ class MusicService:
                 '-i', voice_path,
                 '-i', music_path,
                 '-filter_complex', 
-                f'[0:a]volume={voice_volume}[voice];[1:a]volume={music_volume * 0.3}[music];[voice][music]amix=inputs=2:duration=shortest:normalize=0[mixed]',
+                f'[0:a]volume={voice_volume}[voice];[1:a]volume={music_volume * 0.3}[music];[voice][music]amix=inputs=2:duration=longest:normalize=0[mixed]',
                 '-map', '[mixed]',
                 '-c:a', 'libmp3lame', '-b:a', '320k',
                 output_path

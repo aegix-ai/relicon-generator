@@ -9,7 +9,8 @@ import os
 from pathlib import Path
 
 # Add relicon to path
-sys.path.append(str(Path(__file__).parent))
+relicon_root = Path(__file__).parent.parent
+sys.path.insert(0, str(relicon_root))
 
 from core.logger import (
     get_logger, 

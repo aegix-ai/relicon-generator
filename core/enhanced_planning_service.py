@@ -1782,12 +1782,21 @@ class EnhancedPlanningService:
             elif service_type is None:
                 service_type = self._select_cost_effective_service(brand_info)
             
+            # Extract comprehensive brand intelligence with logo analysis if provided
+            brand_elements = self.brand_intelligence.analyze_brand(
+                brand_name=brand_info.get('brand_name', ''),
+                brand_description=brand_info.get('brand_description', ''),
+                logo_file_path=logo_file_path
+            )
+            
             # Log analysis results
-            logo_status = "with logo analysis" if brand_elements.logo_analysis else "text-only analysis"
+            logo_status = "with logo analysis" if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis else "text-only analysis"
             print(f"Dynamic Niche Detection: {brand_elements.niche.value} (confidence: {brand_elements.confidence_score:.2f}) | Service: {service_type} | {logo_status}")
             
-            if brand_elements.logo_analysis:
+            if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis:
                 print(f"Logo Analysis: {brand_elements.logo_analysis.logo_style.value} style, {len(brand_elements.brand_colors or [])} brand colors")
+            else:
+                print(f"GPT-4o Visual Intelligence: Dynamic brand analysis, {len(brand_elements.brand_colors or [])} brand colors")
             
             # Generate cost-optimized niche-specific scenes
             scenes = self.template_engine.generate_niche_specific_scenes(
@@ -2106,35 +2115,66 @@ class EnhancedPlanningService:
         return blueprint
     
     def _optimize_prompt_for_hailuo(self, visual_concept: str, scene: Dict[str, Any]) -> str:
-        """Optimize prompt specifically for Hailuo service with storytelling focus."""
+        """Optimize prompt specifically for Hailuo service with high-quality visual focus."""
         
-        # Extract storytelling elements for focused prompt
-        key_elements = []
+        # Hailuo excels with detailed, descriptive prompts - use rich descriptions
+        hailuo_strength_elements = [
+            'ultra-high definition 4K quality',
+            'professional commercial cinematography',
+            'detailed product visualization',
+            'natural volumetric lighting',
+            'cinematic depth of field',
+            'smooth camera movements',
+            'authentic brand integration',
+            'professional color grading'
+        ]
         
-        # Get character and emotional context
+        # Extract key elements from the scene
         character_desc = scene.get('character_description', 'professional individual')
-        emotional_arc = scene.get('emotional_arc', 'authentic_moment')
+        emotional_arc = scene.get('emotional_arc', 'authentic moment')
+        purpose = scene.get('purpose', 'demonstration')
+        scene_type = scene.get('type', 'professional commercial')
         
-        # Scene type focus with storytelling emphasis
-        scene_id = scene.get('scene_id', 1)
-        if scene_id == 1:
-            key_elements.extend(['character introduction', 'hyperrealistic opening', 'brand discovery'])
-        elif scene_id == 2:
-            key_elements.extend(['emotional transformation', 'problem to solution', 'authentic relief'])
+        # Create more specific prompts based on scene type
+        if 'split screen' in visual_concept.lower() or 'comparison' in visual_concept.lower():
+            # For split screen scenes showing before/after
+            enhanced_prompt = (
+                f"Split screen comparison showing workflow transformation, "
+                f"from challenge to smooth solution, {visual_concept}, "
+                f"{', '.join(hailuo_strength_elements[:4])}, "
+                f"professional cinematography with natural transitions, "
+                f"high production value"
+            )
+        elif 'direct camera' in visual_concept.lower() or 'smile' in visual_concept.lower():
+            # For direct-to-camera scenes with CTA
+            enhanced_prompt = (
+                f"Professional person speaking directly to camera with genuine smile, "
+                f"{visual_concept}, {scene_type} setting, "
+                f"{', '.join(hailuo_strength_elements[:4])}, "
+                f"confident and trustworthy presentation, "
+                f"branded background with clear call to action, "
+                f"high production value"
+            )
         else:
-            key_elements.extend(['satisfied conclusion', 'compelling action', 'brand triumph'])
+            # General scene optimization
+            enhanced_prompt = (
+                f"Professional commercial scene: {character_desc}, "
+                f"{emotional_arc}, {visual_concept}, "
+                f"{', '.join(hailuo_strength_elements[:4])}, "
+                f"focus on {purpose}, high production value"
+            )
         
-        # Extract brand and niche info
-        niche_info = scene.get('niche_optimization', 'professional')
+        # Important: Do NOT include any text-related elements in the prompt
+        # This ensures subtitles are added post-generation for better control
+        no_text_elements = [
+            "no text", "no subtitles", "no captions", "no overlay text",
+            "clean video", "no written content", "no typography"
+        ]
         
-        # Build storytelling-focused prompt for Hailuo
-        story_prompt = (
-            f"Hyperrealistic story scene: {character_desc.split(',')[0]}, "
-            f"{emotional_arc}, {niche_info} setting, "
-            f"{', '.join(key_elements[:2])}, natural lighting"
-        )
+        # Add text exclusion elements to ensure clean video generation
+        enhanced_prompt = f"{enhanced_prompt}, {', '.join(no_text_elements[:3])}"
         
-        return story_prompt[:150]  # Hailuo optimal length for storytelling
+        return enhanced_prompt[:250]  # Hailuo optimal length with rich detail
     
     def _optimize_prompt_for_luma(self, visual_concept: str, scene: Dict[str, Any]) -> str:
         """Optimize prompt specifically for Luma Dream Machine - leveraging its strengths."""
@@ -2162,6 +2202,86 @@ class EnhancedPlanningService:
         )
         
         return enhanced_prompt[:280]  # Optimal length for Luma Dream Machine
+    
+    def _optimize_prompt_length(self, prompt: str, max_length: int) -> str:
+        """Professional prompt optimization preserving critical Hailuo elements."""
+        if len(prompt) <= max_length:
+            return prompt
+        
+        # CINEMATIC CRITICAL ELEMENTS - Master director priorities (in order)
+        critical_elements = [
+            'no text overlays', 'no subtitles', 'no captions',  # Anti-text (highest priority)
+            'feature film quality', 'theatrical grade',  # Cinematic quality
+            '35mm lens', 'shallow focus', 'steadicam tracking',  # Master cinematography
+            'practical lighting', 'atmospheric', 'authentic'  # Directorial excellence
+        ]
+        
+        # MASTER DIRECTOR ELEMENTS - Cinematic excellence priorities
+        cinematic_strengths = [
+            'micro-hesitation', 'emotional geography', 'gesture timing',
+            'volumetrics', 'depth layers', 'spatial psychology', 
+            'practical motivations', 'environmental poetry'
+        ]
+        
+        # Parse prompt into components
+        components = [comp.strip() for comp in prompt.split(', ') if comp.strip()]
+        
+        # Phase 1: Always preserve critical elements
+        preserved = []
+        remaining = []
+        
+        for component in components:
+            is_critical = any(critical in component.lower() for critical in critical_elements)
+            if is_critical:
+                preserved.append(component)
+            else:
+                remaining.append(component)
+        
+        # Phase 2: Add high-value cinematic elements if space allows
+        cinematic_elements = []
+        other_elements = []
+        
+        for component in remaining:
+            is_cinematic_strength = any(strength in component.lower() for strength in cinematic_strengths)
+            if is_cinematic_strength:
+                cinematic_elements.append(component)
+            else:
+                other_elements.append(component)
+        
+        # Phase 3: Build optimized prompt with priority order
+        result_parts = preserved.copy()  # Start with critical elements
+        
+        # Add cinematic strengths if space allows
+        for element in cinematic_elements:
+            test_prompt = ', '.join(result_parts + [element])
+            if len(test_prompt) <= max_length:
+                result_parts.append(element)
+        
+        # Add other elements if space allows
+        for element in other_elements:
+            test_prompt = ', '.join(result_parts + [element])
+            if len(test_prompt) <= max_length:
+                result_parts.append(element)
+        
+        final_prompt = ', '.join(result_parts)
+        
+        # Final length enforcement with CRITICAL element protection
+        if len(final_prompt) > max_length:
+            # NEVER remove critical elements - they are non-negotiable
+            critical_text = ', '.join(preserved)
+            if len(critical_text) <= max_length:
+                # Keep all critical elements and trim extras
+                final_prompt = critical_text
+            else:
+                # Even if critical elements exceed limit, preserve anti-text at minimum
+                anti_text_elements = [elem for elem in preserved if any(anti in elem.lower() for anti in ['no text', 'no subtitle', 'no caption'])]
+                if anti_text_elements and len(', '.join(anti_text_elements)) <= max_length:
+                    final_prompt = ', '.join(anti_text_elements)
+                else:
+                    # Absolute fallback - just truncate but warn
+                    final_prompt = final_prompt[:max_length].rsplit(', ', 1)[0]
+        
+        return final_prompt
     
     def _select_cost_effective_service(self, brand_info: Dict[str, Any]) -> str:
         """Auto-select service based on configuration with Runway as default."""
@@ -2246,11 +2366,13 @@ class EnhancedPlanningService:
             )
             
             # Log analysis results
-            logo_status = "with base64 logo analysis" if brand_elements.logo_analysis else "text-only analysis"
+            logo_status = "with base64 logo analysis" if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis else "text-only analysis"
             print(f"Dynamic Niche Detection: {brand_elements.niche.value} (confidence: {brand_elements.confidence_score:.2f}) | Service: {service_type} | {logo_status}")
             
-            if brand_elements.logo_analysis:
+            if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis:
                 print(f"Logo Analysis: {brand_elements.logo_analysis.logo_style.value} style, {len(brand_elements.brand_colors or [])} brand colors")
+            else:
+                print(f"GPT-4o Visual Intelligence: Dynamic brand analysis, {len(brand_elements.brand_colors or [])} brand colors")
             
             # Generate cost-optimized niche-specific scenes with logo consistency
             scenes = self.template_engine.generate_niche_specific_scenes(
@@ -2288,7 +2410,7 @@ class EnhancedPlanningService:
                     'key_benefits': brand_elements.key_benefits,
                     'target_audience': brand_elements.target_demographics,
                     'brand_personality': brand_elements.brand_personality,
-                    'logo_analysis': brand_elements.logo_analysis.__dict__ if brand_elements.logo_analysis else None,
+                    'logo_analysis': brand_elements.logo_analysis.__dict__ if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis else None,
                     'brand_colors': brand_elements.brand_colors,
                     'visual_consistency': brand_elements.visual_consistency
                 },

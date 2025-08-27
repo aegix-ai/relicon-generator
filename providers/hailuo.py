@@ -79,59 +79,21 @@ class HailuoProvider(VideoGenerator):
         endpoint = self._get_working_endpoint()
         
         # Apply cinematic enhancement for incredible realism
+        # Use a more focused approach that emphasizes quality without overcomplicating
         force_unique = kwargs.get('force_unique', True)
         if force_unique:
-            import random
-            
-            # Modern commercial cinematography elements
-            cinematography_elements = [
-                "professional commercial cinematography with dynamic product focus",
-                "cinematic depth of field highlighting product details",
-                "golden hour lighting showcasing product aesthetics",
-                "commercial-grade color grading emphasizing brand colors",
-                "high-end product photography lighting setup",
-                "sleek modern commercial visual style"
+            # Core quality elements that Hailuo responds well to
+            quality_elements = [
+                "professional commercial cinematography",
+                "ultra-high definition 4K quality",
+                "detailed product visualization",
+                "natural volumetric lighting",
+                "cinematic depth of field",
+                "smooth camera movements",
+                "authentic brand integration"
             ]
             
-            # Product-focused camera work
-            camera_work = [
-                "dynamic product reveal shots with smooth camera movement",
-                "macro close-ups highlighting product features and details", 
-                "wide lifestyle shots showing product in natural environment",
-                "tracking shots following product usage and interaction",
-                "rotating product shots showcasing all angles and benefits",
-                "overhead shots capturing product workflow and process"
-            ]
-            
-            # Environmental and lifestyle elements
-            environment_lifestyle = [
-                "modern lifestyle environments showcasing product integration",
-                "authentic real-world settings where product is naturally used",
-                "clean professional environments highlighting product quality",
-                "dynamic action scenes demonstrating product benefits",
-                "atmospheric product placement in aspirational settings"
-            ]
-            
-            # Action and demonstration focus
-            action_demonstration = [
-                "hands-on product demonstration showing clear benefits",
-                "before-and-after transformation scenes highlighting results",
-                "product solving real problems through visual demonstration",
-                "lifestyle improvement through product integration",
-                "seamless product workflow and ease of use display",
-                "clear product branding and visual identity integration"
-            ]
-            
-            # Technical and visual quality
-            technical_quality = [
-                "8K ultra-realistic product detail with photographic quality",
-                "professional lighting highlighting product textures and materials",
-                "crisp focus on product functionality and design elements",
-                "commercial-grade visual polish with premium aesthetics",
-                "realistic product physics and natural interaction"
-            ]
-            
-            # Anti-text rendering elements to prevent overlays
+            # Anti-text rendering elements to prevent overlays (IMPORTANT)
             no_text_elements = [
                 "no text overlays", 
                 "no written words", 
@@ -139,24 +101,17 @@ class HailuoProvider(VideoGenerator):
                 "no captions", 
                 "no subtitles",
                 "no on-screen text",
-                "clean video without text elements",
-                "pure visual content only"
+                "clean video without text elements"
             ]
             
-            # Select elements for maximum modern commercial impact
-            selected_elements = [
-                random.choice(cinematography_elements),
-                random.choice(camera_work),
-                random.choice(environment_lifestyle),
-                random.choice(action_demonstration),
-                random.choice(technical_quality),
-                random.choice(no_text_elements),
-                "modern commercial advertisement with product focus"
-            ]
-            
-            enhanced_prompt = f"{prompt}, {', '.join(selected_elements)}"
+            # Combine prompt with quality elements
+            enhanced_prompt = f"{prompt}, {', '.join(quality_elements[:4])}, {', '.join(no_text_elements[:3])}"
         else:
             enhanced_prompt = prompt
+            
+        # Ensure the prompt doesn't exceed optimal length for Hailuo
+        if len(enhanced_prompt) > 250:
+            enhanced_prompt = enhanced_prompt[:250]
             
         # Official MiniMax API payload - using latest model with 720p cost optimization
         payload = {

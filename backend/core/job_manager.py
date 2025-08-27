@@ -93,12 +93,12 @@ class JobManager:
                 def progress_callback(progress: int, message: str):
                     self.update_job_status(job_id, "processing", progress, message)
                 
-                # Extract logo path if provided
-                logo_path = brand_info.get('logo_path')
+                # Extract quality mode if provided
+                quality_mode = brand_info.get('quality_mode', 'professional')
                 
-                # Generate video using enterprise system with logo integration
+                # Generate video using enterprise system with quality control
                 result = orchestrator.create_complete_video(
-                    brand_info, output_path, progress_callback, logo_path=logo_path
+                    brand_info, output_path, progress_callback, video_provider=None, quality_mode=quality_mode
                 )
                 
                 if result['success']:
@@ -116,7 +116,10 @@ class JobManager:
                     )
                     
             except Exception as e:
+                import traceback
+                error_traceback = traceback.format_exc()
                 print(f"Generation error for job {job_id}: {e}")
+                print(f"Full traceback: {error_traceback}")
                 self.update_job_status(
                     job_id, "failed", 0, 
                     f"Generation failed: {str(e)}"

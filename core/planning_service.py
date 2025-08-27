@@ -147,7 +147,6 @@ class PlanningService:
         brand_info: Dict[str, Any], 
         enable_ml_optimization: bool = True,
         enable_quality_validation: bool = True,
-        logo_file_path: Optional[str] = None,
         video_provider: Optional[str] = None,
         creative_brief_mode: str = "professional"  # professional, luxury, innovative
     ) -> Dict[str, Any]:
@@ -159,7 +158,6 @@ class PlanningService:
             brand_info: Brand information dictionary
             enable_ml_optimization: Enable neural prompt optimization
             enable_quality_validation: Enable quality validation network
-            logo_file_path: Optional logo file path for visual analysis
             
         Returns:
             ML-enhanced enterprise video blueprint with quality scoring
@@ -195,7 +193,6 @@ class PlanningService:
                     brand_info=brand_info,
                     target_duration=target_duration,
                     service_type=video_provider or "hailuo",  # Use provided or Hailuo as default
-                    logo_file_path=logo_file_path,
                     enable_quality_validation=enable_quality_validation,
                     enable_prompt_optimization=enable_ml_optimization,
                     creative_brief_mode=creative_brief_mode  # Professional GPT-4o creative level

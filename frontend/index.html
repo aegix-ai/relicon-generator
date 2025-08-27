@@ -57,6 +57,7 @@
                         ></textarea>
                     </div>
 
+
                     <button
                         type="submit"
                         id="submitBtn"
@@ -138,16 +139,22 @@
             statusDiv.classList.remove('hidden');
             
             try {
+                // Create JSON request (no logo support)
+                const requestData = {
+                    brand_name: brandName,
+                    brand_description: brandDescription,
+                    target_audience: 'general audience',
+                    tone: 'friendly',
+                    duration: 30,
+                    call_to_action: 'Take action now'
+                };
+
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        brand_name: brandName,
-                        brand_description: brandDescription,
-                        duration: 30
-                    })
+                    body: JSON.stringify(requestData)
                 });
                 
                 const data = await response.json();
@@ -168,6 +175,12 @@
                             }
                         } catch (error) {
                             console.error('Status check error:', error);
+                            // Stop polling on any error (including 404)
+                            clearInterval(pollInterval);
+                            submitBtn.textContent = 'Generate Video with Enterprise System';
+                            submitBtn.disabled = false;
+                            document.getElementById('status').textContent = 'Job expired (server restarted)';
+                            document.getElementById('message').textContent = 'Please submit a new generation request';
                         }
                     }, 2000);
                 }

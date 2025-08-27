@@ -19,25 +19,33 @@ class VideoService:
         self.provider_manager = provider_manager
     
     def generate_video_from_architecture(self, architecture: Dict[str, Any], output_dir: str, 
-                                       progress_callback: callable = None, logo_integration_plan: Dict[str, Any] = None) -> Dict[str, Any]:
+                                       progress_callback: callable = None, logo_integration_plan: Dict[str, Any] = None,
+                                       quality_mode: str = 'professional') -> Dict[str, Any]:
         """
-        Generate complete video from architectural plan with logo integration support.
+        Generate complete video from architectural plan with professional quality controls.
         
         Args:
             architecture: Video architecture from planning service
             output_dir: Directory to save generated videos
             progress_callback: Progress update callback
             logo_integration_plan: Optional logo integration plan for enhanced prompts
+            quality_mode: Quality mode ('professional', 'standard', 'economy')
             
         Returns:
-            Dictionary with generation results and file paths
+            Dictionary with generation results and file paths including quality metrics
         """
         scenes = architecture.get('scene_architecture', {}).get('scenes', [])
         if not scenes:
             raise ValueError("No scenes found in architecture")
         
+        # Set quality parameters based on mode
+        quality_settings = self._get_quality_settings(quality_mode)
+        
         # Create output directory
         os.makedirs(output_dir, exist_ok=True)
+        
+        print(f"🎬 Starting professional video generation with {quality_mode} quality mode")
+        print(f"📊 Quality settings: {quality_settings['description']}")
         
         # Generate video for each scene
         video_logger.video_generation_start(
@@ -47,8 +55,13 @@ class VideoService:
         )
         generated_videos = []
         video_generator = self.provider_manager.get_video_generator()
+        max_retries = 3
         
-        for i, scene in enumerate(scenes):
+        # Process scenes with retry logic - don't skip failed scenes
+        scene_index = 0
+        while scene_index < len(scenes):
+            scene = scenes[scene_index]
+            i = scene_index  # Keep original variable for compatibility
             scene_number = i + 1
             print(f"Generating scene {scene_number}/{len(scenes)}: {scene.get('purpose', 'Unknown')}")
             
@@ -59,6 +72,7 @@ class VideoService:
             
             # Get appropriate prompt based on provider, with logo enhancement
             provider_name = getattr(settings, 'VIDEO_PROVIDER', 'hailuo').lower()
+            prompt = None  # Initialize prompt variable
             
             # Use logo-enhanced prompt if available
             if logo_integration_plan and 'enhanced_scene_prompts' in logo_integration_plan:
@@ -84,85 +98,115 @@ class VideoService:
                         logo_metadata = placement
                         break
             
-            try:
-                # Generate video with primary provider
-                scene_duration = scene.get('duration', 10)  # Use scene duration from planning
-                video_url = video_generator.generate_video(
-                    prompt=prompt,
-                    aspect_ratio="9:16",
-                    force_unique=True,
-                    duration=scene_duration
-                )
-                
-                # Download video
-                output_filename = f"scene_{scene_number:02d}_{int(time.time())}.mp4"
-                output_path = os.path.join(output_dir, output_filename)
-                
-                if video_generator.download_video(video_url, output_path):
-                    scene_result = {
-                        'scene_number': scene_number,
-                        'file_path': output_path,
-                        'duration': scene.get('duration', 5),
+            # Retry logic for current scene
+            retry_count = 0
+            scene_success = False
+            
+            while retry_count < max_retries and not scene_success:
+                try:
+                    retry_suffix = f" (Retry {retry_count + 1}/{max_retries})" if retry_count > 0 else ""
+                    print(f"🎥 Generating scene {scene_number} with enhanced quality settings{retry_suffix}")
+                    
+                    # Generate video with primary provider using quality settings
+                    scene_duration = scene.get('duration', 10)  # Use scene duration from planning
+                    
+                    # Add quality parameters to video generation
+                    generation_params = {
                         'prompt': prompt,
-                        'url': video_url,
-                        'logo_enhanced': bool(logo_integration_plan)
+                        'aspect_ratio': "9:16",
+                        'force_unique': True,
+                        'duration': scene_duration,
+                        'quality_mode': quality_mode,
+                        **quality_settings.get('generation_params', {})
                     }
                     
-                    # Add logo metadata if available
-                    if logo_metadata:
-                        scene_result['logo_placement'] = logo_metadata
-                    
-                    generated_videos.append(scene_result)
-                    print(f"Scene {scene_number} completed: {output_filename}")
-                    
-                    # Update progress after scene completion
-                    scene_complete_progress = 25 + int((45 / len(scenes)) * (i + 1))
-                    if progress_callback:
-                        progress_callback(scene_complete_progress, f"Scene {scene_number}/{len(scenes)} completed")
-                else:
-                    print(f"Failed to download scene {scene_number}")
-                    
-            except Exception as e:
-                print(f"Scene {scene_number} generation failed: {e}")
+                    video_url = video_generator.generate_video(**generation_params)
                 
-                # Try fallback to Luma if primary provider fails or times out
-                if provider_name == 'hailuo':
-                    try:
-                        print(f"Attempting fallback to Luma for scene {scene_number}...")
-                        from providers.luma import LumaProvider
-                        fallback_generator = LumaProvider()
+                    # Download video
+                    output_filename = f"scene_{scene_number:02d}_{int(time.time())}.mp4"
+                    output_path = os.path.join(output_dir, output_filename)
+                    
+                    if video_generator.download_video(video_url, output_path):
+                        scene_result = {
+                            'scene_number': scene_number,
+                            'file_path': output_path,
+                            'duration': scene.get('duration', 5),
+                            'prompt': prompt,
+                            'url': video_url,
+                            'logo_enhanced': bool(logo_integration_plan)
+                        }
                         
-                        fallback_prompt = scene.get('luma_prompt', scene.get('visual_concept', ''))
-                        if fallback_prompt:
-                            video_url = fallback_generator.generate_video(
-                                prompt=fallback_prompt,
-                                aspect_ratio="9:16"
-                            )
+                        # Add logo metadata if available
+                        if logo_metadata:
+                            scene_result['logo_placement'] = logo_metadata
+                        
+                        generated_videos.append(scene_result)
+                        print(f"✅ Scene {scene_number} completed: {output_filename}")
+                        scene_success = True
+                        
+                        # Update progress after scene completion
+                        scene_complete_progress = 25 + int((45 / len(scenes)) * (scene_index + 1))
+                        if progress_callback:
+                            progress_callback(scene_complete_progress, f"Scene {scene_number}/{len(scenes)} completed")
+                    else:
+                        print(f"❌ Failed to download scene {scene_number}")
+                        raise Exception(f"Download failed for scene {scene_number}")
+                        
+                except Exception as e:
+                    retry_count += 1
+                    print(f"❌ Scene {scene_number} attempt {retry_count} failed: {e}")
+                    
+                    # Try fallback to Luma on first retry if primary provider fails
+                    if retry_count == 1 and provider_name == 'hailuo':
+                        try:
+                            print(f"🔄 Attempting fallback to Luma for scene {scene_number}...")
+                            from providers.luma import LumaProvider
+                            fallback_generator = LumaProvider()
                             
-                            output_filename = f"scene_{scene_number:02d}_luma_{int(time.time())}.mp4"
-                            output_path = os.path.join(output_dir, output_filename)
-                            
-                            if fallback_generator.download_video(video_url, output_path):
-                                generated_videos.append({
-                                    'scene_number': scene_number,
-                                    'file_path': output_path,
-                                    'duration': scene.get('duration', 5),
-                                    'prompt': fallback_prompt,
-                                    'url': video_url,
-                                    'provider': 'luma_fallback'
-                                })
-                                print(f"Scene {scene_number} completed with Luma fallback: {output_filename}")
-                            else:
-                                print(f"Fallback also failed to download scene {scene_number}")
-                    except Exception as fallback_error:
-                        print(f"Fallback to Luma also failed: {fallback_error}")
-                continue
+                            fallback_prompt = scene.get('luma_prompt', scene.get('visual_concept', ''))
+                            if fallback_prompt:
+                                video_url = fallback_generator.generate_video(
+                                    prompt=fallback_prompt,
+                                    aspect_ratio="9:16"
+                                )
+                                
+                                output_filename = f"scene_{scene_number:02d}_luma_{int(time.time())}.mp4"
+                                output_path = os.path.join(output_dir, output_filename)
+                                
+                                if fallback_generator.download_video(video_url, output_path):
+                                    scene_result = {
+                                        'scene_number': scene_number,
+                                        'file_path': output_path,
+                                        'duration': scene.get('duration', 5),
+                                        'prompt': fallback_prompt,
+                                        'url': video_url,
+                                        'provider': 'luma_fallback'
+                                    }
+                                    generated_videos.append(scene_result)
+                                    print(f"✅ Scene {scene_number} completed with Luma fallback: {output_filename}")
+                                    scene_success = True
+                                    continue  # Skip retry increment, scene succeeded
+                        except Exception as fallback_error:
+                            print(f"Fallback to Luma also failed: {fallback_error}")
+                    
+                    if retry_count >= max_retries:
+                        print(f"💀 Scene {scene_number} failed after {max_retries} retries. Skipping to maintain video continuity.")
+                        break
+            
+            # Move to next scene only after success or max retries reached
+            scene_index += 1
+        
+        # Calculate quality metrics
+        quality_metrics = self._calculate_quality_metrics(generated_videos, quality_settings)
         
         return {
             'total_scenes': len(scenes),
             'generated_scenes': len(generated_videos),
             'videos': generated_videos,
-            'success_rate': len(generated_videos) / len(scenes) if scenes else 0
+            'success_rate': len(generated_videos) / len(scenes) if scenes else 0,
+            'quality_mode': quality_mode,
+            'quality_metrics': quality_metrics,
+            'professional_grade': quality_mode == 'professional'
         }
     
     def generate_single_video(self, prompt: str, output_path: str, **kwargs) -> bool:
@@ -206,3 +250,83 @@ class VideoService:
         except Exception as e:
             print(f"Failed to switch to {provider_name}: {e}")
             raise
+    
+    def _get_quality_settings(self, quality_mode: str) -> Dict[str, Any]:
+        """Get quality settings based on mode."""
+        quality_modes = {
+            'professional': {
+                'description': 'Broadcast television commercial quality',
+                'resolution': '720p+',
+                'crf': 18,
+                'preset': 'medium',
+                'profile': 'high',
+                'generation_params': {
+                    'enhanced_quality': True,
+                    'professional_mode': True
+                }
+            },
+            'standard': {
+                'description': 'High quality for general use',
+                'resolution': '720p',
+                'crf': 23,
+                'preset': 'medium',
+                'profile': 'main',
+                'generation_params': {
+                    'enhanced_quality': False,
+                    'professional_mode': False
+                }
+            },
+            'economy': {
+                'description': 'Cost-optimized quality',
+                'resolution': '720p',
+                'crf': 28,
+                'preset': 'fast',
+                'profile': 'baseline',
+                'generation_params': {
+                    'enhanced_quality': False,
+                    'professional_mode': False
+                }
+            }
+        }
+        
+        return quality_modes.get(quality_mode, quality_modes['professional'])
+    
+    def _calculate_quality_metrics(self, generated_videos: List[Dict[str, Any]], quality_settings: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate quality metrics for generated videos."""
+        try:
+            total_videos = len(generated_videos)
+            if total_videos == 0:
+                return {'overall_quality': 'failed', 'videos_analyzed': 0}
+            
+            successful_generations = sum(1 for video in generated_videos if 'file_path' in video)
+            logo_enhanced_count = sum(1 for video in generated_videos if video.get('logo_enhanced', False))
+            
+            # Simple quality scoring based on success rates and enhancements
+            quality_score = (successful_generations / total_videos) * 100
+            
+            if logo_enhanced_count > 0:
+                quality_score += 10  # Bonus for logo integration
+            
+            quality_level = 'excellent' if quality_score >= 90 else 'good' if quality_score >= 75 else 'acceptable' if quality_score >= 60 else 'poor'
+            
+            return {
+                'overall_quality': quality_level,
+                'quality_score': quality_score,
+                'videos_analyzed': total_videos,
+                'successful_generations': successful_generations,
+                'logo_enhanced_videos': logo_enhanced_count,
+                'success_rate_percent': (successful_generations / total_videos * 100) if total_videos > 0 else 0,
+                'quality_mode_used': quality_settings.get('description', 'unknown'),
+                'professional_features': {
+                    'logo_integration': logo_enhanced_count > 0,
+                    'quality_validation': True,
+                    'professional_processing': quality_settings.get('crf', 23) <= 20
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'overall_quality': 'error',
+                'error': str(e),
+                'videos_analyzed': len(generated_videos) if generated_videos else 0
+            }

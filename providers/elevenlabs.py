@@ -236,6 +236,10 @@ class ElevenLabsProvider(AudioGenerator):
             if total_duration == 0:
                 print("Total audio duration is 0")
                 return False
+                
+            if target_duration <= 0:
+                print(f"Invalid target duration: {target_duration}")
+                return False
             
             # Create filter complex for concatenation and timing
             filter_parts = []
@@ -250,7 +254,22 @@ class ElevenLabsProvider(AudioGenerator):
             
             # Adjust speed to fit target duration
             speed_factor = total_duration / target_duration
-            speed_filter = f"[concatenated]atempo={speed_factor:.3f}[adjusted]"
+            
+            # For voice audio, we should never slow it down below 1.0x as it sounds unnatural
+            # Instead, we should pad with silence or use other techniques
+            if speed_factor < 1.0:
+                # If audio is shorter than target, pad with silence instead of slowing down
+                # This preserves natural voice speed
+                silence_duration = target_duration - total_duration
+                speed_filter = f"[concatenated]apad=pad_dur={silence_duration:.3f}[adjusted]"
+            elif speed_factor > 100.0:
+                # If audio is too long, speed it up to maximum
+                clamped_speed = 100.0
+                speed_filter = f"[concatenated]atempo={clamped_speed:.3f}[adjusted]"
+            else:
+                # Normal case - speed up if needed (but not slow down)
+                clamped_speed = max(1.0, speed_factor)  # Ensure we don't slow down voice
+                speed_filter = f"[concatenated]atempo={clamped_speed:.3f}[adjusted]"
             
             # Add fade out at the end
             fade_filter = f"[adjusted]afade=out:st={target_duration-1:.1f}:d=1[final]"
@@ -269,6 +288,7 @@ class ElevenLabsProvider(AudioGenerator):
             ]
             
             print(f"Creating unified {target_duration}s audio from {len(audio_segments)} segments...")
+            print(f"Audio duration: total={total_duration:.3f}s, target={target_duration:.3f}s (keeping normal voice speed)")
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
