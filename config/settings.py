@@ -18,7 +18,7 @@ class Settings:
     HAILUO_API_KEY: str = os.environ.get("HAILUO_API_KEY", "")
     
     # Provider Configuration
-    VIDEO_PROVIDER: str = os.environ.get("VIDEO_PROVIDER", "hailuo")  # hailuo, luma, runway
+    VIDEO_PROVIDER: str = os.environ.get("VIDEO_PROVIDER", "luma")  # luma, runway
     AUDIO_PROVIDER: str = os.environ.get("AUDIO_PROVIDER", "elevenlabs")  # elevenlabs
     TEXT_PROVIDER: str = os.environ.get("TEXT_PROVIDER", "openai")  # openai
     
@@ -41,8 +41,13 @@ class Settings:
     DEFAULT_ASPECT_RATIO: str = "9:16"  # TikTok/Instagram format
     DEFAULT_VIDEO_DURATION: int = 18  # seconds - optimized for short-form content
     MAX_VIDEO_DURATION: int = 20  # seconds - maximum duration for enterprise ads
-    DEFAULT_VIDEO_RESOLUTION: str = "720p"  # Cost-optimized: 720p = $0.4/5s vs 1080p = $0.9/5s
+    DEFAULT_VIDEO_RESOLUTION: str = "720p"  # Default to 720p per project preference
     DEFAULT_VIDEO_QUALITY: str = "high"
+
+    # Creative Direction Overrides (optional, for forcing session behavior)
+    BUSINESS_TYPE_OVERRIDE: Optional[str] = os.environ.get("BUSINESS_TYPE_OVERRIDE")  # e.g., "service", "product"
+    FOCUS_OVERRIDE: Optional[str] = os.environ.get("FOCUS_OVERRIDE")  # e.g., "expertise_and_results"
+    CTA_STYLE_OVERRIDE: Optional[str] = os.environ.get("CTA_STYLE_OVERRIDE")  # e.g., "consultation_oriented"
     
     # Cost Limits - Updated for 720p optimization
     ESTIMATED_COST_PER_VIDEO: float = 1.5  # dollars - 3 scenes × $0.4 + audio + OpenAI
@@ -66,8 +71,7 @@ class Settings:
             errors.append("RUNWAY_API_KEY is required for Runway video provider")
         elif self.VIDEO_PROVIDER == "luma" and not self.LUMA_API_KEY:
             errors.append("LUMA_API_KEY is required for Luma video provider")
-        elif self.VIDEO_PROVIDER == "hailuo" and not self.HAILUO_API_KEY:
-            errors.append("HAILUO_API_KEY is required for Hailuo video provider")
+        # Note: Hailuo provider removed - only Luma and Runway supported
         
         # Audio provider validation
         if self.AUDIO_PROVIDER == "elevenlabs" and not self.ELEVENLABS_API_KEY:

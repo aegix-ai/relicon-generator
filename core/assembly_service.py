@@ -8,6 +8,7 @@ import tempfile
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from core.logger import assembly_logger
+from config.settings import settings
 
 
 class AssemblyService:
@@ -21,7 +22,7 @@ class AssemblyService:
                            subtitle_segments: List = None, logo_integration_plan: Dict[str, Any] = None,
                            quality_settings: Dict[str, Any] = None) -> bool:
         """
-        Assemble final video from video scenes and audio track with subtitle and logo overlays.
+        Assemble final video from video scenes and audio track with subtitle overlays.
         Enhanced with professional quality controls and validation.
         
         Args:
@@ -106,11 +107,11 @@ class AssemblyService:
                 if not self._combine_video_audio(duration_adjusted_path, audio_file, combined_video_path, target_duration, quality_settings):
                     return False
 
-                # Step 4: Apply subtitle and logo overlays
-                if subtitle_segments or logo_integration_plan:
+                # Step 4: Apply subtitle overlays
+                if subtitle_segments:
                     overlay_applied_path = os.path.join(temp_dir, "with_overlays.mp4")
                     if not self._apply_overlays(combined_video_path, overlay_applied_path, 
-                                              subtitle_segments, logo_integration_plan, target_duration, audio_file):
+                                              subtitle_segments, target_duration, audio_file):
                         return False
                     final_video_path = overlay_applied_path
                 else:
@@ -213,18 +214,18 @@ class AssemblyService:
             return False
     
     def _apply_overlays(self, input_path: str, output_path: str, subtitle_segments: List = None,
-                       logo_integration_plan: Dict[str, Any] = None, target_duration: float = 18.0, audio_path: str = None) -> bool:
-        """Apply subtitle and logo overlays to video."""
+                       target_duration: float = 18.0, audio_path: str = None) -> bool:
+        """Apply subtitle overlays to video."""
         try:
             # If we have an audio file but no subtitle segments, try to generate them from audio
             if audio_path and os.path.exists(audio_path) and not subtitle_segments:
-                from core.subtitle_service import subtitle_service
+                from core.advanced_subtitle_service import subtitle_service
                 # Try to extract script text from the original architecture for better alignment
                 script_text = None
                 # TODO: Pass architecture to get unified_script for perfect alignment
                 subtitle_segments = subtitle_service.generate_subtitles_from_audio(audio_path, script_text)
 
-            print("Applying subtitle and logo overlays...")
+            print("Applying subtitle overlays...")
             
             # Build filter complex for overlays
             filter_parts = []
@@ -234,16 +235,15 @@ class AssemblyService:
             current_video = '[0:v]'
             input_count = 1
             
-            # Logo overlay system removed - skip logo processing
             
             # Add subtitle overlays if available
             if subtitle_segments:
-                from core.subtitle_service import subtitle_service
+                from core.advanced_subtitle_service import subtitle_service
                 
                 # Generate subtitle overlay filter
                 subtitle_filter = subtitle_service.generate_subtitle_overlay_filter(
                     subtitle_segments,
-                    style_config=self._get_subtitle_style_config(logo_integration_plan)
+                    style_config=self._get_subtitle_style_config()
                 )
                 
                 if subtitle_filter:
@@ -296,44 +296,31 @@ class AssemblyService:
             except:
                 return False
     
-    def _get_subtitle_style_config(self, logo_integration_plan: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Get subtitle styling configuration based on logo integration."""
+    def _get_subtitle_style_config(self) -> Dict[str, Any]:
+        """Get subtitle styling configuration."""
         default_style = {
-            'fontsize': 42,  # Larger for better readability on mobile/vertical screens
+            'fontsize': 36,  # Optimized size for 9:16 aspect ratio
             'fontcolor': 'white',
             'bordercolor': 'black',
-            'borderw': 5,  # Thicker border for better contrast
+            'borderw': 4,  # Compact border for mobile viewing
             'shadow_color': '0x80000000',
-            'shadow_x': 4,
-            'shadow_y': 4,
+            'shadow_x': 3,
+            'shadow_y': 3,
             'position': 'bottom',  # Default to bottom
             'background_opacity': 0.8,  # More opaque background for better readability
             'background_color': '0x80000000'
         }
         
         # Optimize for 9:16 vertical videos
-        # Position subtitles in the lower third but not too close to bottom
+        # Position subtitles in the lower third for optimal mobile viewing
         if default_style['position'] == 'bottom':
-            default_style['y_position'] = 'h*0.75'  # 75% down the video (middle-bottom area)
+            default_style['y_position'] = 'h*0.65'  # 65% down the video (lower third)
         elif default_style['position'] == 'top':
             default_style['y_position'] = 'h*0.15'  # 15% from top
         else:  # center
             default_style['y_position'] = 'h*0.5'   # True center
         
-        # Adapt subtitle style based on logo colors
-        if logo_integration_plan and 'brand_color_palette' in logo_integration_plan:
-            palette = logo_integration_plan['brand_color_palette']
-            primary_color = palette.get('primary', '#FFFFFF')
-            
-            # Use brand colors for subtle integration
-            default_style['bordercolor'] = primary_color
-            
-            # Adjust position if logo is in bottom area
-            logo_placements = logo_integration_plan.get('logo_placements', [])
-            for placement in logo_placements:
-                if 'bottom' in placement.get('position', ''):
-                    default_style['position'] = 'top'
-                    break
+        # Style is now consistent for all videos
         
         return default_style
     
@@ -346,7 +333,7 @@ class AssemblyService:
             
             # Generate subtitles if not provided
             if not subtitle_segments:
-                from core.subtitle_service import subtitle_service
+                from core.advanced_subtitle_service import subtitle_service
                 
                 # Extract script from architecture for perfect alignment
                 script_text = None
@@ -375,7 +362,7 @@ class AssemblyService:
                 return True
             
             # Generate professional subtitle overlay filter
-            from core.subtitle_service import subtitle_service
+            from core.advanced_subtitle_service import subtitle_service
             
             # Professional subtitle styling
             professional_style = {
@@ -438,21 +425,57 @@ class AssemblyService:
             except:
                 return False
     
-    # Logo overlay method removed
     
-    # Logo-related methods removed
     
     def _concatenate_videos(self, video_files: List[str], output_path: str) -> bool:
-        """Concatenate multiple video files into one."""
+        """Concatenate multiple video files into one while preserving natural motion."""
         try:
-            # Create filter complex for concatenation with scaling
+            # Determine target dimensions based on quality settings (default 9:16 portrait)
+            def _target_dims() -> tuple[int, int]:
+                # Map common labels to portrait dimensions
+                res = getattr(settings, 'DEFAULT_VIDEO_RESOLUTION', '1080p')
+                res = (res or '1080p').lower()
+                if res in ('1080p', 'fullhd', 'fhd'):
+                    return (1080, 1920)
+                if res in ('720p',):
+                    return (720, 1280)
+                # Fallback: probe first video, else 1080x1920
+                try:
+                    import json, subprocess
+                    probe = subprocess.run([
+                        'ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_streams', video_files[0]
+                    ], capture_output=True, text=True)
+                    data = json.loads(probe.stdout)
+                    vstreams = [s for s in data.get('streams', []) if s.get('codec_type') == 'video']
+                    if vstreams:
+                        w = int(vstreams[0].get('width', 1080))
+                        h = int(vstreams[0].get('height', 1920))
+                        # Normalize to portrait 9:16 if clearly vertical
+                        if h >= w:
+                            # Round to nearest standard size
+                            if h >= 1920:
+                                return (1080, 1920)
+                            return (720, 1280)
+                        else:
+                            # Landscape – still scale consistently without forcing rotation
+                            return (1920, 1080)
+                except Exception:
+                    pass
+                return (1080, 1920)
+
+            target_w, target_h = _target_dims()
+
+            # Create filter complex for concatenation with scaling (no FPS forcing)
             filter_parts = []
             input_files = []
             
             for i, video_file in enumerate(video_files):
                 input_files.extend(['-i', video_file])
-                # Scale all videos to cost-optimized 720p format
-                filter_parts.append(f"[{i}:v]scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,fps=30,setsar=1[v{i}]")
+                # Scale all videos to target portrait dimensions, preserve natural frame cadence (no fps filter)
+                filter_parts.append(
+                    f"[{i}:v]scale={target_w}:{target_h}:force_original_aspect_ratio=increase,"
+                    f"crop={target_w}:{target_h},setsar=1[v{i}]"
+                )
             
             # Concatenate all scaled videos
             video_inputs = ''.join([f"[v{i}]" for i in range(len(video_files))])
@@ -468,7 +491,8 @@ class AssemblyService:
                 '-map', '[outv]',
                 '-c:v', 'libx264',
                 '-preset', 'medium',
-                '-crf', '23',
+                # Use higher quality here to minimize re-encode artifacts; final pass will still occur later
+                '-crf', '18',
                 '-pix_fmt', 'yuv420p',
                 output_path
             ]
@@ -487,7 +511,7 @@ class AssemblyService:
             return False
     
     def _adjust_video_duration(self, input_path: str, output_path: str, target_duration: float) -> bool:
-        """Adjust video duration to exact target length."""
+        """Adjust video duration to exact target length by extending with freeze frames."""
         try:
             # Get current video duration
             probe_cmd = [
@@ -507,40 +531,47 @@ class AssemblyService:
             
             print(f"Current duration: {current_duration:.2f}s, Target: {target_duration:.2f}s")
             
-            # Calculate speed adjustment
+            # Duration is close enough, just copy
             if abs(current_duration - target_duration) < 0.1:
-                # Duration is close enough, just copy
                 import shutil
                 shutil.copy2(input_path, output_path)
                 return True
             
-            # Calculate and clamp speed factor to a reasonable range (e.g., 0.5x to 2.0x)
-            speed_factor = target_duration / current_duration
-            clamped_speed_factor = min(max(speed_factor, 0.5), 2.0)
-
-            if abs(speed_factor - clamped_speed_factor) > 0.01:
-                print(f"Warning: Original speed factor {speed_factor:.2f}x is outside the safe range. Clamping to {clamped_speed_factor:.2f}x.")
-
-            filter_v = f'setpts={clamped_speed_factor}*PTS'
-            if clamped_speed_factor > 1.0:
-                print(f"Stretching video: {current_duration:.2f}s → {target_duration:.2f}s (factor: {clamped_speed_factor:.2f}x slower)")
+            if current_duration > target_duration:
+                # Video is longer than target - trim it
+                print(f"Trimming video: {current_duration:.2f}s → {target_duration:.2f}s")
+                cmd = [
+                    'ffmpeg', '-y', '-i', input_path,
+                    '-t', str(target_duration),
+                    '-c:v', 'libx264',
+                    '-preset', 'medium',
+                    '-crf', '18',
+                    '-c:a', 'copy',
+                    output_path
+                ]
             else:
-                print(f"Compressing video: {current_duration:.2f}s → {target_duration:.2f}s (factor: {1/clamped_speed_factor:.2f}x faster)")
-            
-            # Apply speed adjustment
-            cmd = [
-                'ffmpeg', '-y', '-i', input_path,
-                '-filter:v', filter_v,
-                '-c:v', 'libx264',
-                '-preset', 'medium',
-                '-crf', '23',
-                output_path  # Remove -t parameter to let the full stretched video render
-            ]
+                # Video is shorter than target - extend with freeze frame
+                extension_duration = target_duration - current_duration
+                print(f"Extending video: {current_duration:.2f}s → {target_duration:.2f}s (+{extension_duration:.2f}s freeze frame)")
+                
+                # Create filter to extend video by freezing last frame
+                # Use tpad filter to pad video with last frame
+                video_filter = f"tpad=stop_mode=clone:stop_duration={extension_duration:.3f}"
+                
+                cmd = [
+                    'ffmpeg', '-y', '-i', input_path,
+                    '-filter:v', video_filter,
+                    '-c:v', 'libx264',
+                    '-preset', 'medium',
+                    '-crf', '18',
+                    '-c:a', 'copy',
+                    output_path
+                ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                print(f"Video duration adjusted to {target_duration}s")
+                print(f"Video duration adjusted to {target_duration}s (maintaining natural playback speed)")
                 return True
             else:
                 print(f"Duration adjustment failed: {result.stderr}")
@@ -659,8 +690,9 @@ class AssemblyService:
                 # Handle duration mismatch more intelligently
                 duration_diff = abs(video_duration - audio_duration)
                 
-                if duration_diff < 1.0:
-                    print("Video and audio durations match - using full length assembly")
+                # FIXED: Tighter synchronization tolerance for professional quality
+                if duration_diff < 0.2:  # 200ms tolerance instead of 1000ms
+                    print("Video and audio durations match within professional tolerance")
                     use_shortest = False
                 elif video_duration > audio_duration:
                     # Video is longer than audio - extend audio or use loop/pad
@@ -683,9 +715,9 @@ class AssemblyService:
                     'crf': 18
                 }
             
-            # Determine if we need audio extension
+            # FIXED: More precise audio extension threshold
             need_audio_extension = (not use_shortest and 'video_duration' in locals() and 'audio_duration' in locals() 
-                                  and video_duration > audio_duration + 1.0)
+                                  and video_duration > audio_duration + 0.1)  # 100ms threshold instead of 1000ms
             
             cmd = [
                 'ffmpeg', '-y',

@@ -40,9 +40,11 @@ class AudioService:
                                   **{"audio.missing_field": "unified_script"})
                 return False
             
-            # Get target duration - ensure it's 18s
-            target_duration = architecture.get('scene_architecture', {}).get('total_duration', 18)
-            print(f"DEBUG: Audio service target_duration = {target_duration}s")
+            # Get target duration from scene architecture, fallback to audio architecture, then to 18s (standard ad duration)
+            scene_duration = architecture.get('scene_architecture', {}).get('total_duration')
+            audio_duration = architecture.get('audio_architecture', {}).get('total_duration')
+            target_duration = scene_duration or audio_duration or 18
+            print(f"DEBUG: Audio service target_duration = {target_duration}s (scene: {scene_duration}, audio: {audio_duration})")
             
             # Generate audio segments for each scene
             scenes = architecture.get('scene_architecture', {}).get('scenes', [])
@@ -67,9 +69,11 @@ class AudioService:
                     temp_audio_path = os.path.join(temp_dir, f"segment_{i:02d}.mp3")
                     
                     if audio_generator.generate_audio(script_part, temp_audio_path, audio_config):
+                        # Use consistent duration fallback with video service
+                        scene_duration = scene.get('duration', 6)  # FIXED: Same fallback as video service (6s per scene)
                         audio_segments.append({
                             'file': temp_audio_path,
-                            'duration': scene.get('duration', 5),
+                            'duration': scene_duration,
                             'scene_number': i + 1
                         })
                         print(f"Generated audio segment {i + 1}")

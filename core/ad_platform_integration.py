@@ -301,17 +301,17 @@ class OAuth2TokenManager:
             ).first()
             
             if not oauth_token:
-                logger.warning(f\"No OAuth token found for {self.platform} account {account_id}\")
+                logger.warning(f"No OAuth token found for {self.platform} account {account_id}")
                 return None
             
             # Check if token is expired or expires soon
             if oauth_token.is_expired():
-                logger.info(f\"Token expired for {self.platform} account {account_id}, attempting refresh\")
+                logger.info(f"Token expired for {self.platform} account {account_id}, attempting refresh")
                 success = await self._refresh_token(oauth_token, session)
                 if not success:
                     return None
             elif oauth_token.expires_soon():
-                logger.info(f\"Token expires soon for {self.platform} account {account_id}, refreshing proactively\")
+                logger.info(f"Token expires soon for {self.platform} account {account_id}, refreshing proactively")
                 await self._refresh_token(oauth_token, session)
             
             # Update usage tracking
@@ -322,7 +322,7 @@ class OAuth2TokenManager:
             return oauth_token.get_access_token()
             
         except Exception as e:
-            logger.error(f\"Error getting valid token for {self.platform}: {e}\")
+            logger.error(f"Error getting valid token for {self.platform}: {e}")
             session.rollback()
             return None
         finally:
@@ -330,9 +330,9 @@ class OAuth2TokenManager:
     
     async def store_token(self, account_id: str, access_token: str, refresh_token: str = None, 
                          expires_in: int = None, scope: str = None) -> bool:
-        \"\"\"Store OAuth token securely in database.\"\"\"                         
+        """Store OAuth token securely in database."""                         
         if not DATABASE_AVAILABLE:
-            logger.warning(f\"Database not available for token storage: {self.platform}\")
+            logger.warning(f"Database not available for token storage: {self.platform}")
             return False
         
         session = get_db_session()
@@ -376,30 +376,30 @@ class OAuth2TokenManager:
             session.commit()
             
             # Log successful token storage
-            await self._log_auth_event(\"token_stored\", account_id, 
-                                     {\"expires_at\": expires_at.isoformat() if expires_at else None,
-                                      \"has_refresh_token\": bool(refresh_token)})
+            await self._log_auth_event("token_stored", account_id, 
+                                     {"expires_at": expires_at.isoformat() if expires_at else None,
+                                      "has_refresh_token": bool(refresh_token)})
             
-            logger.info(f\"OAuth token stored successfully for {self.platform} account {account_id}\")
+            logger.info(f"OAuth token stored successfully for {self.platform} account {account_id}")
             return True
             
         except Exception as e:
-            logger.error(f\"Error storing token for {self.platform}: {e}\")
+            logger.error(f"Error storing token for {self.platform}: {e}")
             session.rollback()
             return False
         finally:
             session.close()
     
     async def _refresh_token(self, oauth_token: 'OAuthToken', session: Session) -> bool:
-        \"\"\"Refresh OAuth token using refresh token.\"\"\"        
+        """Refresh OAuth token using refresh token."""        
         refresh_token = oauth_token.get_refresh_token()
         if not refresh_token:
-            logger.warning(f\"No refresh token available for {self.platform} account {oauth_token.account_id}\")
+            logger.warning(f"No refresh token available for {self.platform} account {oauth_token.account_id}")
             return False
         
         # Check rate limiting
         if not self._check_rate_limit(oauth_token.account_id):
-            logger.warning(f\"Rate limit exceeded for token refresh: {self.platform} {oauth_token.account_id}\")
+            logger.warning(f"Rate limit exceeded for token refresh: {self.platform} {oauth_token.account_id}")
             return False
         
         try:
@@ -420,26 +420,26 @@ class OAuth2TokenManager:
             session.commit()
             
             # Log successful refresh
-            await self._log_auth_event(\"token_refreshed\", oauth_token.account_id, 
-                                     {\"expires_at\": oauth_token.expires_at.isoformat() if oauth_token.expires_at else None})
+            await self._log_auth_event("token_refreshed", oauth_token.account_id, 
+                                     {"expires_at": oauth_token.expires_at.isoformat() if oauth_token.expires_at else None})
             
-            logger.info(f\"Token refreshed successfully for {self.platform} account {oauth_token.account_id}\")
+            logger.info(f"Token refreshed successfully for {self.platform} account {oauth_token.account_id}")
             return True
             
         except Exception as e:
-            logger.error(f\"Token refresh failed for {self.platform}: {e}\")
-            await self._log_auth_event(\"token_refresh_failed\", oauth_token.account_id, {\"error\": str(e)})
+            logger.error(f"Token refresh failed for {self.platform}: {e}")
+            await self._log_auth_event("token_refresh_failed", oauth_token.account_id, {"error": str(e)})
             return False
     
     async def _platform_refresh_token(self, oauth_token: 'OAuthToken') -> Optional[Dict[str, Any]]:
-        \"\"\"Platform-specific token refresh implementation.\"\"\"        
+        """Platform-specific token refresh implementation."""        
         # This will be implemented by platform-specific subclasses
-        raise NotImplementedError(\"Platform-specific token refresh must be implemented\")
+        raise NotImplementedError("Platform-specific token refresh must be implemented")
     
     def _check_rate_limit(self, account_id: str) -> bool:
-        \"\"\"Simple rate limiting for token refresh requests.\"\"\"        
+        """Simple rate limiting for token refresh requests."""        
         now = time.time()
-        key = f\"{self.platform}:{account_id}\"
+        key = f"{self.platform}:{account_id}"
         
         if key not in self._rate_limiter:
             self._rate_limiter[key] = {'count': 0, 'reset_time': now + 3600}
@@ -459,7 +459,7 @@ class OAuth2TokenManager:
         return True
     
     async def _log_auth_event(self, event_type: str, account_id: str, details: Dict[str, Any] = None):
-        \"\"\"Log authentication events for audit trail.\"\"\"        
+        """Log authentication events for audit trail."""        
         if not DATABASE_AVAILABLE:
             return
         
@@ -478,13 +478,13 @@ class OAuth2TokenManager:
             session.commit()
             
         except Exception as e:
-            logger.error(f\"Failed to log auth event: {e}\")
+            logger.error(f"Failed to log auth event: {e}")
             session.rollback()
         finally:
             session.close()
     
     async def revoke_token(self, account_id: str) -> bool:
-        \"\"\"Revoke and deactivate OAuth token.\"\"\"        
+        """Revoke and deactivate OAuth token."""        
         if not DATABASE_AVAILABLE:
             return False
         
@@ -504,14 +504,14 @@ class OAuth2TokenManager:
                 oauth_token.updated_at = func.current_timestamp()
                 session.commit()
                 
-                await self._log_auth_event(\"token_revoked\", account_id)
-                logger.info(f\"Token revoked for {self.platform} account {account_id}\")
+                await self._log_auth_event("token_revoked", account_id)
+                logger.info(f"Token revoked for {self.platform} account {account_id}")
                 return True
             
             return False
             
         except Exception as e:
-            logger.error(f\"Error revoking token for {self.platform}: {e}\")
+            logger.error(f"Error revoking token for {self.platform}: {e}")
             session.rollback()
             return False
         finally:
@@ -635,19 +635,19 @@ class AdPlatformClient(ABC):
         return await self.token_manager.revoke_token(self.account_id)
 
 class MetaTokenManager(OAuth2TokenManager):
-    \"\"\"Meta-specific OAuth2 token manager.\"\"\"
+    """Meta-specific OAuth2 token manager."""
     
     def __init__(self):
-        super().__init__(\"meta\")
+        super().__init__("meta")
     
     async def _platform_refresh_token(self, oauth_token: 'OAuthToken') -> Optional[Dict[str, Any]]:
-        \"\"\"Refresh Meta access token using refresh token.\"\"\"
+        """Refresh Meta access token using refresh token."""
         refresh_token = oauth_token.get_refresh_token()
         if not refresh_token:
             return None
         
         try:
-            token_url = \"https://graph.facebook.com/oauth/access_token\"
+            token_url = "https://graph.facebook.com/oauth/access_token"
             
             data = {
                 'grant_type': 'refresh_token',
@@ -665,27 +665,27 @@ class MetaTokenManager(OAuth2TokenManager):
                             'expires_in': token_data.get('expires_in', 3600)
                         }
                     else:
-                        logger.error(f\"Meta token refresh failed: {response.status}\")
+                        logger.error(f"Meta token refresh failed: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f\"Meta token refresh error: {e}\")
+            logger.error(f"Meta token refresh error: {e}")
             return None
 
 class TikTokTokenManager(OAuth2TokenManager):
-    \"\"\"TikTok-specific OAuth2 token manager.\"\"\"
+    """TikTok-specific OAuth2 token manager."""
     
     def __init__(self):
-        super().__init__(\"tiktok\")
+        super().__init__("tiktok")
     
     async def _platform_refresh_token(self, oauth_token: 'OAuthToken') -> Optional[Dict[str, Any]]:
-        \"\"\"Refresh TikTok access token using refresh token.\"\"\"
+        """Refresh TikTok access token using refresh token."""
         refresh_token = oauth_token.get_refresh_token()
         if not refresh_token:
             return None
         
         try:
-            token_url = \"https://business-api.tiktok.com/open_api/v1.3/oauth2/refresh_token/\"
+            token_url = "https://business-api.tiktok.com/open_api/v1.3/oauth2/refresh_token/"
             
             data = {
                 'app_id': config.ad_platforms.tiktok_app_id,
@@ -706,30 +706,30 @@ class TikTokTokenManager(OAuth2TokenManager):
                                 'expires_in': token_info.get('expires_in', 86400)
                             }
                         else:
-                            logger.error(f\"TikTok token refresh failed: {response_data.get('message')}\")
+                            logger.error(f"TikTok token refresh failed: {response_data.get('message')}")
                             return None
                     else:
-                        logger.error(f\"TikTok token refresh failed: {response.status}\")
+                        logger.error(f"TikTok token refresh failed: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f\"TikTok token refresh error: {e}\")
+            logger.error(f"TikTok token refresh error: {e}")
             return None
 
 class GoogleAdsTokenManager(OAuth2TokenManager):
-    \"\"\"Google Ads-specific OAuth2 token manager.\"\"\"
+    """Google Ads-specific OAuth2 token manager."""
     
     def __init__(self):
-        super().__init__(\"google_ads\")
+        super().__init__("google_ads")
     
     async def _platform_refresh_token(self, oauth_token: 'OAuthToken') -> Optional[Dict[str, Any]]:
-        \"\"\"Refresh Google Ads access token using refresh token.\"\"\"
+        """Refresh Google Ads access token using refresh token."""
         refresh_token = oauth_token.get_refresh_token()
         if not refresh_token:
             return None
         
         try:
-            token_url = \"https://oauth2.googleapis.com/token\"
+            token_url = "https://oauth2.googleapis.com/token"
             
             data = {
                 'client_id': config.ad_platforms.google_ads_client_id,
@@ -747,11 +747,11 @@ class GoogleAdsTokenManager(OAuth2TokenManager):
                             'expires_in': token_data.get('expires_in', 3600)
                         }
                     else:
-                        logger.error(f\"Google Ads token refresh failed: {response.status}\")
+                        logger.error(f"Google Ads token refresh failed: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f\"Google Ads token refresh error: {e}\")
+            logger.error(f"Google Ads token refresh error: {e}")
             return None
     
     @abstractmethod

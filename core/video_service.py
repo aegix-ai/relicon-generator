@@ -8,6 +8,7 @@ import time
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 from core.provider_manager import provider_manager
+from core.assembly_service import AssemblyService
 from core.logger import video_logger
 from config.settings import settings
 
@@ -71,7 +72,7 @@ class VideoService:
                 progress_callback(scene_progress, f"Generating Scene {scene_number}/{len(scenes)}...")
             
             # Get appropriate prompt based on provider, with logo enhancement
-            provider_name = getattr(settings, 'VIDEO_PROVIDER', 'hailuo').lower()
+            provider_name = getattr(settings, 'VIDEO_PROVIDER', 'luma').lower()
             prompt = None  # Initialize prompt variable
             
             # Use logo-enhanced prompt if available
@@ -81,10 +82,12 @@ class VideoService:
             
             # Fallback to original prompts
             if not prompt:
-                if provider_name == 'hailuo':
-                    prompt = scene.get('hailuo_prompt', scene.get('visual_concept', ''))
-                else:
+                if provider_name == 'luma':
                     prompt = scene.get('luma_prompt', scene.get('visual_concept', ''))
+                elif provider_name == 'runway':
+                    prompt = scene.get('runway_prompt', scene.get('visual_concept', ''))
+                else:
+                    prompt = scene.get('visual_concept', '')
             
             if not prompt:
                 print(f"Warning: No prompt found for scene {scene_number}")
@@ -108,7 +111,7 @@ class VideoService:
                     print(f"🎥 Generating scene {scene_number} with enhanced quality settings{retry_suffix}")
                     
                     # Generate video with primary provider using quality settings
-                    scene_duration = scene.get('duration', 10)  # Use scene duration from planning
+                    scene_duration = scene.get('duration', 6)  # Use scene duration from planning (6s per scene for 18s total)
                     
                     # Add quality parameters to video generation
                     generation_params = {
@@ -120,17 +123,34 @@ class VideoService:
                         **quality_settings.get('generation_params', {})
                     }
                     
-                    video_url = video_generator.generate_video(**generation_params)
+                    # Use professional promotional method for Luma provider in professional mode
+                    if hasattr(video_generator, 'generate_professional_promotional_video') and quality_mode == 'professional':
+                        print("🎬 Using Luma model ray-2 (best) at 720p per project preference")
+                        video_url = video_generator.generate_professional_promotional_video(**generation_params)
+                    else:
+                        video_url = video_generator.generate_video(**generation_params)
                 
                     # Download video
                     output_filename = f"scene_{scene_number:02d}_{int(time.time())}.mp4"
                     output_path = os.path.join(output_dir, output_filename)
                     
                     if video_generator.download_video(video_url, output_path):
+                        # Enforce exact 6.00s scene duration per requirement
+                        fixed_output_path = os.path.join(output_dir, f"scene_{scene_number:02d}_{int(time.time())}_6s.mp4")
+                        try:
+                            assembly = AssemblyService()
+                            if assembly._adjust_video_duration(output_path, fixed_output_path, 6.0):
+                                # Prefer the fixed-length clip
+                                final_scene_path = fixed_output_path
+                            else:
+                                # Fallback to original if adjustment failed
+                                final_scene_path = output_path
+                        except Exception:
+                            final_scene_path = output_path
                         scene_result = {
                             'scene_number': scene_number,
-                            'file_path': output_path,
-                            'duration': scene.get('duration', 5),
+                            'file_path': final_scene_path,
+                            'duration': 6,  # Enforced per-scene duration
                             'prompt': prompt,
                             'url': video_url,
                             'logo_enhanced': bool(logo_integration_plan)
@@ -156,38 +176,51 @@ class VideoService:
                     retry_count += 1
                     print(f"❌ Scene {scene_number} attempt {retry_count} failed: {e}")
                     
-                    # Try fallback to Luma on first retry if primary provider fails
-                    if retry_count == 1 and provider_name == 'hailuo':
+                    # Try fallback to Runway on first retry if primary provider (Luma) fails
+                    # Disabled until Runway API key is configured
+                    if False and retry_count == 1 and provider_name == 'luma':
                         try:
-                            print(f"🔄 Attempting fallback to Luma for scene {scene_number}...")
-                            from providers.luma import LumaProvider
-                            fallback_generator = LumaProvider()
+                            print(f"🔄 Attempting fallback to Runway for scene {scene_number}...")
+                            from providers.runway import RunwayProvider
+                            fallback_generator = RunwayProvider()
                             
-                            fallback_prompt = scene.get('luma_prompt', scene.get('visual_concept', ''))
+                            # Get Runway-specific prompt or create a shorter version
+                            fallback_prompt = scene.get('runway_prompt', scene.get('visual_concept', ''))
+                            if not fallback_prompt:
+                                # Create a short, basic prompt from the scene
+                                fallback_prompt = f"Professional commercial video, 9:16 aspect ratio, scene {scene_number}"
+                            
+                            # Ensure prompt is under Runway's 500 character limit
+                            if len(fallback_prompt) > 450:  # Leave some buffer
+                                fallback_prompt = fallback_prompt[:450].rsplit(' ', 1)[0] + "..."
+                                print(f"📏 Shortened prompt for Runway: {len(fallback_prompt)} chars")
+                            
                             if fallback_prompt:
+                                print(f"🎬 Runway fallback prompt: {fallback_prompt[:100]}...")
                                 video_url = fallback_generator.generate_video(
                                     prompt=fallback_prompt,
-                                    aspect_ratio="9:16"
+                                    aspect_ratio="9:16",
+                                    duration=5  # Runway's typical duration
                                 )
                                 
-                                output_filename = f"scene_{scene_number:02d}_luma_{int(time.time())}.mp4"
+                                output_filename = f"scene_{scene_number:02d}_runway_{int(time.time())}.mp4"
                                 output_path = os.path.join(output_dir, output_filename)
                                 
                                 if fallback_generator.download_video(video_url, output_path):
                                     scene_result = {
                                         'scene_number': scene_number,
                                         'file_path': output_path,
-                                        'duration': scene.get('duration', 5),
+                                        'duration': scene.get('duration', 6),  # FIXED: Consistent fallback (6s per scene for 18s total)
                                         'prompt': fallback_prompt,
                                         'url': video_url,
-                                        'provider': 'luma_fallback'
+                                        'provider': 'runway_fallback'
                                     }
                                     generated_videos.append(scene_result)
-                                    print(f"✅ Scene {scene_number} completed with Luma fallback: {output_filename}")
+                                    print(f"✅ Scene {scene_number} completed with Runway fallback: {output_filename}")
                                     scene_success = True
                                     continue  # Skip retry increment, scene succeeded
                         except Exception as fallback_error:
-                            print(f"Fallback to Luma also failed: {fallback_error}")
+                            print(f"Runway fallback also failed: {fallback_error}")
                     
                     if retry_count >= max_retries:
                         print(f"💀 Scene {scene_number} failed after {max_retries} retries. Skipping to maintain video continuity.")
@@ -256,7 +289,7 @@ class VideoService:
         quality_modes = {
             'professional': {
                 'description': 'Broadcast television commercial quality',
-                'resolution': '720p+',
+                'resolution': '720p',
                 'crf': 18,
                 'preset': 'medium',
                 'profile': 'high',
@@ -272,7 +305,7 @@ class VideoService:
                 'preset': 'medium',
                 'profile': 'main',
                 'generation_params': {
-                    'enhanced_quality': False,
+                    'enhanced_quality': True,
                     'professional_mode': False
                 }
             },

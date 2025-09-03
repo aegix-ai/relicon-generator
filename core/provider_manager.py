@@ -25,7 +25,7 @@ class ProviderManager:
             if provider_name:
                 self._video_provider = self._create_video_provider(provider_name)
             else:
-                provider_name = getattr(settings, 'VIDEO_PROVIDER', 'hailuo').lower()
+                provider_name = getattr(settings, 'VIDEO_PROVIDER', 'luma').lower()
                 self._video_provider = self._create_video_provider(provider_name)
         return self._video_provider
     
@@ -49,17 +49,14 @@ class ProviderManager:
     
     def _create_video_provider(self, provider_name: str) -> VideoGenerator:
         """Create video provider instance based on configuration."""
-        if provider_name == 'runway':
-            from providers.runway import RunwayProvider
-            return RunwayProvider()
-        elif provider_name == 'hailuo':
-            from providers.hailuo import HailuoProvider
-            return HailuoProvider()
-        elif provider_name == 'luma':
+        if provider_name == 'luma':
             from providers.luma import LumaProvider
             return LumaProvider()
+        elif provider_name == 'runway':
+            from providers.runway import RunwayProvider
+            return RunwayProvider()
         else:
-            raise ValueError(f"Unknown video provider: {provider_name}")
+            raise ValueError(f"Unknown video provider: {provider_name}. Supported providers: luma, runway")
     
     def _create_audio_provider(self, provider_name: str) -> AudioGenerator:
         """Create audio provider instance based on configuration."""

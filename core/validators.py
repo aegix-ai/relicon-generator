@@ -9,8 +9,6 @@ import base64
 from typing import Dict, Any, List, Optional, Union, Tuple
 from pathlib import Path
 from dataclasses import dataclass
-from PIL import Image
-import io
 from datetime import datetime
 
 from core.exceptions import ValidationError
@@ -201,123 +199,6 @@ class BrandInfoValidator:
             sanitized_value=sanitized_info if len(all_errors) == 0 else None
         )
 
-class LogoValidator:
-    """Validator for logo file uploads."""
-    
-    def __init__(self):
-        self.max_file_size = config.logo.max_file_size_mb * 1024 * 1024  # Convert to bytes
-        self.supported_formats = config.logo.supported_formats
-    
-    def validate_file_path(self, file_path: str) -> ValidationResult:
-        """Validate logo file path."""
-        
-        if not file_path:
-            return self._create_error("Logo file path is required")
-        
-        path = Path(file_path)
-        
-        # Check if file exists
-        if not path.exists():
-            return self._create_error(f"Logo file not found: {file_path}")
-        
-        # Check if it's a file
-        if not path.is_file():
-            return self._create_error(f"Path is not a file: {file_path}")
-        
-        # Check file size
-        file_size = path.stat().st_size
-        if file_size > self.max_file_size:
-            size_mb = file_size / (1024 * 1024)
-            return self._create_error(f"Logo file too large: {size_mb:.2f}MB (max: {config.logo.max_file_size_mb}MB)")
-        
-        # Check file extension
-        extension = path.suffix.upper().lstrip('.')
-        if extension not in self.supported_formats:
-            return self._create_error(f"Unsupported logo format: {extension}. Supported: {', '.join(self.supported_formats)}")
-        
-        # Try to open as image
-        try:
-            with Image.open(file_path) as img:
-                # Check image dimensions (reasonable limits)
-                width, height = img.size
-                if width > 5000 or height > 5000:
-                    return self._create_error(f"Logo dimensions too large: {width}x{height} (max: 5000x5000)")
-                
-                if width < 32 or height < 32:
-                    return self._create_error(f"Logo dimensions too small: {width}x{height} (min: 32x32)")
-                
-                # Check if image is valid
-                img.verify()
-                
-        except Exception as e:
-            return self._create_error(f"Invalid logo image file: {str(e)}")
-        
-        return self._create_success(file_path)
-    
-    def validate_base64(self, base64_data: str) -> ValidationResult:
-        """Validate base64 encoded logo."""
-        
-        if not base64_data:
-            return self._create_error("Base64 logo data is required")
-        
-        # Remove data URL prefix if present
-        if base64_data.startswith('data:'):
-            try:
-                header, data = base64_data.split(',', 1)
-                base64_data = data
-            except ValueError:
-                return self._create_error("Invalid data URL format")
-        
-        # Validate base64 format
-        try:
-            decoded_data = base64.b64decode(base64_data)
-        except Exception as e:
-            return self._create_error(f"Invalid base64 encoding: {str(e)}")
-        
-        # Check decoded size
-        if len(decoded_data) > self.max_file_size:
-            size_mb = len(decoded_data) / (1024 * 1024)
-            return self._create_error(f"Logo data too large: {size_mb:.2f}MB (max: {config.logo.max_file_size_mb}MB)")
-        
-        # Try to open as image
-        try:
-            with Image.open(io.BytesIO(decoded_data)) as img:
-                # Check format
-                if img.format not in self.supported_formats:
-                    return self._create_error(f"Unsupported logo format: {img.format}. Supported: {', '.join(self.supported_formats)}")
-                
-                # Check image dimensions
-                width, height = img.size
-                if width > 5000 or height > 5000:
-                    return self._create_error(f"Logo dimensions too large: {width}x{height} (max: 5000x5000)")
-                
-                if width < 32 or height < 32:
-                    return self._create_error(f"Logo dimensions too small: {width}x{height} (min: 32x32)")
-                
-                # Verify image integrity
-                img.verify()
-                
-        except Exception as e:
-            return self._create_error(f"Invalid logo image data: {str(e)}")
-        
-        return self._create_success(base64_data)
-    
-    def _create_error(self, message: str) -> ValidationResult:
-        """Create validation error result."""
-        return ValidationResult(
-            is_valid=False,
-            errors=[f"logo: {message}"],
-            warnings=[]
-        )
-    
-    def _create_success(self, sanitized_value: Any) -> ValidationResult:
-        """Create validation success result."""
-        return ValidationResult(
-            is_valid=True,
-            errors=[],
-            warnings=[],
-            sanitized_value=sanitized_value
-        )
 
 class MLQualityValidator:
     """ML-powered content quality validator with comprehensive scoring."""
@@ -643,6 +524,8 @@ class MLQualityValidator:
             
             # Assess creative vision quality
             creative_vision = architecture.get('creative_vision', '')
+            if not isinstance(creative_vision, str):
+                creative_vision = str(creative_vision) if creative_vision else ''
             if creative_vision:
                 vision_quality = self.assess_content_quality(creative_vision)
                 quality_details['creative_vision_quality'] = vision_quality
@@ -654,6 +537,8 @@ class MLQualityValidator:
             
             # Assess unified script quality
             unified_script = architecture.get('unified_script', '')
+            if not isinstance(unified_script, str):
+                unified_script = str(unified_script) if unified_script else ''
             if unified_script:
                 script_quality = self.assess_content_quality(unified_script)
                 quality_details['script_quality'] = script_quality
@@ -668,7 +553,16 @@ class MLQualityValidator:
             scene_qualities = []
             
             for i, scene in enumerate(scenes):
-                scene_content = f"{scene.get('visual_concept', '')} {scene.get('script_line', '')}"
+                visual_concept = scene.get('visual_concept', '')
+                script_line = scene.get('script_line', '')
+                
+                # Ensure we have strings, not dicts
+                if not isinstance(visual_concept, str):
+                    visual_concept = str(visual_concept) if visual_concept else ''
+                if not isinstance(script_line, str):
+                    script_line = str(script_line) if script_line else ''
+                
+                scene_content = f"{visual_concept} {script_line}"
                 if scene_content.strip():
                     scene_quality = self.assess_content_quality(scene_content)
                     scene_qualities.append(scene_quality)
@@ -974,7 +868,7 @@ class VideoConfigValidator:
         sanitized_config = {}
         
         # Validate duration
-        duration = video_config.get('target_duration', 30)
+        duration = video_config.get('target_duration', 18)
         if not isinstance(duration, int) or duration <= 0:
             all_errors.append("target_duration must be a positive integer")
         elif duration > config.video.max_duration_seconds:
@@ -986,7 +880,7 @@ class VideoConfigValidator:
         # Validate service type
         service_type = video_config.get('service_type')
         if service_type:
-            valid_services = ['luma', 'hailuo']
+            valid_services = ['luma', 'runway']
             if service_type not in valid_services:
                 all_errors.append(f"service_type must be one of: {', '.join(valid_services)}")
             else:
@@ -1004,7 +898,6 @@ class ValidationManager:
     
     def __init__(self):
         self.brand_validator = BrandInfoValidator()
-        self.logo_validator = LogoValidator()
         self.video_validator = VideoConfigValidator()
         self.ml_quality_validator = MLQualityValidator()
         
@@ -1032,30 +925,11 @@ class ValidationManager:
             sanitized_data['brand_info'] = brand_result.sanitized_value
             all_warnings.extend(brand_result.warnings)
         
-        # Validate logo if provided
-        logo_file_path = request_data.get('logo_file_path')
-        logo_base64 = request_data.get('logo_base64')
-        
-        if logo_file_path and logo_base64:
-            all_errors.append("Cannot provide both logo_file_path and logo_base64")
-        elif logo_file_path:
-            logo_result = self.logo_validator.validate_file_path(logo_file_path)
-            if not logo_result.is_valid:
-                all_errors.extend(logo_result.errors)
-            else:
-                sanitized_data['logo_file_path'] = logo_result.sanitized_value
-                all_warnings.extend(logo_result.warnings)
-        elif logo_base64:
-            logo_result = self.logo_validator.validate_base64(logo_base64)
-            if not logo_result.is_valid:
-                all_errors.extend(logo_result.errors)
-            else:
-                sanitized_data['logo_base64'] = logo_result.sanitized_value
-                all_warnings.extend(logo_result.warnings)
+        # Logo validation removed - no longer supported
         
         # Validate video config
         video_config = {
-            'target_duration': request_data.get('target_duration', 30),
+            'target_duration': request_data.get('target_duration', 18),
             'service_type': request_data.get('service_type')
         }
         

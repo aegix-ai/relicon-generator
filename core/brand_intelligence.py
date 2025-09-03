@@ -1255,8 +1255,7 @@ class BrandIntelligenceService:
     def analyze_brand(
         self, 
         brand_name: str, 
-        brand_description: str, 
-        logo_file_path: Optional[str] = None
+        brand_description: str
     ) -> BrandElements:
         """
         Enhanced comprehensive brand analysis with neural classification and competitive intelligence. 
@@ -1264,7 +1263,6 @@ class BrandIntelligenceService:
         Args:
             brand_name: The brand name
             brand_description: Detailed brand/business description
-            logo_file_path: Optional path to uploaded logo file for visual analysis
             
         Returns:
             BrandElements with ML-enhanced intelligence and competitive analysis
@@ -1420,8 +1418,8 @@ class BrandIntelligenceService:
                 brand_name=brand_name,
                 exc_info=True
             )
-            # Fallback to basic analysis
-            return self._fallback_brand_analysis(brand_name, brand_description, logo_file_path)
+            # Fallback to raising the error since fallback analysis removed
+            raise
     
     def get_brand_profile_from_database(self, profile_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve brand profile from database by ID."""
@@ -1517,8 +1515,7 @@ class BrandIntelligenceService:
     def analyze_brand_with_persistence(
         self, 
         brand_name: str, 
-        brand_description: str, 
-        logo_file_path: Optional[str] = None,
+        brand_description: str,
         save_to_database: bool = True
     ) -> Tuple[BrandElements, Optional[str]]:
         """
@@ -1528,7 +1525,7 @@ class BrandIntelligenceService:
             Tuple of (BrandElements, profile_id if saved to database)
         """
         # Perform brand analysis
-        brand_elements = self.analyze_brand(brand_name, brand_description, logo_file_path)
+        brand_elements = self.analyze_brand(brand_name, brand_description)
         
         profile_id = None
         if save_to_database and database_manager and database_manager.is_available:
@@ -1757,15 +1754,28 @@ class BrandIntelligenceService:
         Example: increased efficiency, cost savings, improved user experience
         """
         try:
-            client = openai.OpenAI()
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=100,
-                temperature=0.5,
-            )
-            benefits_str = response.choices[0].message.content.strip()
-            return [b.strip() for b in benefits_str.split(',') if b.strip()]
+            client = openai.OpenAI(timeout=30.0)  # Add timeout
+            
+            # Add connection retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=100,
+                        temperature=0.5,
+                    )
+                    benefits_str = response.choices[0].message.content.strip()
+                    return [b.strip() for b in benefits_str.split(',') if b.strip()]
+                except (ConnectionError, TimeoutError, Exception) as conn_error:
+                    if attempt < max_retries - 1:
+                        wait_time = (attempt + 1) * 2  # 2s, 4s, 6s
+                        logger.info(f"OpenAI connection attempt {attempt + 1} failed, retrying in {wait_time}s...")
+                        import time
+                        time.sleep(wait_time)
+                    else:
+                        raise conn_error
         except Exception as e:
             logger.warning(f"GPT-4o benefit extraction failed: {e}. Falling back to rule-based.")
             return self._extract_benefits(text)
@@ -1781,15 +1791,28 @@ class BrandIntelligenceService:
         Example: patented technology, 24/7 customer support, eco-friendly materials
         """
         try:
-            client = openai.OpenAI()
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=100,
-                temperature=0.5,
-            )
-            usps_str = response.choices[0].message.content.strip()
-            return [u.strip() for u in usps_str.split(',') if u.strip()]
+            client = openai.OpenAI(timeout=30.0)  # Add timeout
+            
+            # Add connection retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=100,
+                        temperature=0.5,
+                    )
+                    usps_str = response.choices[0].message.content.strip()
+                    return [u.strip() for u in usps_str.split(',') if u.strip()]
+                except (ConnectionError, TimeoutError, Exception) as conn_error:
+                    if attempt < max_retries - 1:
+                        wait_time = (attempt + 1) * 2  # 2s, 4s, 6s
+                        logger.info(f"OpenAI connection attempt {attempt + 1} failed, retrying in {wait_time}s...")
+                        import time
+                        time.sleep(wait_time)
+                    else:
+                        raise conn_error
         except Exception as e:
             logger.warning(f"GPT-4o USP extraction failed: {e}. Falling back to rule-based.")
             return self._extract_unique_selling_points(text)
@@ -2222,39 +2245,6 @@ class BrandIntelligenceService:
             any(word in usp for word in ['unique', 'only', 'first', 'exclusive', 'revolutionary', 'innovative', 'breakthrough'])
         )
     
-    def _fallback_brand_analysis(self, brand_name: str, brand_description: str, logo_file_path: Optional[str] = None) -> BrandElements:
-        """Fallback to basic brand analysis in case of errors."""
-        try:
-            logger.info(f"Using fallback brand analysis for {brand_name}")
-            
-            text_lower = brand_description.lower()
-            niche_scores = self._detect_business_niche_baseline(text_lower)
-            best_niche, best_confidence = self._select_best_niche(niche_scores)
-            
-            # Simple business type detection for fallback
-            business_type, _ = self._detect_business_type(brand_description, brand_name, best_niche)
-            
-            return BrandElements(
-                brand_name=brand_name.strip(),
-                industry=self._determine_industry(best_niche, text_lower),
-                niche=best_niche,
-                business_type=business_type,
-                key_benefits=self._extract_benefits(brand_description)[:3],
-                unique_selling_points=self._extract_unique_selling_points(brand_description)[:2],
-                target_demographics=self._analyze_target_demographics(text_lower),
-                emotional_triggers=self._identify_emotional_triggers(text_lower),
-                brand_personality=self._determine_brand_personality(text_lower),
-                visual_style_keywords=self._extract_visual_style_keywords(text_lower, best_niche),
-                competitive_advantages=self._identify_competitive_advantages(brand_description),
-                confidence_score=best_confidence,
-                quality_score=0.6,
-                brand_coherence_score=0.5,
-                market_viability_score=0.5
-            )
-            
-        except Exception as e:
-            logger.error(f"Fallback brand analysis also failed: {e}", exc_info=True)
-            raise
     
     def _extract_benefits(self, text: str) -> List[str]:
         """Extract key benefits from brand description."""
@@ -2474,93 +2464,8 @@ class BrandIntelligenceService:
             'style_consistency': f"modern_{niche.value}_branding"
         }
     
-    def _merge_logo_personality(self, text_personality: Dict[str, str]) -> Dict[str, str]:
-        """GPT-4o handles all personality analysis dynamically."""
-        
-        # Return text-based personality - GPT-4o enhances this dynamically
-        return text_personality
     
-    def _merge_logo_visual_keywords(self, text_keywords: List[str]) -> List[str]:
-        """GPT-4o handles all visual keyword enhancement dynamically."""
-        
-        # Return text-based keywords - GPT-4o enhances this dynamically
-        return text_keywords[:15]  # Limit to top 15 keywords
     
-    def analyze_brand_with_base64_logo(
-        self, 
-        brand_name: str, 
-        brand_description: str, 
-        logo_base64: str
-    ) -> BrandElements:
-        """
-        Analyze brand with base64 encoded logo data.
-        
-        Args:
-            brand_name: The brand name
-            brand_description: Detailed brand/business description
-            logo_base64: Base64 encoded logo image data
-            
-        Returns:
-            BrandElements with extracted intelligence including logo-derived elements
-        """
-        # Clean and prepare text
-        text_lower = brand_description.lower()
-        
-        # Detect business niche
-        niche, niche_confidence = self._detect_business_niche(text_lower)
-        business_type, _ = self._detect_business_type(brand_description, brand_name, niche)
-        
-        # Extract key benefits and USPs
-        benefits = self._extract_benefits(brand_description)
-        usps = self._extract_unique_selling_points(brand_description)
-        
-        # Analyze target demographics
-        demographics = self._analyze_target_demographics(text_lower)
-        
-        # Identify emotional triggers
-        emotional_triggers = self._identify_emotional_triggers(text_lower)
-        
-        # Determine brand personality
-        personality = self._determine_brand_personality(text_lower)
-        
-        # Extract visual style keywords
-        visual_keywords = self._extract_visual_style_keywords(text_lower, niche)
-        
-        # Identify competitive advantages
-        advantages = self._identify_competitive_advantages(brand_description)
-        
-        # Determine industry
-        industry = self._determine_industry(niche, text_lower)
-        
-        # Logo analysis removed - GPT-4o handles all visual branding dynamically
-        brand_colors = ["#1e3a8a", "#7c3aed"]  # Default brand colors
-        visual_consistency = {
-            "primary_color": "#1e3a8a",
-            "secondary_color": "#7c3aed", 
-            "style": "professional"
-        }
-        
-        # GPT-4o handles all personality and visual enhancement dynamically
-        personality = self._merge_logo_personality(personality)
-        visual_keywords = self._merge_logo_visual_keywords(visual_keywords)
-        
-        return BrandElements(
-            brand_name=brand_name.strip(),
-            industry=industry,
-            niche=niche,
-            business_type=business_type,
-            key_benefits=benefits,
-            unique_selling_points=usps,
-            target_demographics=demographics,
-            emotional_triggers=emotional_triggers,
-            brand_personality=personality,
-            visual_style_keywords=visual_keywords,
-            competitive_advantages=advantages,
-            confidence_score=niche_confidence,
-            # logo_analysis removed - GPT-4o handles all visual branding dynamically
-            brand_colors=brand_colors,
-            visual_consistency=visual_consistency
-        )
 
     def _neural_detect_business_niche_enhanced(self, text: str, brand_name: str) -> Tuple[BusinessNiche, float]:
         """Enhanced neural network-powered business niche detection with 96% accuracy."""
@@ -2731,10 +2636,6 @@ class BrandIntelligenceService:
                     'error': str(e)
                 }
 
-    def enhance_brand_with_logo_processing(self, brand_elements: BrandElements, logo_file_path: Optional[str]) -> BrandElements:
-        """Logo processing removed - GPT-4o handles all visual branding dynamically."""
-        # Logo functionality removed - return brand elements as-is
-        return brand_elements
     
     def _detect_business_type(self, description: str, brand_name: str, niche: BusinessNiche) -> Tuple[BusinessType, float]:
         """

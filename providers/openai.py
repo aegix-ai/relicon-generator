@@ -9,7 +9,7 @@ import time
 from typing import Dict, List, Any, Optional, Tuple
 from openai import OpenAI
 from interfaces.text_generator import TextGenerator
-from core.enhanced_planning_service import EnhancedPlanningService
+# Removed circular import - EnhancedPlanningService not needed here
 from core.brand_intelligence import brand_intelligence
 from core.validators import validator
 from core.monitoring import monitoring
@@ -38,7 +38,7 @@ class OpenAIProvider(TextGenerator):
         
         try:
             self.client = OpenAI(api_key=api_key)
-            self.enhanced_planner = EnhancedPlanningService()
+            # Enhanced planner integration moved to avoid circular imports
             
             # Performance metrics tracking
             self.performance_metrics = {
@@ -155,9 +155,12 @@ class OpenAIProvider(TextGenerator):
             
             target_duration = min(sanitized_brand_info.get('duration', 30), 30)
             
-            # Step 4: Create architecture using enhanced planning service
+            # Step 4: Create architecture using enhanced planning service  
             try:
-                professional_blueprint = self.enhanced_planner.create_professional_video_blueprint(
+                # Import here to avoid circular imports
+                from core.enhanced_planning_service import EnhancedPlanningService
+                enhanced_planner = EnhancedPlanningService()
+                professional_blueprint = enhanced_planner.create_professional_video_blueprint(
                     brand_info=sanitized_brand_info,
                     target_duration=target_duration,
                     service_type="luma",

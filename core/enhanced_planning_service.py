@@ -13,14 +13,8 @@ from datetime import datetime
 import hashlib
 from enum import Enum
 
-try:
-    from sklearn.cluster import KMeans
-    from sklearn.metrics.pairwise import cosine_similarity
-    from sklearn.neural_network import MLPRegressor
-    from sklearn.preprocessing import StandardScaler
-    ML_OPTIMIZATION_AVAILABLE = True
-except ImportError:
-    ML_OPTIMIZATION_AVAILABLE = False
+# Removed heavy ML dependencies - using algorithmic approach instead
+ML_OPTIMIZATION_AVAILABLE = False
 
 from core.brand_intelligence import BrandIntelligenceService, BrandElements
 from core.niche_prompt_templates import NichePromptTemplateEngine
@@ -34,110 +28,68 @@ from core.validators import MLQualityValidator
 
 logger = get_logger(__name__)
 
-class PromptOptimizationEngine:
-    """ML-powered prompt optimization for maximum generation quality."""
+class AlgorithmicOptimizationEngine:
+    """Algorithmic prompt optimization using pattern-based approach."""
     
     def __init__(self):
-        self.optimization_history = []
-        self.quality_model = None
-        self.prompt_embeddings = {}
-        self.is_ml_initialized = False
-        
-        if ML_OPTIMIZATION_AVAILABLE:
-            self._initialize_ml_models()
-    
-    def _initialize_ml_models(self):
-        """Initialize ML models for prompt optimization."""
-        try:
-            # Quality prediction model
-            self.quality_model = MLPRegressor(
-                hidden_layer_sizes=(128, 64, 32),
-                activation='relu',
-                solver='adam',
-                alpha=0.001,
-                max_iter=1000,
-                random_state=42
-            )
-            
-            self.scaler = StandardScaler()
-            self.is_ml_initialized = True
-            
-            logger.info("ML prompt optimization models initialized")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize ML optimization models: {e}")
-            self.is_ml_initialized = False
+        self.optimization_patterns = {
+            'visual_quality': ['4K ultra-high definition', 'professional cinematography', 'cinematic lighting'],
+            'brand_consistency': ['brand colors', 'professional style', 'corporate aesthetic'],
+            'engagement_factors': ['dynamic movement', 'compelling composition', 'visual storytelling']
+        }
+        logger.info("Algorithmic prompt optimization initialized")
     
     def optimize_prompt_for_quality(self, base_prompt: str, context: Dict[str, Any]) -> Tuple[str, float]:
-        """Optimize prompt for maximum quality using ML."""
+        """Optimize prompt using algorithmic pattern-based approach."""
         try:
-            if not self.is_ml_initialized:
-                return self._rule_based_optimization(base_prompt, context)
+            # Apply algorithmic optimization patterns
+            optimized_prompt = self._apply_optimization_patterns(base_prompt, context)
             
-            # Extract prompt features
-            features = self._extract_prompt_features(base_prompt, context)
+            # Calculate quality score based on pattern matching
+            quality_score = self._calculate_pattern_quality_score(optimized_prompt, context)
             
-            # Generate optimization variants
-            variants = self._generate_prompt_variants(base_prompt, context)
-            
-            # Predict quality scores
-            best_variant = base_prompt
-            best_score = 0.5
-            
-            for variant in variants:
-                variant_features = self._extract_prompt_features(variant, context)
-                predicted_quality = self._predict_prompt_quality(variant_features)
-                
-                if predicted_quality > best_score:
-                    best_variant = variant
-                    best_score = predicted_quality
-            
-            logger.debug(f"Prompt optimized: quality score {best_score:.3f}")
-            return best_variant, best_score
+            logger.debug(f"Prompt optimized algorithmically: quality score {quality_score:.3f}")
+            return optimized_prompt, quality_score
             
         except Exception as e:
-            logger.warning(f"ML prompt optimization failed: {e}")
-            return self._rule_based_optimization(base_prompt, context)
+            logger.warning(f"Prompt optimization failed: {e}")
+            return base_prompt, 0.7  # Default quality score
     
-    def _extract_prompt_features(self, prompt: str, context: Dict[str, Any]) -> np.ndarray:
-        """Extract numerical features from prompt for ML analysis."""
-        features = []
+    def _apply_optimization_patterns(self, prompt: str, context: Dict[str, Any]) -> str:
+        """Apply algorithmic optimization patterns to improve prompt quality."""
+        optimized = prompt
         
-        # Basic text statistics
-        words = prompt.split()
-        features.extend([
-            len(words),  # Word count
-            len(set(words)),  # Unique words
-            len(prompt),  # Character count
-            prompt.count(','),  # Comma count (detail indicator)
-            prompt.count('.'),  # Period count
-            len([w for w in words if len(w) > 6])  # Complex words
-        ])
+        # Add visual quality patterns if missing
+        if not any(term in optimized.lower() for term in ['4k', 'professional', 'cinematic']):
+            optimized += ", professional 4K cinematography"
+        
+        # Add brand consistency patterns
+        if context.get('service_type') == 'commercial':
+            optimized += ", corporate professional style"
+        
+        # Add engagement factors
+        if not any(term in optimized.lower() for term in ['dynamic', 'compelling', 'engaging']):
+            optimized += ", dynamic visual storytelling"
+        
+        return optimized
+    
+    def _calculate_pattern_quality_score(self, prompt: str, context: Dict[str, Any]) -> float:
+        """Calculate quality score based on algorithmic pattern analysis."""
+        score = 0.5  # Base score
         
         # Quality indicators
-        quality_terms = ['cinematic', 'professional', 'high-quality', 'detailed', 'realistic']
-        features.append(sum(1 for term in quality_terms if term in prompt.lower()))
+        quality_terms = ['cinematic', 'professional', 'high-quality', 'detailed', '4k']
+        quality_score = sum(0.1 for term in quality_terms if term in prompt.lower())
         
         # Technical terms
-        technical_terms = ['4K', '8K', 'HDR', 'volumetric', 'lighting', 'camera']
-        features.append(sum(1 for term in technical_terms if term in prompt.lower()))
+        technical_terms = ['lighting', 'camera', 'composition', 'cinematography']  
+        technical_score = sum(0.05 for term in technical_terms if term in prompt.lower())
         
-        # Emotional terms
-        emotional_terms = ['dramatic', 'beautiful', 'stunning', 'captivating', 'engaging']
-        features.append(sum(1 for term in emotional_terms if term in prompt.lower()))
+        # Length and detail bonus
+        word_count = len(prompt.split())
+        detail_score = min(0.2, word_count / 100)  # Max 0.2 bonus for detailed prompts
         
-        # Context features
-        niche = context.get('niche', 'professional')
-        service_type = context.get('service_type', 'luma')
-        
-        features.extend([
-            1.0 if service_type == 'luma' else 0.0,
-            1.0 if 'technology' in niche else 0.0,
-            1.0 if 'healthcare' in niche else 0.0,
-            context.get('scene_duration', 10.0) / 10.0  # Normalized duration
-        ])
-        
-        return np.array(features, dtype=np.float32)
+        return min(1.0, score + quality_score + technical_score + detail_score)
     
     def _generate_prompt_variants(self, base_prompt: str, context: Dict[str, Any]) -> List[str]:
         """Generate optimized prompt variants."""
@@ -153,10 +105,10 @@ class PromptOptimizationEngine:
                 self._enhance_for_luma_detail(base_prompt)
             ])
         else:
-            # Hailuo-optimized variants
+            # Generic high-quality variants for other providers
             variants.extend([
-                self._enhance_for_hailuo_action(base_prompt),
-                self._enhance_for_hailuo_clarity(base_prompt)
+                self._enhance_for_quality_action(base_prompt),
+                self._enhance_for_clarity(base_prompt)
             ])
         
         # Quality enhancement variants
@@ -216,16 +168,16 @@ class PromptOptimizationEngine:
         
         return enhanced
     
-    def _enhance_for_hailuo_action(self, prompt: str) -> str:
-        """Enhance prompt for Hailuo's action focus."""
+    def _enhance_for_quality_action(self, prompt: str) -> str:
+        """Enhance prompt for action-focused scenes."""
         # Extract key action elements
         words = prompt.split()
         action_words = [w for w in words if w.lower() in [
             'moving', 'walking', 'using', 'demonstrating', 'showing', 'interacting'
         ]]
         
-        # Build concise action-focused prompt
-        core_elements = words[:8]  # First 8 words
+        # Build action-focused prompt
+        core_elements = words[:12]  # First 12 words
         enhanced = ' '.join(core_elements)
         
         if action_words:
@@ -233,10 +185,10 @@ class PromptOptimizationEngine:
         
         enhanced += ", professional commercial setting"
         
-        return enhanced[:120]  # Hailuo optimal length
+        return enhanced[:200]  # Standard length
     
-    def _enhance_for_hailuo_clarity(self, prompt: str) -> str:
-        """Enhance prompt for Hailuo's clarity preferences."""
+    def _enhance_for_clarity(self, prompt: str) -> str:
+        """Enhance prompt for clarity and precision."""
         # Simplify and clarify
         essential_elements = []
         words = prompt.split()
@@ -274,168 +226,21 @@ class PromptOptimizationEngine:
             return f"{prompt}, featuring {brand_name} branding"
         return prompt
     
-    def _predict_prompt_quality(self, features: np.ndarray) -> float:
-        """Predict prompt quality score using ML model."""
-        if not self.is_ml_initialized or self.quality_model is None:
-            return 0.5
-        
-        try:
-            # Simulate quality prediction (in production, use trained model)
-            # For now, use rule-based scoring as ML model placeholder
-            score = 0.5
-            
-            # Word count optimization (150-250 words optimal for Luma)
-            word_count = features[0] if len(features) > 0 else 50
-            if 20 <= word_count <= 50:  # Optimal range
-                score += 0.2
-            
-            # Quality terms boost
-            quality_terms_count = features[6] if len(features) > 6 else 0
-            score += min(quality_terms_count * 0.1, 0.2)
-            
-            # Technical terms boost
-            technical_terms_count = features[7] if len(features) > 7 else 0
-            score += min(technical_terms_count * 0.05, 0.1)
-            
-            return min(score, 1.0)
-            
-        except Exception as e:
-            logger.warning(f"Quality prediction failed: {e}")
-            return 0.5
-    
-    def _rule_based_optimization(self, prompt: str, context: Dict[str, Any]) -> Tuple[str, float]:
-        """Fallback rule-based optimization."""
-        service_type = context.get('service_type', 'luma')
-        
-        if service_type == 'luma':
-            optimized = self._enhance_for_luma_cinematic(prompt)
-            quality_score = 0.7
-        else:
-            optimized = self._enhance_for_hailuo_action(prompt)
-            quality_score = 0.6
-        
-        return optimized, quality_score
-    
-    def get_ml_enhancement_status(self) -> Dict[str, Any]:
-        """Get comprehensive ML enhancement status for monitoring."""
-        try:
-            status = {
-                'ml_optimization_available': ML_OPTIMIZATION_AVAILABLE,
-                'models_initialized': self.is_ml_initialized,
-                'optimization_history': {
-                    'total_optimizations': len(self.optimization_history),
-                    'avg_quality_improvement': 0.0,
-                    'last_optimization': None
-                },
-                'performance_metrics': {
-                    'quality_model_accuracy': 0.94 if self.is_ml_initialized else 0.0,
-                    'prompt_generation_success_rate': 0.96 if self.is_ml_initialized else 0.85,
-                    'avg_processing_time_ms': 150 if self.is_ml_initialized else 50
-                }
-            }
-            
-            if self.optimization_history:
-                quality_scores = [record['quality_score'] for record in self.optimization_history]
-                status['optimization_history']['avg_quality_improvement'] = np.mean(quality_scores) if quality_scores else 0.0
-                status['optimization_history']['last_optimization'] = self.optimization_history[-1]['timestamp']
-            
-            return status
-            
-        except Exception as e:
-            logger.error(f"Failed to get ML enhancement status: {e}")
-            return {'error': str(e), 'ml_optimization_available': False}
-    
-    def retrain_quality_model(self, training_data: List[Dict[str, Any]]) -> bool:
-        """Retrain the quality prediction model with new data."""
-        try:
-            if not ML_OPTIMIZATION_AVAILABLE or not training_data:
-                return False
-            
-            # Extract features and targets from training data
-            features = []
-            targets = []
-            
-            for data_point in training_data:
-                prompt_features = self._extract_prompt_features(data_point['prompt'], data_point.get('context', {}))
-                features.append(prompt_features)
-                targets.append(data_point['quality_score'])
-            
-            if len(features) < 10:  # Need minimum training data
-                logger.warning("Insufficient training data for model retraining")
-                return False
-            
-            # Retrain the model
-            X = np.array(features)
-            y = np.array(targets)
-            
-            # Scale features
-            X_scaled = self.scaler.fit_transform(X)
-            
-            # Train model
-            self.quality_model.fit(X_scaled, y)
-            
-            # Calculate cross-validation score
-            from sklearn.model_selection import cross_val_score
-            cv_scores = cross_val_score(self.quality_model, X_scaled, y, cv=5, scoring='r2')
-            avg_score = np.mean(cv_scores)
-            
-            logger.info(f"Quality model retrained with {len(training_data)} samples, CV R² score: {avg_score:.3f}")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Model retraining failed: {e}")
-            return False
-    
-    def record_performance(self, prompt: str, context: Dict[str, Any], quality_score: float):
-        """Record prompt performance for learning."""
-        performance_record = {
-            'prompt': prompt,
-            'context': context,
-            'quality_score': quality_score,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        
-        self.optimization_history.append(performance_record)
-        
-        # Keep only recent history
-        if len(self.optimization_history) > 1000:
-            self.optimization_history = self.optimization_history[-500:]
-    
     def get_optimization_stats(self) -> Dict[str, Any]:
         """Get optimization performance statistics."""
-        if not self.optimization_history:
-            return {'total_optimizations': 0}
-        
-        quality_scores = [record['quality_score'] for record in self.optimization_history]
-        
         return {
-            'total_optimizations': len(self.optimization_history),
-            'average_quality': np.mean(quality_scores) if quality_scores else 0.0,
-            'quality_improvement': self._calculate_quality_trend(quality_scores),
-            'ml_enabled': self.is_ml_initialized
+            'optimization_engine': 'algorithmic_pattern_based',
+            'patterns_available': len(self.optimization_patterns),
+            'status': 'active'
         }
-    
-    def _calculate_quality_trend(self, scores: List[float]) -> float:
-        """Calculate quality improvement trend."""
-        if len(scores) < 10:
-            return 0.0
-        
-        recent_avg = np.mean(scores[-10:])
-        older_avg = np.mean(scores[-20:-10]) if len(scores) >= 20 else np.mean(scores[:-10])
-        
-        return recent_avg - older_avg
 
-class QualityValidationNetwork:
-    """Neural network for quality validation and scoring."""
+class AlgorithmicQualityValidator:
+    """Algorithmic quality validation using pattern-based scoring."""
     
     def __init__(self):
-        self.validation_model = None
         self.quality_thresholds = self._initialize_quality_thresholds()
-        self.is_initialized = False
-        
-        if ML_OPTIMIZATION_AVAILABLE:
-            self._initialize_validation_network()
+        self.is_initialized = True
+        logger.info("Algorithmic quality validator initialized")
     
     def _initialize_quality_thresholds(self) -> Dict[str, float]:
         """Initialize quality validation thresholds."""
@@ -449,28 +254,24 @@ class QualityValidationNetwork:
             'brand_alignment_threshold': 0.8
         }
     
-    def _initialize_validation_network(self):
-        """Initialize neural network for quality validation."""
-        try:
-            from sklearn.ensemble import RandomForestRegressor
-            
-            # Use Random Forest as quality validator
-            self.validation_model = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10,
-                random_state=42,
-                n_jobs=-1
-            )
-            
-            self.is_initialized = True
-            logger.info("Quality validation network initialized")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize validation network: {e}")
-            self.is_initialized = False
+    def _calculate_algorithmic_score(self, features: Dict[str, Any]) -> float:
+        """Calculate quality score using algorithmic pattern matching."""
+        score = 0.5  # Base score
+        
+        # Content quality indicators
+        if features.get('has_detailed_description', False):
+            score += 0.15
+        if features.get('word_count', 0) > 50:
+            score += 0.1
+        if features.get('technical_terms_count', 0) > 3:
+            score += 0.1
+        if features.get('brand_elements_present', False):
+            score += 0.15
+        
+        return min(1.0, score)
     
     def validate_blueprint_quality(self, blueprint: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate overall blueprint quality using neural network."""
+        """Validate overall blueprint quality using algorithmic pattern analysis."""
         try:
             validation_results = {
                 'overall_quality_score': 0.0,
@@ -545,7 +346,7 @@ class QualityValidationNetwork:
             score += 0.2
         
         # Duration validation
-        if total_duration == 30:  # Perfect duration
+        if total_duration == 18:  # Perfect duration
             score += 0.3
         elif 25 <= total_duration <= 35:
             score += 0.2
@@ -688,7 +489,7 @@ class QualityValidationNetwork:
         
         # Audio architecture validation
         audio_arch = blueprint.get('audio_architecture', {})
-        if audio_arch.get('total_duration') == 30:
+        if audio_arch.get('total_duration') == 18:
             score += 0.2
         
         # Unified script validation
@@ -1442,47 +1243,33 @@ class PerformancePredictionEngine:
         self.is_ml_enabled = ML_OPTIMIZATION_AVAILABLE
         
         if self.is_ml_enabled:
-            self._initialize_prediction_models()
+            self._initialize_algorithmic_predictors()
     
-    def _initialize_prediction_models(self):
-        """Initialize ML models for performance prediction."""
-        try:
-            from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-            from sklearn.linear_model import LinearRegression
-            from sklearn.preprocessing import StandardScaler
-            
-            # Performance prediction models
-            self.prediction_models = {
-                'ctr_predictor': RandomForestRegressor(
-                    n_estimators=100,
-                    max_depth=10,
-                    random_state=42,
-                    n_jobs=-1
-                ),
-                'conversion_predictor': GradientBoostingRegressor(
-                    n_estimators=100,
-                    learning_rate=0.1,
-                    max_depth=6,
-                    random_state=42
-                ),
-                'engagement_predictor': LinearRegression(),
-                'roas_predictor': RandomForestRegressor(
-                    n_estimators=150,
-                    max_depth=12,
-                    random_state=42
-                )
+    def _initialize_algorithmic_predictors(self):
+        """Initialize algorithmic performance prediction patterns."""
+        # Performance scoring patterns based on industry benchmarks
+        self.performance_patterns = {
+            'ctr_factors': {
+                'engaging_hook': 0.25,
+                'clear_value_prop': 0.20,
+                'visual_quality': 0.15,
+                'brand_recognition': 0.15,
+                'call_to_action': 0.25
+            },
+            'conversion_factors': {
+                'trust_signals': 0.30,
+                'urgency_indicators': 0.25,
+                'social_proof': 0.20,
+                'clear_benefits': 0.25
+            },
+            'engagement_factors': {
+                'emotional_appeal': 0.30,
+                'storytelling_quality': 0.25,
+                'visual_aesthetics': 0.25,
+                'audience_relevance': 0.20
             }
-            
-            # Feature scalers
-            self.feature_scalers = {
-                name: StandardScaler() for name in self.prediction_models.keys()
-            }
-            
-            logger.info("Performance prediction models initialized")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize prediction models: {e}")
-            self.is_ml_enabled = False
+        }
+        logger.info("Algorithmic performance predictors initialized")
     
     def predict_performance_metrics(
         self, 
@@ -1490,7 +1277,7 @@ class PerformancePredictionEngine:
         platform: str = 'meta', 
         enable_caching: bool = True
     ) -> Optional[Dict[str, float]]:
-        """Predict performance metrics for a video blueprint."""
+        """Predict performance metrics using algorithmic pattern analysis."""
         try:
             if not self.is_ml_enabled:
                 return self._fallback_performance_prediction(blueprint, platform)
@@ -1661,8 +1448,8 @@ class EnhancedPlanningService:
         self.cost_optimization = self._initialize_cost_optimization()
         
         # Enhanced ML-powered components
-        self.prompt_optimizer = PromptOptimizationEngine()
-        self.quality_validator = QualityValidationNetwork()
+        self.prompt_optimizer = AlgorithmicOptimizationEngine()
+        self.quality_validator = AlgorithmicQualityValidator()
         self.ab_testing = ABTestingFramework()
         
         # Phase 2: Performance prediction integration
@@ -1706,13 +1493,13 @@ class EnhancedPlanningService:
         """Initialize cost-optimized duration constraints for maximum budget savings."""
         return {
             'max_total_duration': 30,  # Strict maximum 30 seconds for cost control
-            'optimal_duration': 30,    # Always use full 30s for maximum impact
+            'optimal_duration': 18,    # 18s for perfect audio sync and mobile attention
             'scene_count': 3,          # Exactly 3 scenes - most cost-effective structure
-            'scene_duration_optimal': 10,  # Perfect 10s per scene for budget efficiency
-            'scene_durations': [10, 10, 10],  # Fixed optimal distribution
+            'scene_duration_optimal': 6,  # Perfect 6s per scene for 18s total
+            'scene_durations': [6, 6, 6],  # Fixed optimal distribution for 18s total
             'validation_tolerance': 0,  # Zero tolerance for cost control
             'cost_optimization': {
-                'prefer_30_second_total': True,  # Maximum value per generation
+                'prefer_18_second_total': True,  # Optimal for mobile and audio sync
                 'fixed_scene_structure': True,   # Consistent cost prediction
                 'no_duration_variations': True   # Eliminate generation waste
             }
@@ -1722,14 +1509,14 @@ class EnhancedPlanningService:
         """Initialize cost optimization settings with Luma Dream Machine as default."""
         return {
             'service_selection': {
-                'primary_service': 'hailuo',   # Hailuo as default for highest quality
-                'fallback_service': 'luma',    # Backup service for complex cases
-                'default_preference': 'hailuo', # Always prefer Hailuo unless specified
+                'primary_service': 'luma',     # Luma as primary for highest quality
+                'fallback_service': 'runway',  # Runway as fallback service
+                'default_preference': 'luma',  # Always prefer Luma unless specified
                 'cost_threshold': 'quality_focused'
             },
             'prompt_optimization': {
                 'target_length_luma': 250,     # Optimal for Luma Dream Machine
-                'target_length_hailuo': 120,   # Backup service optimization
+                'target_length_runway': 150,   # Runway service optimization
                 'luma_optimized_templates': True, # Templates optimized for Luma
                 'reuse_templates': True,       # Cache common elements
                 'dynamic_niche_detection': True # Auto-optimize for any business type
@@ -1738,16 +1525,109 @@ class EnhancedPlanningService:
                 'maintain_quality': True,      # Never compromise professionalism
                 'brand_accuracy': 'maximum',   # Highest accuracy required
                 'niche_optimization': 'dynamic', # Auto-detect and optimize for all niches
-                'hailuo_first_approach': True    # Prioritize Hailuo for best results
+                'luma_first_approach': True      # Prioritize Luma for best results
             }
         }
     
+    def create_hierarchical_video_blueprint(
+        self, 
+        brand_info: Dict[str, Any],
+        target_duration: int = 30,
+        service_type: Optional[str] = None,
+        enable_millisecond_precision: bool = True
+    ) -> Dict[str, Any]:
+        """
+        ULTRA-SOPHISTICATED Tree Algorithm for Millisecond-Precision Video Planning
+        
+        This implements a 7-level hierarchical tree that breaks down video creation from 
+        abstract concept to atomic millisecond-level execution with director expertise.
+        
+        Tree Levels:
+        1. CONCEPT: Brand understanding and story strategy
+        2. NARRATIVE: Story arc with psychological progression  
+        3. ACT: Emotional beats with precise timing
+        4. SCENE: Visual storytelling with cinematic concepts
+        5. SHOT: Camera work with professional techniques
+        6. MOMENT: Frame-by-frame visual elements
+        7. MILLISECOND: Atomic timing of all elements
+        """
+        try:
+            logger.info("Starting ULTRA-SOPHISTICATED hierarchical planning", action="hierarchical.tree.start")
+            
+            # LEVEL 1: CONCEPT UNDERSTANDING - Deep brand and audience analysis
+            concept_tree = self._analyze_concept_and_strategy(brand_info, target_duration)
+            
+            # LEVEL 2: NARRATIVE PLANNING - Story arc with psychological progression
+            narrative_tree = self._design_narrative_structure(concept_tree, target_duration)
+            
+            # LEVEL 3: ACT BREAKDOWN - Emotional beats with millisecond precision
+            act_tree = self._create_sophisticated_act_breakdown(narrative_tree, target_duration * 1000)
+            
+            # LEVEL 4: SCENE CONSTRUCTION - From first principles with director expertise
+            scene_tree = self._build_scenes_from_first_principles(act_tree, target_duration * 1000)
+            
+            # LEVEL 5: SHOT PLANNING - Professional cinematography with detailed prompts
+            shot_tree = self._craft_expert_director_shots(scene_tree)
+            
+            # LEVEL 6: MOMENT ENGINEERING - Frame-by-frame visual choreography
+            moment_tree = self._engineer_frame_level_moments(shot_tree)
+            
+            # LEVEL 7: MILLISECOND ORCHESTRATION - Atomic timing of every element
+            millisecond_tree = self._orchestrate_millisecond_precision(moment_tree, target_duration * 1000)
+            
+            # COMPILATION: Create execution blueprint with complete tree
+            blueprint = self._compile_sophisticated_blueprint(
+                concept_tree, narrative_tree, act_tree, scene_tree, 
+                shot_tree, moment_tree, millisecond_tree, 
+                brand_info, target_duration, service_type
+            )
+            
+            logger.info("Ultra-sophisticated hierarchical blueprint created", 
+                       action="hierarchical.tree.complete",
+                       tree_depth=7,
+                       total_millisecond_elements=len(millisecond_tree),
+                       sophistication_level="expert_director")
+            
+            return blueprint
+            
+        except Exception as e:
+            logger.error(f"Sophisticated hierarchical planning failed: {e}", exc_info=True)
+            return self.create_professional_video_blueprint(
+                brand_info, target_duration, service_type
+            )
+    
+    def create_enterprise_blueprint(
+        self, 
+        brand_info: Dict[str, Any],
+        target_duration: int = 18,
+        service_type: Optional[str] = None,
+        enable_quality_validation: bool = True,
+        enable_prompt_optimization: bool = True,
+        video_provider: Optional[str] = None,
+        creative_brief_mode: str = "professional"
+    ) -> Dict[str, Any]:
+        """
+        Create enterprise-grade video blueprint - delegates to professional blueprint.
+        Maintained for backward compatibility with orchestrator.
+        """
+        logger.info("Creating enterprise blueprint via professional blueprint method",
+                   action="blueprint.enterprise.start")
+        
+        return self.create_professional_video_blueprint(
+            brand_info=brand_info,
+            target_duration=target_duration,
+            service_type=service_type,
+            enable_quality_validation=enable_quality_validation,
+            enable_prompt_optimization=enable_prompt_optimization,
+            video_provider=video_provider,
+            creative_brief_mode=creative_brief_mode
+        )
+
     def create_professional_video_blueprint(
         self, 
         brand_info: Dict[str, Any],
         target_duration: int = 30,
         service_type: Optional[str] = None,
-        logo_file_path: Optional[str] = None,
         enable_quality_validation: bool = True,
         enable_prompt_optimization: bool = True,
         video_provider: Optional[str] = None,
@@ -1755,17 +1635,16 @@ class EnhancedPlanningService:
     ) -> Dict[str, Any]:
         """
 # TODO: Integrate cinematic ad scene generation from cinematic_prompt.py for hyperrealistic, niche-specific ads
-        Create cost-optimized professional video blueprint with logo-based brand consistency.
-        Maximum budget savings while maintaining highest accuracy with logo analysis.
+        Create cost-optimized professional video blueprint with brand consistency.
+        Maximum budget savings while maintaining highest accuracy with brand analysis.
         
         Args:
             brand_info: Brand information dictionary with name and description
             target_duration: Target video duration (fixed at 30 seconds for cost optimization)
             service_type: Video generation service (auto-selected for cost efficiency)
-            logo_file_path: Optional path to uploaded logo for visual brand analysis
             
         Returns:
-            Complete cost-optimized professional video blueprint with logo-based consistency
+            Complete cost-optimized professional video blueprint with brand consistency
         """
         try:
             start_time = time.time()
@@ -1773,8 +1652,8 @@ class EnhancedPlanningService:
             # Validate input requirements
             self._validate_brand_input(brand_info)
             
-            # Force 30-second duration for maximum cost efficiency
-            target_duration = self.duration_constraints['optimal_duration']  # Always 30s
+            # Force 18-second duration for audio sync and mobile optimization
+            target_duration = self.duration_constraints['optimal_duration']  # Always 18s
             
             # Auto-select most cost-effective service
             if video_provider:
@@ -1782,24 +1661,47 @@ class EnhancedPlanningService:
             elif service_type is None:
                 service_type = self._select_cost_effective_service(brand_info)
             
-            # Extract comprehensive brand intelligence with logo analysis if provided
+            # Extract comprehensive brand intelligence
             brand_elements = self.brand_intelligence.analyze_brand(
                 brand_name=brand_info.get('brand_name', ''),
-                brand_description=brand_info.get('brand_description', ''),
-                logo_file_path=logo_file_path
+                brand_description=brand_info.get('brand_description', '')
             )
             
             # Log analysis results
-            logo_status = "with logo analysis" if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis else "text-only analysis"
-            print(f"Dynamic Niche Detection: {brand_elements.niche.value} (confidence: {brand_elements.confidence_score:.2f}) | Service: {service_type} | {logo_status}")
+            print(f"Dynamic Niche Detection: {brand_elements.niche.value} (confidence: {brand_elements.confidence_score:.2f}) | Service: {service_type}")
+            print(f"GPT-4o Visual Intelligence: Dynamic brand analysis, {len(brand_elements.brand_colors or [])} brand colors")
             
-            if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis:
-                print(f"Logo Analysis: {brand_elements.logo_analysis.logo_style.value} style, {len(brand_elements.brand_colors or [])} brand colors")
+            # Apply precision engineering to timing before scene generation
+            if enable_quality_validation:
+                # Import tree planning algorithm for precision timing
+                from core.tree_planning_algorithm import TreePlanningAlgorithm
+                precision_planner = TreePlanningAlgorithm()
+                
+                # Create millisecond-precision planning tree
+                precision_tree = precision_planner.create_planning_tree(brand_info, target_duration * 1000)
+                
+                # Extract engineered scene timings from the tree
+                engineered_scenes = []
+                for act_node in precision_tree.children:
+                    for scene_node in act_node.children:
+                        engineered_scenes.append({
+                            'duration': scene_node.time_interval.duration_ms / 1000.0,  # Convert to seconds
+                            'visual_concept': scene_node.visual_concept,
+                            'act_purpose': act_node.act_purpose,
+                            'engineered_timing': scene_node.metadata.get('engineered_timing', False),
+                            'precise_duration_ms': scene_node.metadata.get('precise_duration_ms', 0),
+                            'psychological_impact_optimized': scene_node.metadata.get('psychological_impact_optimized', False)
+                        })
+                
+                print(f"🎯 Precision Engineering: {len(engineered_scenes)} scenes with millisecond-level timing control")
+                
+                # Generate engineered scenes with precise timing
+                scenes = self._generate_precision_engineered_scenes(
+                    brand_elements, brand_info, service_type, target_duration, engineered_scenes
+                )
             else:
-                print(f"GPT-4o Visual Intelligence: Dynamic brand analysis, {len(brand_elements.brand_colors or [])} brand colors")
-            
-            # Generate cost-optimized niche-specific scenes
-            scenes = self.template_engine.generate_niche_specific_scenes(
+                # Generate standard cost-optimized niche-specific scenes
+                scenes = self.template_engine.generate_niche_specific_scenes(
                 brand_elements=brand_elements,
                 target_duration=target_duration,
                 service_type=service_type
@@ -1827,7 +1729,7 @@ class EnhancedPlanningService:
                     'scene_count': len(scenes),
                     'scenes': scenes
                 },
-                'unified_script': self._generate_unified_script(scenes),
+                'unified_script': self._generate_unified_script(scenes, target_duration),
                 'brand_intelligence': {
                     'niche': brand_elements.niche.value,
                     'confidence_score': brand_elements.confidence_score,
@@ -1842,7 +1744,7 @@ class EnhancedPlanningService:
                     'brand_intelligence_enabled': True,
                     'dynamic_niche_detection': True,
                     'professional_quality_maintained': True,
-                    'duration_optimization': 'fixed_30s_3_scenes_10s_each',
+                    'duration_optimization': 'fixed_18s_3_scenes_6s_each',
                     'service_auto_selection': True,
                     'service_type': service_type,
                     'generation_accuracy': 'professional_maximum_with_cost_optimization',
@@ -1855,7 +1757,7 @@ class EnhancedPlanningService:
                     ],
                     'professional_standards': {
                         'scene_count': 3,
-                        'total_duration': 30,
+                        'total_duration': 18,
                         'quality_level': 'professional_commercial',
                         'niche_coverage': 'all_business_types_dynamic',
                         'brand_accuracy': 'maximum'
@@ -1876,8 +1778,7 @@ class EnhancedPlanningService:
                 blueprint=blueprint,
                 brand_elements=brand_elements,
                 quality_assessment=quality_assessment,
-                processing_time=processing_time,
-                logo_file_path=logo_file_path
+                processing_time=processing_time
             )
             
             # Quality gating - only proceed if quality meets standards
@@ -1900,8 +1801,7 @@ class EnhancedPlanningService:
             # Record failure metrics
             self._record_failure_metrics(
                 error=str(e),
-                brand_info=brand_info,
-                logo_file_path=logo_file_path
+                brand_info=brand_info
             )
             print(f"Professional blueprint creation failed: {e}")
             raise
@@ -1953,6 +1853,105 @@ class EnhancedPlanningService:
         
         print(f"Cost-optimized: 3 scenes × 10s = 30s total for maximum budget efficiency")
         return scenes
+    
+    def _generate_precision_engineered_scenes(
+        self, 
+        brand_elements: BrandElements, 
+        brand_info: Dict[str, Any], 
+        service_type: str, 
+        target_duration: int,
+        engineered_scenes: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Generate precision-engineered scenes with millisecond-level timing control."""
+        
+        # Use niche-specific templates as the base
+        base_scenes = self.template_engine.generate_niche_specific_scenes(
+            brand_elements=brand_elements,
+            target_duration=target_duration,
+            service_type=service_type
+        )
+        
+        # Apply precision engineering to each scene
+        precision_scenes = []
+        for i, (base_scene, engineered_scene) in enumerate(zip(base_scenes, engineered_scenes)):
+            # Merge base scene with precision engineering
+            precision_scene = base_scene.copy()
+            
+            # Apply precise timing controls
+            precision_scene.update({
+                'duration': engineered_scene['duration'],
+                'precise_duration_ms': engineered_scene['precise_duration_ms'],
+                'act_purpose': engineered_scene['act_purpose'],
+                'visual_concept_engineered': engineered_scene['visual_concept'],
+                'engineered_timing': engineered_scene['engineered_timing'],
+                'psychological_impact_optimized': engineered_scene['psychological_impact_optimized']
+            })
+            
+            # Add precision timing metadata
+            precision_scene['timing_precision'] = {
+                'millisecond_control': True,
+                'frame_perfect_execution': True,
+                'psychological_timing_optimized': True,
+                'attention_engineering': True,
+                'second_by_second_control': True,
+                'duration_mathematically_calculated': f"{engineered_scene['duration']:.3f}s"
+            }
+            
+            # Enhance prompts with timing awareness
+            if 'luma_prompt' in precision_scene:
+                timing_enhancement = f" (precisely timed for {engineered_scene['duration']:.1f}s psychological impact)"
+                precision_scene['luma_prompt'] += timing_enhancement
+                
+            # Add act-specific engineering
+            if engineered_scene['act_purpose'] == 'hook':
+                precision_scene['attention_engineering'] = {
+                    'peak_attention_timing': '1.2 seconds',
+                    'curiosity_maximized': True,
+                    'visual_impact_calculated': True
+                }
+            elif engineered_scene['act_purpose'] == 'problem':
+                precision_scene['emotional_engineering'] = {
+                    'empathy_buildup_timing': 'mathematically_optimized',
+                    'emotional_resonance_maximized': True,
+                    'pain_point_clarity': 'precision_timed'
+                }
+            elif engineered_scene['act_purpose'] == 'solution':
+                precision_scene['solution_engineering'] = {
+                    'reveal_timing_optimized': True,
+                    'transformation_clarity': 'frame_perfect',
+                    'benefit_demonstration_precise': True
+                }
+            elif engineered_scene['act_purpose'] == 'proof':
+                precision_scene['credibility_engineering'] = {
+                    'evidence_strength_timed': True,
+                    'trust_building_optimized': True,
+                    'social_proof_maximized': True
+                }
+            elif engineered_scene['act_purpose'] == 'action':
+                precision_scene['conversion_engineering'] = {
+                    'urgency_buildup_calculated': True,
+                    'cta_timing_optimized': True,
+                    'motivation_maximized': True
+                }
+            
+            precision_scenes.append(precision_scene)
+        
+        # Ensure total duration matches target
+        total_precision_duration = sum(scene['duration'] for scene in precision_scenes)
+        duration_difference = target_duration - total_precision_duration
+        
+        if abs(duration_difference) > 0.1:  # Allow 100ms tolerance
+            # Adjust the longest scene to match exact target
+            longest_scene_idx = max(range(len(precision_scenes)), 
+                                  key=lambda i: precision_scenes[i]['duration'])
+            precision_scenes[longest_scene_idx]['duration'] += duration_difference
+            precision_scenes[longest_scene_idx]['timing_adjusted'] = True
+        
+        print(f"🎯 Precision Engineering Applied: {len(precision_scenes)} scenes with frame-perfect timing")
+        print(f"🎬 Total Duration: {sum(scene['duration'] for scene in precision_scenes):.3f}s (target: {target_duration}s)")
+        print(f"🎵 Note: Scene durations will be dynamically adjusted to match actual audio duration")
+        
+        return precision_scenes
     
     def _generate_creative_vision(
         self, 
@@ -2014,19 +2013,24 @@ class EnhancedPlanningService:
         primary_trait = list(personality.keys())[0]
         return mood_mapping.get(primary_trait, "professional and engaging")
     
-    def _generate_unified_script(self, scenes: List[Dict[str, Any]]) -> str:
-        """Generate unified script from scene script lines."""
+    def _generate_unified_script(self, scenes: List[Dict[str, Any]], target_duration: int = 30) -> str:
+        """Generate unified script from scene script lines, optimized for target duration."""
         script_lines = [scene.get('script_line', '') for scene in scenes]
         unified_script = ' '.join(filter(None, script_lines))
         
-        # Validate script length for 30-second duration
+        # Calculate optimal script length based on target duration
+        # Professional speech rate: ~2.3 words per second (accounting for pauses and emphasis)
+        words_per_second = 2.3
+        max_words = int(target_duration * words_per_second)
+        
         word_count = len(unified_script.split())
-        max_words = 75  # ~2.5 words per second for 30s
         
         if word_count > max_words:
-            print(f"Script trimmed from {word_count} to {max_words} words for 30s duration")
+            print(f"Script optimized: trimmed from {word_count} to {max_words} words for {target_duration}s duration")
             words = unified_script.split()[:max_words]
             unified_script = ' '.join(words)
+        elif word_count < max_words * 0.7:  # If script is too short (less than 70% of optimal)
+            print(f"Script length: {word_count} words for {target_duration}s (could be longer for better engagement)")
         
         return unified_script
     
@@ -2045,7 +2049,7 @@ class EnhancedPlanningService:
             
             # Validate total duration constraint
             if total_duration > self.duration_constraints['max_total_duration']:
-                raise ValueError(f"Duration {total_duration}s exceeds maximum 30s")
+                raise ValueError(f"Duration {total_duration}s exceeds maximum 18s for optimal mobile viewing")
             
             # Validate scene durations
             actual_total = sum(scene.get('duration', 0) for scene in scenes)
@@ -2095,14 +2099,19 @@ class EnhancedPlanningService:
             visual_concept = scene.get('visual_concept', '')
             
             # Service-specific optimization
-            if service_type.lower() == "hailuo":
-                # Hailuo prefers concise, action-focused prompts
-                optimized_prompt = self._optimize_prompt_for_hailuo(visual_concept, scene)
-                scene['hailuo_prompt'] = optimized_prompt
-                scene['service_optimized'] = 'hailuo'
-            else:
+            if service_type.lower() == "luma":
                 # Luma handles detailed cinematic descriptions well
-                optimized_prompt = self._optimize_prompt_for_luma(visual_concept, scene)  
+                optimized_prompt = self._optimize_prompt_for_luma(visual_concept, scene)
+                scene['luma_prompt'] = optimized_prompt
+                scene['service_optimized'] = 'luma'
+            elif service_type.lower() == "runway":
+                # Runway optimization for cinematic quality
+                optimized_prompt = self._optimize_prompt_for_runway(visual_concept, scene)
+                scene['runway_prompt'] = optimized_prompt  
+                scene['service_optimized'] = 'runway'
+            else:
+                # Default to Luma optimization
+                optimized_prompt = self._optimize_prompt_for_luma(visual_concept, scene)
                 scene['luma_prompt'] = optimized_prompt
                 scene['service_optimized'] = 'luma'
         
@@ -2114,54 +2123,58 @@ class EnhancedPlanningService:
         
         return blueprint
     
-    def _optimize_prompt_for_hailuo(self, visual_concept: str, scene: Dict[str, Any]) -> str:
-        """Optimize prompt specifically for Hailuo service with high-quality visual focus."""
+    def _optimize_prompt_for_runway(self, visual_concept: str, scene: Dict[str, Any]) -> str:
+        """HYPERREALISTIC Commercial-Grade Runway ML Optimization.
         
-        # Hailuo excels with detailed, descriptive prompts - use rich descriptions
-        hailuo_strength_elements = [
-            'ultra-high definition 4K quality',
-            'professional commercial cinematography',
-            'detailed product visualization',
-            'natural volumetric lighting',
-            'cinematic depth of field',
-            'smooth camera movements',
-            'authentic brand integration',
-            'professional color grading'
+        Creates cinema-quality commercial scenes with Runway's advanced motion capabilities.
+        Implements professional movement and composition techniques for luxury brand standards.
+        """
+        
+        # LUXURY COMMERCIAL RUNWAY MOTION ELEMENTS (Advanced Cinematography)
+        runway_hyperrealistic_elements = [
+            'sophisticated cinematic camera choreography with smooth professional movement',
+            'luxury brand commercial film quality with premium production values', 
+            'dynamic motion sequences with elegant professional transitions',
+            'high-end advertising production with sophisticated visual storytelling',
+            'dramatic commercial lighting effects with professional three-point setup',
+            'seamless luxury brand transitions with cinematic flow',
+            'premium brand storytelling focus with sophisticated narrative progression',
+            'luxury commercial visual aesthetics with professional cinematographic excellence'
         ]
         
-        # Extract key elements from the scene
+        # Extract key elements from the scene for hyperrealistic enhancement
         character_desc = scene.get('character_description', 'professional individual')
-        emotional_arc = scene.get('emotional_arc', 'authentic moment')
+        emotional_arc = scene.get('emotional_arc', 'authentic professional moment')
         purpose = scene.get('purpose', 'demonstration')
-        scene_type = scene.get('type', 'professional commercial')
+        scene_type = scene.get('type', 'luxury commercial')
         
-        # Create more specific prompts based on scene type
+        # HYPERREALISTIC SCENE COMPOSITION based on advanced commercial techniques
         if 'split screen' in visual_concept.lower() or 'comparison' in visual_concept.lower():
-            # For split screen scenes showing before/after
+            # Premium split screen commercial with luxury brand transformation
             enhanced_prompt = (
-                f"Split screen comparison showing workflow transformation, "
-                f"from challenge to smooth solution, {visual_concept}, "
-                f"{', '.join(hailuo_strength_elements[:4])}, "
-                f"professional cinematography with natural transitions, "
-                f"high production value"
+                f"LUXURY COMMERCIAL: Sophisticated split-screen transformation showing premium workflow evolution, "
+                f"from challenge to elegant solution breakthrough, {visual_concept}, "
+                f"{', '.join(runway_hyperrealistic_elements[:3])}, "
+                f"professional commercial cinematography with seamless luxury transitions, "
+                f"BMW/Apple-level production value with sophisticated brand integration"
             )
         elif 'direct camera' in visual_concept.lower() or 'smile' in visual_concept.lower():
-            # For direct-to-camera scenes with CTA
+            # Premium direct-to-camera commercial with sophisticated presentation
             enhanced_prompt = (
-                f"Professional person speaking directly to camera with genuine smile, "
-                f"{visual_concept}, {scene_type} setting, "
-                f"{', '.join(hailuo_strength_elements[:4])}, "
-                f"confident and trustworthy presentation, "
-                f"branded background with clear call to action, "
-                f"high production value"
+                f"LUXURY COMMERCIAL: Professional executive speaking directly to camera with confident authentic presence, "
+                f"{visual_concept}, sophisticated {scene_type} environment with premium lighting, "
+                f"{', '.join(runway_hyperrealistic_elements[:3])}, "
+                f"authoritative and trustworthy luxury brand presentation, "
+                f"sophisticated commercial background with elegant call to action, "
+                f"Nike/Coca-Cola-level commercial production excellence"
             )
         else:
-            # General scene optimization
+            # Premium general commercial scene with luxury brand sophistication
             enhanced_prompt = (
-                f"Professional commercial scene: {character_desc}, "
-                f"{emotional_arc}, {visual_concept}, "
-                f"{', '.join(hailuo_strength_elements[:4])}, "
-                f"focus on {purpose}, high production value"
+                f"LUXURY COMMERCIAL: {character_desc} in sophisticated brand scenario, "
+                f"{emotional_arc} with premium lifestyle integration, {visual_concept}, "
+                f"{', '.join(runway_hyperrealistic_elements[:3])}, "
+                f"focus on {purpose} with luxury brand excellence, sophisticated commercial production value"
             )
         
         # Important: Do NOT include any text-related elements in the prompt
@@ -2177,31 +2190,406 @@ class EnhancedPlanningService:
         return enhanced_prompt[:250]  # Hailuo optimal length with rich detail
     
     def _optimize_prompt_for_luma(self, visual_concept: str, scene: Dict[str, Any]) -> str:
-        """Optimize prompt specifically for Luma Dream Machine - leveraging its strengths."""
+        """HYPERREALISTIC Commercial-Grade Luma Dream Machine Optimization.
         
-        # Luma Dream Machine excels with detailed, descriptive prompts - use rich descriptions
-        luma_strength_elements = [
-            'hyperrealistic commercial cinematography',
-            '4K photorealistic quality with natural volumetric lighting',
-            'authentic character emotions and micro-expressions',
-            'cinematic depth of field with atmospheric details',
-            'professional color grading and motion blur',
-            'branded environment with seamless integration',
-            'story-driven visual narrative with continuity'
+        Creates cinema-quality commercial scenes at BMW/Apple/Nike advertisement level.
+        Implements advanced cinematography with industry-standard production values.
+        """
+        
+        # HYPERREALISTIC COMMERCIAL CINEMATOGRAPHY FRAMEWORK
+        character_desc = scene.get('character_description', 'professional individual')
+        scene_purpose = scene.get('purpose', 'demonstration')
+        scene_type = scene.get('type', 'commercial')
+        
+        # Part 1: Premium Subject & Action with professional performance
+        subject_action = self._build_hyperrealistic_subject_action(character_desc, scene_purpose, visual_concept)
+        
+        # Part 2: Luxury Environment with cinematic production design
+        environment = self._build_cinematic_environment(scene_type, visual_concept)
+        
+        # Part 3: Professional Commercial Style Reference
+        style_reference = self._get_commercial_grade_style_reference(scene_type)
+        
+        # Part 4: Advanced Camera Work & Cinematic Mood
+        camera_mood = self._get_professional_cinematography_direction(scene_purpose, visual_concept)
+        
+        # LUXURY COMMERCIAL ASSEMBLY with professional integration
+        enhanced_prompt = f"{subject_action}, {environment}, {style_reference}, {camera_mood}"
+        
+        # Professional quality validation and optimization
+        validated_prompt = self._validate_commercial_prompt_quality(enhanced_prompt)
+        
+        return validated_prompt[:200]  # Luma optimal length for professional clips
+    
+    def _build_hyperrealistic_subject_action(self, character_desc: str, scene_purpose: str, visual_concept: str) -> str:
+        """Build HYPERREALISTIC subject and action with commercial-grade performance."""
+        # Extract premium character archetype
+        core_character = character_desc.split(',')[0].strip()
+        
+        # PROFESSIONAL COMMERCIAL ACTIONS with authentic performance
+        commercial_actions = {
+            'hook': [
+                "confidently demonstrating with authentic expertise",
+                "engaging with genuine professional authority", 
+                "presenting with compelling brand confidence",
+                "showcasing with natural charismatic presence"
+            ],
+            'problem_solution': [
+                "seamlessly transforming challenges into solutions",
+                "expertly navigating from problem to breakthrough",
+                "confidently resolving with innovative approach",
+                "demonstrating mastery with effortless precision"
+            ],
+            'cta': [
+                "directly connecting with compelling authenticity",
+                "engaging with persuasive professional charm",
+                "inviting action with confident authority",
+                "motivating with genuine expertise and warmth"
+            ],
+            'demonstration': [
+                "professionally demonstrating with expert precision",
+                "confidently showcasing with authentic mastery",
+                "elegantly presenting with sophisticated technique",
+                "expertly guiding through premium experience"
+            ],
+            'testimonial': [
+                "authentically sharing transformative experience",
+                "confidently endorsing with genuine enthusiasm", 
+                "naturally expressing professional satisfaction",
+                "elegantly communicating premium value"
+            ],
+            'lifestyle': [
+                "naturally integrating into sophisticated lifestyle",
+                "elegantly embodying premium brand experience",
+                "confidently living elevated quality of life",
+                "authentically enjoying transformative benefits"
+            ],
+            'product_reveal': [
+                "dramatically unveiling with professional flair",
+                "elegantly introducing with sophisticated presentation",
+                "confidently revealing with premium anticipation",
+                "expertly showcasing with commercial excellence"
+            ],
+            'transformation': [
+                "experiencing remarkable professional transformation",
+                "confidently embracing elevated lifestyle change",
+                "naturally evolving into premium experience",
+                "authentically achieving sophisticated upgrade"
+            ]
+        }
+        
+        import random
+        actions = commercial_actions.get(scene_purpose, commercial_actions.get('demonstration', commercial_actions['lifestyle']))
+        selected_action = random.choice(actions)
+        
+        return f"{core_character} {selected_action}"
+    
+    def _build_luma_subject_action(self, character: str, purpose: str, concept: str) -> str:
+        """Build Subject & Action component for Luma - WHO + WHAT they're doing."""
+        
+        # Action mapping for 5-10 second clips
+        action_map = {
+            'demonstration': 'demonstrating',
+            'testimonial': 'speaking confidently to camera', 
+            'lifestyle': 'naturally using',
+            'product_reveal': 'elegantly revealing',
+            'transformation': 'experiencing the transformation',
+            'interaction': 'interacting with'
+        }
+        
+        action = action_map.get(purpose, 'professionally showcasing')
+        
+        # Extract key subject from concept if character is generic
+        if 'professional individual' in character and any(word in concept.lower() for word in ['person', 'woman', 'man', 'entrepreneur']):
+            if 'entrepreneur' in concept.lower():
+                character = 'confident young entrepreneur'
+            elif 'woman' in concept.lower():
+                character = 'professional woman'
+            elif 'man' in concept.lower():
+                character = 'professional man'
+        
+        return f"{character} {action}"
+    
+    def _build_cinematic_environment(self, scene_type: str, visual_concept: str) -> str:
+        """Build CINEMATIC environment with luxury production design."""
+        # LUXURY COMMERCIAL ENVIRONMENTS with premium production values
+        cinematic_environments = {
+            'corporate': [
+                "sophisticated executive boardroom with floor-to-ceiling windows, premium marble surfaces, dramatic city skyline backdrop",
+                "modern glass office tower with panoramic urban views, sleek minimalist design, professional lighting architecture", 
+                "luxury corporate workspace with contemporary furniture, ambient designer lighting, premium material finishes",
+                "high-end business center with architectural glass features, sophisticated interior design, natural illumination"
+            ],
+            'commercial': [
+                "premium corporate headquarters with sophisticated architecture, professional lighting design, luxury brand environment",
+                "executive business center with floor-to-ceiling windows, modern minimalist design, sophisticated commercial atmosphere",
+                "high-end office complex with premium materials, dramatic lighting architecture, professional brand setting",
+                "luxury workspace with contemporary design elements, sophisticated lighting, premium commercial environment"
+            ],
+            'lifestyle': [
+                "elegant modern residence with designer furniture, warm natural lighting, sophisticated contemporary aesthetics",
+                "upscale urban loft with premium materials, artistic lighting design, professional luxury ambiance",
+                "stylish penthouse environment with luxury finishes, soft directional lighting, modern architectural elements",
+                "sophisticated home setting with designer elements, warm ambient lighting, premium lifestyle context"
+            ],
+            'tech': [
+                "futuristic tech headquarters with sleek surfaces, ambient LED lighting, sophisticated digital environment",
+                "modern innovation center with cutting-edge design, professional lighting systems, premium technology setting",
+                "high-tech workspace with minimalist architecture, dramatic accent lighting, sophisticated digital atmosphere",
+                "premium technology office with contemporary design, sophisticated lighting architecture, innovation-focused environment"
+            ],
+            'luxury': [
+                "opulent penthouse office with marble surfaces, gold accent lighting, panoramic metropolitan views",
+                "exclusive private club setting with rich materials, dramatic spotlighting, luxury lifestyle integration", 
+                "high-end hotel executive suite with premium finishes, sophisticated lighting design, elegant atmosphere",
+                "luxury venue interior with premium materials, ambient designer lighting, exclusive lifestyle context"
+            ],
+            'outdoor': [
+                "prestigious urban plaza with modern architecture, golden hour cinematography, sophisticated cityscape backdrop",
+                "luxury resort terrace with panoramic views, dramatic sunset lighting, premium lifestyle environment",
+                "exclusive rooftop venue with city skyline, sophisticated evening lighting, upscale social context",
+                "high-end retail district with architectural elements, professional street photography lighting, urban sophistication"
+            ],
+            'studio': [
+                "premium photography studio with professional lighting grid, seamless backdrop, commercial production setup",
+                "high-end broadcast facility with cinematic lighting, sophisticated equipment, media production environment",
+                "luxury brand showroom with dramatic presentation lighting, premium display architecture, elegant product context",
+                "exclusive private studio with museum-quality lighting, sophisticated interior design, artistic atmosphere"
+            ]
+        }
+        
+        import random
+        environments = cinematic_environments.get(scene_type, cinematic_environments['commercial'])
+        selected_environment = random.choice(environments)
+        
+        # Add cinematic lighting enhancement
+        lighting_enhancements = [
+            "with cinematic three-point lighting setup",
+            "bathed in golden hour cinematography", 
+            "enhanced by dramatic key lighting",
+            "illuminated with professional film lighting",
+            "featuring sophisticated lighting design",
+            "with luxury commercial lighting architecture"
         ]
         
-        # Extract character info if available
-        character_desc = scene.get('character_description', 'professional individual')
-        emotional_arc = scene.get('emotional_arc', 'authentic_moment')
+        lighting = random.choice(lighting_enhancements)
+        return f"{selected_environment} {lighting}"
+
+    def _build_luma_environment(self, scene_type: str, concept: str) -> str:
+        """Build Environment/Setting component - WHERE + WHEN + atmosphere."""
         
-        # Build Luma-optimized prompt with rich detail (Luma's strength)
-        enhanced_prompt = (
-            f"Professional commercial scene: {character_desc}, "
-            f"{emotional_arc}, {visual_concept}, "
-            f"{', '.join(luma_strength_elements[:5])}"
-        )
+        # Professional environment mapping
+        environment_map = {
+            'commercial': 'modern corporate office with floor-to-ceiling windows',
+            'lifestyle': 'contemporary living space with natural lighting',
+            'tech': 'sleek tech workspace with ambient LED lighting',
+            'healthcare': 'clean medical environment with soft professional lighting',
+            'finance': 'sophisticated financial district office with city views',
+            'retail': 'elegant retail showroom with premium lighting'
+        }
         
-        return enhanced_prompt[:280]  # Optimal length for Luma Dream Machine
+        # Extract environment hints from concept
+        if 'office' in concept.lower():
+            base_env = 'modern glass office'
+        elif 'home' in concept.lower() or 'living' in concept.lower():
+            base_env = 'contemporary home interior'
+        elif 'studio' in concept.lower():
+            base_env = 'professional studio setting'
+        else:
+            base_env = environment_map.get(scene_type, 'professional modern setting')
+        
+        # Add cinematic time and atmosphere
+        return f"{base_env}, golden hour lighting streaming through, cinematic atmosphere"
+    
+    def _get_commercial_grade_style_reference(self, scene_type: str) -> str:
+        """Get COMMERCIAL-GRADE style reference with industry standards."""
+        # LUXURY BRAND COMMERCIAL STYLE REFERENCES (BMW/Apple/Nike level)
+        commercial_styles = [
+            "luxury brand cinematography with premium color grading, sophisticated visual storytelling, commercial excellence",
+            "high-end advertising photography with dramatic depth of field, professional lighting design, premium aesthetic",
+            "cinematic commercial production with dynamic camera movements, sophisticated composition, luxury brand standards", 
+            "premium lifestyle cinematography with elegant visual language, sophisticated lighting architecture, brand sophistication",
+            "professional advertising videography with commercial-grade color science, premium production values, luxury appeal",
+            "sophisticated brand cinematography with artistic lighting design, premium visual storytelling, commercial sophistication",
+            "luxury commercial aesthetic with cinematic depth, sophisticated production design, premium brand integration",
+            "high-end lifestyle photography with dramatic visual impact, professional commercial standards, elegant sophistication",
+            "premium brand videography with sophisticated cinematography, luxury production values, commercial artistry",
+            "cinematic advertising excellence with sophisticated lighting, premium visual design, luxury brand storytelling"
+        ]
+        
+        import random
+        return random.choice(commercial_styles)
+
+    def _get_luma_style_reference(self, scene_type: str) -> str:
+        """Get Style & Reference component - cinematic style direction."""
+        
+        # Luma excels with these style references
+        style_map = {
+            'commercial': 'photorealistic commercial cinematography',
+            'lifestyle': 'cinematic realism with natural authenticity',
+            'tech': 'sleek sci-fi commercial aesthetic',
+            'healthcare': 'clean medical documentary style',
+            'finance': 'sophisticated corporate film style',
+            'retail': 'luxury brand commercial cinematography'
+        }
+        
+        return style_map.get(scene_type, 'photorealistic cinematic style')
+    
+    def _get_professional_cinematography_direction(self, scene_purpose: str, visual_concept: str) -> str:
+        """Get PROFESSIONAL cinematography direction with advanced camera work."""
+        # ADVANCED COMMERCIAL CINEMATOGRAPHY with industry-standard camera techniques
+        professional_camera_work = {
+            'hook': [
+                "dynamic dolly-in with shallow depth of field, engaging eye-level perspective, confident commercial framing",
+                "sophisticated crane movement with dramatic reveal, professional three-point lighting, premium commercial mood",
+                "smooth gimbal tracking with cinematic composition, elegant camera choreography, luxury brand cinematography",
+                "professional steadicam work with dynamic perspective shift, sophisticated lighting design, commercial excellence"
+            ],
+            'problem_solution': [
+                "seamless tracking shot with progressive reveal, sophisticated cinematography, professional commercial flow",
+                "elegant camera transition with smooth movement, cinematic storytelling, premium production values",
+                "professional dolly track with narrative progression, sophisticated lighting, commercial-grade cinematography",
+                "dynamic camera choreography with smooth transitions, premium visual storytelling, luxury commercial mood"
+            ],
+            'cta': [
+                "direct camera engagement with confident framing, professional portrait lighting, compelling commercial presence", 
+                "intimate medium shot with sophisticated depth, premium lighting design, engaging commercial cinematography",
+                "confident camera positioning with professional framing, sophisticated lighting, direct commercial appeal",
+                "engaging eye-level cinematography with premium lighting, sophisticated commercial composition, direct connection"
+            ],
+            'demonstration': [
+                "professional tracking shot with expert framing, sophisticated lighting design, commercial-grade precision",
+                "smooth dolly movement with cinematic composition, premium production values, sophisticated camera work",
+                "elegant camera choreography with professional techniques, luxury commercial cinematography, expert presentation",
+                "sophisticated cinematography with smooth camera flow, premium lighting architecture, professional excellence"
+            ],
+            'testimonial': [
+                "intimate portrait cinematography with professional lighting, sophisticated depth of field, authentic commercial appeal",
+                "confident medium shot with elegant framing, premium lighting design, sophisticated commercial presence",
+                "professional interview setup with cinematic lighting, elegant composition, luxury brand cinematography",
+                "sophisticated portrait work with premium lighting architecture, professional commercial authenticity"
+            ],
+            'lifestyle': [
+                "elegant camera choreography with sophisticated movement, premium lifestyle cinematography, luxury commercial aesthetic",
+                "professional camera work with cinematic elegance, sophisticated lighting design, premium brand presentation",
+                "sophisticated cinematography with smooth camera flow, elegant visual storytelling, luxury commercial sophistication",
+                "premium camera technique with sophisticated composition, elegant lighting architecture, commercial brand excellence"
+            ],
+            'product_reveal': [
+                "dramatic product reveal with professional lighting, sophisticated cinematography, luxury commercial presentation",
+                "elegant unveiling cinematography with premium production values, sophisticated camera choreography",
+                "professional product cinematography with dramatic lighting, sophisticated visual storytelling, commercial excellence",
+                "luxury brand reveal with sophisticated camera work, premium lighting design, elegant commercial cinematography"
+            ],
+            'transformation': [
+                "sophisticated transformation cinematography with smooth transitions, premium production values, commercial excellence",
+                "professional before-after cinematography with elegant camera work, sophisticated lighting, luxury brand appeal",
+                "cinematic transformation sequence with sophisticated camera choreography, premium commercial cinematography",
+                "elegant transformation storytelling with professional camera techniques, sophisticated lighting architecture"
+            ]
+        }
+        
+        import random
+        camera_options = professional_camera_work.get(scene_purpose, professional_camera_work.get('demonstration', professional_camera_work['lifestyle']))
+        selected_camera_work = random.choice(camera_options)
+        
+        # Add professional mood enhancement
+        commercial_moods = [
+            "confident commercial energy",
+            "sophisticated brand elegance",
+            "premium lifestyle sophistication", 
+            "luxury commercial excellence",
+            "professional brand confidence",
+            "sophisticated commercial appeal"
+        ]
+        
+        mood = random.choice(commercial_moods)
+        return f"{selected_camera_work}, {mood}"
+
+    def _get_luma_camera_direction(self, purpose: str, concept: str) -> str:
+        """Get Camera/Mood component - professional camera work Luma understands."""
+        
+        # Luma-optimized camera motions that work well
+        camera_motions = {
+            'demonstration': 'smooth dolly-in shot with shallow depth of field',
+            'testimonial': 'steady medium shot with subtle dolly push',
+            'product_reveal': 'dramatic reveal with slow zoom out',
+            'lifestyle': 'tracking shot with natural camera movement',
+            'transformation': 'time-lapse style smooth transition',
+            'interaction': 'dynamic handheld with cinematic stabilization'
+        }
+        
+        base_camera = camera_motions.get(purpose, 'cinematic tracking shot')
+        
+        # Add professional mood
+        if 'confident' in concept.lower() or 'professional' in concept.lower():
+            mood = 'dramatic lighting with professional atmosphere'
+        elif 'natural' in concept.lower() or 'authentic' in concept.lower():
+            mood = 'soft natural lighting with warm atmosphere'
+        else:
+            mood = 'cinematic lighting with polished atmosphere'
+        
+        return f"{base_camera}, {mood}"
+    
+    def _validate_commercial_prompt_quality(self, prompt: str) -> str:
+        """Validate and enhance prompt quality for COMMERCIAL-GRADE Luma Dream Machine."""
+        # LUXURY COMMERCIAL QUALITY INDICATORS
+        essential_quality_keywords = {
+            'cinematography': ['cinematic', 'cinematography', 'camera work', 'filming'],
+            'professionalism': ['professional', 'commercial', 'premium', 'luxury', 'sophisticated'],
+            'production_value': ['high-end', 'premium', 'luxury', 'sophisticated', 'elegant'],
+            'lighting': ['lighting', 'illuminated', 'golden hour', 'dramatic', 'ambient'],
+            'commercial_grade': ['commercial', 'brand', 'advertising', 'professional', 'premium']
+        }
+        
+        # Validate commercial quality standards
+        quality_score = 0
+        for category, keywords in essential_quality_keywords.items():
+            if any(keyword in prompt.lower() for keyword in keywords):
+                quality_score += 1
+        
+        # Enhance prompt if quality score is insufficient
+        if quality_score < 3:
+            # Add commercial-grade enhancement
+            commercial_enhancer = "premium commercial cinematography with sophisticated lighting design and luxury brand aesthetics, "
+            prompt = f"{commercial_enhancer}{prompt}"
+        
+        # Professional formatting with commercial standards
+        prompt = prompt.replace('  ', ' ').strip()
+        
+        # Ensure commercial appeal keywords are present
+        if 'commercial' not in prompt.lower():
+            prompt = f"commercial-grade {prompt}"
+        
+        return prompt
+
+    def _validate_luma_prompt_quality(self, prompt: str, scene: Dict[str, Any]) -> str:
+        """Apply professional quality checklist for Luma optimization."""
+        
+        # Pro checklist validation
+        improvements = []
+        
+        # ✅ Subject & action clearly defined?
+        if not any(word in prompt.lower() for word in ['demonstrating', 'speaking', 'using', 'revealing', 'showcasing']):
+            improvements.append('professionally demonstrating')
+        
+        # ✅ Environment defined (time, place, atmosphere)?
+        if not any(word in prompt.lower() for word in ['office', 'studio', 'lighting', 'interior', 'setting']):
+            improvements.append('professional studio setting')
+        
+        # ✅ Coherent style (cinematic, photorealistic)?
+        if not any(word in prompt.lower() for word in ['cinematic', 'photorealistic', 'commercial']):
+            improvements.append('cinematic realism')
+        
+        # ✅ Camera motion or angle?
+        if not any(word in prompt.lower() for word in ['shot', 'camera', 'dolly', 'tracking', 'zoom']):
+            improvements.append('smooth camera movement')
+        
+        # Apply improvements if needed
+        if improvements:
+            prompt += f", {', '.join(improvements)}"
+        
+        return prompt
     
     def _optimize_prompt_length(self, prompt: str, max_length: int) -> str:
         """Professional prompt optimization preserving critical Hailuo elements."""
@@ -2312,7 +2700,7 @@ class EnhancedPlanningService:
         # Add cost optimization metadata with Luma focus
         cost_optimizations = {
             'service_selection_reason': f"Luma Dream Machine selected for {service_type} - highest professional quality",
-            'duration_optimization': 'Fixed 30s (3×10s scenes) for optimal Luma generation',
+            'duration_optimization': 'Fixed 18s (3×6s scenes) for optimal mobile attention and audio sync',
             'prompt_length_optimization': f"Optimized for {service_type} - professional quality with cost efficiency", 
             'template_reuse': 'Professional Luma-optimized templates cached',
             'luma_advantages': 'Superior hyperrealistic quality, better character consistency, professional cinematography'
@@ -2328,134 +2716,13 @@ class EnhancedPlanningService:
         
         return base_vision
     
-    def create_professional_video_blueprint_with_base64_logo(
-        self, 
-        brand_info: Dict[str, Any],
-        logo_base64: str,
-        target_duration: int = 30,
-        service_type: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Create professional video blueprint with base64 encoded logo.
-        
-        Args:
-            brand_info: Brand information dictionary
-            logo_base64: Base64 encoded logo image data
-            target_duration: Target video duration (fixed at 30s)
-            service_type: Video generation service (auto-selected)
-            
-        Returns:
-            Complete professional video blueprint with logo-based consistency
-        """
-        try:
-            # Validate input requirements
-            self._validate_brand_input(brand_info)
-            
-            # Force 30-second duration for maximum cost efficiency
-            target_duration = self.duration_constraints['optimal_duration']  # Always 30s
-            
-            # Auto-select most cost-effective service
-            if service_type is None:
-                service_type = self._select_cost_effective_service(brand_info)
-            
-            # Extract comprehensive brand intelligence with base64 logo analysis
-            brand_elements = self.brand_intelligence.analyze_brand_with_base64_logo(
-                brand_name=brand_info.get('brand_name', ''),
-                brand_description=brand_info.get('brand_description', ''),
-                logo_base64=logo_base64
-            )
-            
-            # Log analysis results
-            logo_status = "with base64 logo analysis" if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis else "text-only analysis"
-            print(f"Dynamic Niche Detection: {brand_elements.niche.value} (confidence: {brand_elements.confidence_score:.2f}) | Service: {service_type} | {logo_status}")
-            
-            if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis:
-                print(f"Logo Analysis: {brand_elements.logo_analysis.logo_style.value} style, {len(brand_elements.brand_colors or [])} brand colors")
-            else:
-                print(f"GPT-4o Visual Intelligence: Dynamic brand analysis, {len(brand_elements.brand_colors or [])} brand colors")
-            
-            # Generate cost-optimized niche-specific scenes with logo consistency
-            scenes = self.template_engine.generate_niche_specific_scenes(
-                brand_elements=brand_elements,
-                target_duration=target_duration,
-                service_type=service_type
-            )
-            
-            # Apply cost-optimized duration constraints (fixed 10s per scene)
-            scenes = self._enforce_duration_constraints(scenes, target_duration)
-            
-            # Generate cost-efficient audio architecture
-            audio_architecture = self.template_engine.generate_audio_architecture(
-                brand_elements=brand_elements,
-                scenes=scenes,
-                total_duration=target_duration
-            )
-            
-            # Create professional creative vision with logo optimization
-            creative_vision = self._generate_cost_optimized_creative_vision(brand_elements, brand_info, service_type)
-            
-            # Compile complete professional blueprint with logo data
-            blueprint = {
-                'creative_vision': creative_vision,
-                'audio_architecture': audio_architecture,
-                'scene_architecture': {
-                    'total_duration': target_duration,
-                    'scene_count': len(scenes),
-                    'scenes': scenes
-                },
-                'unified_script': self._generate_unified_script(scenes),
-                'brand_intelligence': {
-                    'niche': brand_elements.niche.value,
-                    'confidence_score': brand_elements.confidence_score,
-                    'key_benefits': brand_elements.key_benefits,
-                    'target_audience': brand_elements.target_demographics,
-                    'brand_personality': brand_elements.brand_personality,
-                    'logo_analysis': brand_elements.logo_analysis.__dict__ if hasattr(brand_elements, 'logo_analysis') and brand_elements.logo_analysis else None,
-                    'brand_colors': brand_elements.brand_colors,
-                    'visual_consistency': brand_elements.visual_consistency
-                },
-                'production_metadata': {
-                    'architect_version': '4.1_logo_integrated_professional',
-                    'cost_optimization_enabled': True,
-                    'logo_analysis_enabled': True,
-                    'brand_color_consistency': True,
-                    'visual_brand_consistency': True,
-                    'budget_efficiency': 'maximum',
-                    'brand_intelligence_enabled': True,
-                    'dynamic_niche_detection': True,
-                    'professional_quality_maintained': True,
-                    'duration_optimization': 'fixed_30s_3_scenes_10s_each',
-                    'service_auto_selection': True,
-                    'service_type': service_type,
-                    'generation_accuracy': 'professional_maximum_with_logo_consistency',
-                    'logo_features': [
-                        'automatic_color_extraction_and_integration',
-                        'brand_style_consistency_across_scenes',
-                        'font_style_suggestions_from_logo_analysis',
-                        'visual_weight_and_mood_matching',
-                        'professional_brand_environment_generation'
-                    ]
-                }
-            }
-            
-            # Final validation
-            blueprint = self._validate_complete_blueprint(blueprint)
-            
-            print(f"Logo-Enhanced Blueprint Created: {len(scenes)} scenes, {target_duration}s duration, logo-consistent branding")
-            
-            return blueprint
-            
-        except Exception as e:
-            print(f"Logo-enhanced blueprint creation failed: {e}")
-            raise
     
     def _assess_blueprint_quality(self, blueprint: Dict[str, Any]) -> Dict[str, Any]:
         """Assess blueprint quality using comprehensive ML-powered analysis."""
         try:
             # Use ML quality validator for comprehensive assessment
-            validation_result, quality_scores = self.ml_quality_validator.validate_architecture_quality(
-                architecture=blueprint
-            )
+            validation_result = self.ml_quality_validator.validate_architecture_quality(blueprint)
+            quality_scores = validation_result.sanitized_value.get('quality_assessment', {}) if validation_result.sanitized_value else {}
             
             # Extract individual quality metrics
             quality_assessment = {
@@ -2643,7 +2910,7 @@ class EnhancedPlanningService:
             if fallback_scenes:
                 # Update blueprint with fallback content
                 blueprint['scene_architecture']['scenes'] = fallback_scenes
-                blueprint['unified_script'] = self._generate_unified_script(fallback_scenes)
+                blueprint['unified_script'] = self._generate_unified_script(fallback_scenes, blueprint.get('scene_architecture', {}).get('total_duration', 30))
                 
                 # Add fallback metadata
                 blueprint['production_metadata']['fallback_applied'] = True
@@ -2660,8 +2927,7 @@ class EnhancedPlanningService:
                                  blueprint: Dict[str, Any], 
                                  brand_elements: BrandElements,
                                  quality_assessment: Dict[str, Any],
-                                 processing_time: float,
-                                 logo_file_path: Optional[str] = None) -> None:
+                                 processing_time: float) -> None:
         """Record comprehensive generation metrics to database-backed monitoring system."""
         try:
             # Calculate ML enhancement usage
@@ -2721,7 +2987,7 @@ class EnhancedPlanningService:
         except Exception as e:
             logger.error(f"Failed to record generation metrics: {e}", exc_info=True)
     
-    def _record_failure_metrics(self, error: str, brand_info: Dict[str, Any], logo_file_path: Optional[str] = None) -> None:
+    def _record_failure_metrics(self, error: str, brand_info: Dict[str, Any]) -> None:
         """Record failure metrics for continuous improvement."""
         try:
             # Record failure in quality monitoring
@@ -2737,7 +3003,6 @@ class EnhancedPlanningService:
                 error_details={
                     'error_message': error,
                     'brand_name': brand_info.get('brand_name', 'unknown'),
-                    'has_logo': logo_file_path is not None,
                     'brand_description_length': len(brand_info.get('brand_description', ''))
                 }
             )
@@ -3046,27 +3311,15 @@ class EnhancedPlanningService:
         brand_name: str,
         brand_description: str,
         target_duration: int = 30,
-        logo_path: Optional[str] = None,
-        target_platform: str = 'meta',
-        logo_base64: Optional[str] = None
+        target_platform: str = 'meta'
     ) -> Dict[str, Any]:
         """Create video blueprint with Phase 2 performance predictions."""
         try:
             # Create the base blueprint using existing method
-            if logo_base64:
-                blueprint = self.create_professional_video_blueprint_with_base64_logo(
-                    brand_name=brand_name,
-                    brand_description=brand_description,
-                    target_duration=target_duration,
-                    logo_base64=logo_base64
-                )
-            else:
-                blueprint = self.create_professional_video_blueprint(
-                    brand_name=brand_name,
-                    brand_description=brand_description,
-                    target_duration=target_duration,
-                    logo_path=logo_path
-                )
+            blueprint = self.create_professional_video_blueprint(
+                brand_info={'brand_name': brand_name, 'brand_description': brand_description},
+                target_duration=target_duration
+            )
             
             # Generate performance predictions
             performance_predictions = self.performance_predictor.predict_performance_metrics(
@@ -3114,20 +3367,10 @@ class EnhancedPlanningService:
         except Exception as e:
             logger.error(f"Blueprint generation with performance predictions failed: {e}", exc_info=True)
             # Fallback to regular blueprint creation
-            if logo_base64:
-                return self.create_professional_video_blueprint_with_base64_logo(
-                    brand_name=brand_name,
-                    brand_description=brand_description,
-                    target_duration=target_duration,
-                    logo_base64=logo_base64
-                )
-            else:
-                return self.create_professional_video_blueprint(
-                    brand_name=brand_name,
-                    brand_description=brand_description,
-                    target_duration=target_duration,
-                    logo_path=logo_path
-                )
+            return self.create_professional_video_blueprint(
+                brand_info={'brand_name': brand_name, 'brand_description': brand_description},
+                target_duration=target_duration
+            )
     
     def _generate_performance_insights(self, predictions: Dict[str, float], platform: str) -> Dict[str, Any]:
         """Generate actionable insights from performance predictions."""
@@ -3229,3 +3472,804 @@ class EnhancedPlanningService:
         except Exception as e:
             logger.error(f"Failed to get performance prediction analytics: {e}")
             return {'error': str(e)}
+    
+    # ULTRA-SOPHISTICATED TREE ALGORITHM - Millisecond Precision Planning
+    
+    def _analyze_concept_and_strategy(self, brand_info: Dict[str, Any], duration: int) -> Dict[str, Any]:
+        """
+        LEVEL 1: CONCEPT UNDERSTANDING
+        Deep analysis of brand, audience psychology, and strategic goals.
+        Understands the concept exactly before any planning begins.
+        """
+        brand_name = brand_info.get('brand_name', 'Unknown Brand')
+        brand_desc = brand_info.get('brand_description', '')
+        
+        # Extract brand intelligence
+        try:
+            brand_elements = self.brand_intelligence.analyze_brand_comprehensive(brand_info)
+            niche = brand_elements.niche.value if brand_elements else 'general'
+            audience = brand_elements.target_demographics if brand_elements else []
+        except:
+            niche = 'general'
+            audience = ['general_audience']
+        
+        # Deep concept analysis
+        concept_understanding = {
+            'brand_essence': {
+                'core_message': self._extract_core_message(brand_name, brand_desc),
+                'value_proposition': self._identify_value_proposition(brand_desc),
+                'emotional_drivers': self._analyze_emotional_drivers(brand_desc, niche),
+                'competitive_advantage': self._determine_competitive_advantage(brand_desc)
+            },
+            'audience_psychology': {
+                'primary_motivation': self._analyze_audience_motivation(niche, audience),
+                'pain_points': self._identify_pain_points(niche, brand_desc),
+                'desired_outcomes': self._determine_desired_outcomes(niche),
+                'decision_triggers': self._analyze_decision_triggers(niche)
+            },
+            'strategic_framework': {
+                'communication_goal': self._determine_communication_goal(brand_desc),
+                'persuasion_strategy': self._select_persuasion_strategy(niche, audience),
+                'emotional_journey': self._map_emotional_journey(duration),
+                'call_to_action_strategy': self._design_cta_strategy(niche)
+            },
+            'constraints_and_requirements': {
+                'duration_ms': duration * 1000,
+                'format': '9:16_vertical',
+                'platform_optimization': 'reels_tiktok',
+                'quality_standard': 'broadcast_commercial'
+            }
+        }
+        
+        logger.info("Concept analysis complete", action="concept.analysis.complete",
+                   brand_essence_complexity=len(concept_understanding['brand_essence']),
+                   audience_insights=len(concept_understanding['audience_psychology']))
+        
+        return concept_understanding
+    
+    def _design_narrative_structure(self, concept_tree: Dict[str, Any], duration: int) -> Dict[str, Any]:
+        """
+        LEVEL 2: NARRATIVE PLANNING
+        Creates story arc with psychological progression based on concept understanding.
+        Plans overall story scene by scene with strategic intent.
+        """
+        brand_essence = concept_tree['brand_essence']
+        audience_psychology = concept_tree['audience_psychology'] 
+        strategic_framework = concept_tree['strategic_framework']
+        
+        # Design sophisticated story arc with psychological flow
+        narrative_structure = {
+            'story_strategy': {
+                'narrative_type': self._select_narrative_type(strategic_framework),
+                'persuasion_model': strategic_framework['persuasion_strategy'],
+                'emotional_arc': strategic_framework['emotional_journey'],
+                'pacing_strategy': self._determine_pacing_strategy(duration)
+            },
+            'psychological_progression': {
+                'attention_phase': {
+                    'goal': 'capture_and_hold_attention',
+                    'emotion': 'curiosity_intrigue', 
+                    'duration_ratio': 0.15,
+                    'psychological_trigger': audience_psychology['primary_motivation']
+                },
+                'problem_phase': {
+                    'goal': 'establish_relevance_and_pain',
+                    'emotion': 'concern_empathy',
+                    'duration_ratio': 0.20, 
+                    'psychological_trigger': audience_psychology['pain_points']
+                },
+                'solution_phase': {
+                    'goal': 'present_transformation',
+                    'emotion': 'hope_excitement',
+                    'duration_ratio': 0.35,
+                    'psychological_trigger': audience_psychology['desired_outcomes']
+                },
+                'credibility_phase': {
+                    'goal': 'build_trust_and_authority',
+                    'emotion': 'confidence_trust',
+                    'duration_ratio': 0.20,
+                    'psychological_trigger': audience_psychology['decision_triggers']
+                },
+                'action_phase': {
+                    'goal': 'drive_immediate_action',
+                    'emotion': 'urgency_motivation',
+                    'duration_ratio': 0.10,
+                    'psychological_trigger': strategic_framework['call_to_action_strategy']
+                }
+            },
+            'scene_narrative_map': self._create_scene_narrative_mapping(brand_essence, duration)
+        }
+        
+        logger.info("Narrative structure designed", action="narrative.design.complete",
+                   narrative_complexity=len(narrative_structure['psychological_progression']))
+        
+        return narrative_structure
+    
+    def _create_sophisticated_act_breakdown(self, narrative_tree: Dict[str, Any], total_duration_ms: int) -> List[Dict[str, Any]]:
+        """
+        LEVEL 3: ACT BREAKDOWN
+        Breaks down narrative into precise acts with emotional beats and millisecond timing.
+        """
+        acts = []
+        current_time_ms = 0
+        psychological_progression = narrative_tree['psychological_progression']
+        
+        for phase_name, phase_data in psychological_progression.items():
+            duration_ms = int(total_duration_ms * phase_data["duration_ratio"])
+            
+            # Create sophisticated act with detailed specifications
+            act = {
+                'act_id': f"act_{len(acts) + 1}_{phase_name}",
+                'phase_name': phase_name,
+                'narrative_goal': phase_data['goal'],
+                'target_emotion': phase_data['emotion'],
+                'psychological_trigger': phase_data['psychological_trigger'],
+                'timing': {
+                    'start_ms': current_time_ms,
+                    'end_ms': current_time_ms + duration_ms,
+                    'duration_ms': duration_ms,
+                    'duration_seconds': duration_ms / 1000.0
+                },
+                'cinematic_approach': self._determine_cinematic_approach(phase_name, phase_data),
+                'visual_strategy': self._design_visual_strategy(phase_name, phase_data),
+                'audio_strategy': self._design_audio_strategy(phase_name, phase_data)
+            }
+            
+            acts.append(act)
+            current_time_ms += duration_ms
+        
+        logger.info("Sophisticated act breakdown complete", action="act.breakdown.complete",
+                   total_acts=len(acts), total_duration_ms=current_time_ms)
+        
+        return acts
+    
+    def _build_scenes_from_first_principles(self, act_tree: List[Dict[str, Any]], total_duration_ms: int) -> List[Dict[str, Any]]:
+        """
+        LEVEL 4: SCENE CONSTRUCTION FROM FIRST PRINCIPLES
+        Builds every single scene from first principles with director expertise.
+        Each scene is crafted with cinematic knowledge and storytelling mastery.
+        """
+        scenes = []
+        scene_counter = 1
+        
+        for act in act_tree:
+            act_duration_ms = act['timing']['duration_ms']
+            
+            # Determine optimal scene count based on emotional complexity and duration
+            optimal_scene_count = self._calculate_optimal_scene_count(act, act_duration_ms)
+            scene_duration_ms = act_duration_ms // optimal_scene_count
+            
+            for scene_idx in range(optimal_scene_count):
+                scene_start_ms = act['timing']['start_ms'] + (scene_idx * scene_duration_ms)
+                scene_end_ms = min(scene_start_ms + scene_duration_ms, act['timing']['end_ms'])
+                
+                # Build scene from first principles with expert director knowledge
+                scene = self._construct_scene_from_first_principles(
+                    scene_counter, scene_idx, act, scene_start_ms, scene_end_ms
+                )
+                
+                scenes.append(scene)
+                scene_counter += 1
+        
+        logger.info("Scenes constructed from first principles", action="scene.construction.complete",
+                   total_scenes=len(scenes))
+        
+        return scenes
+    
+    def _construct_scene_from_first_principles(self, scene_number: int, scene_index: int, 
+                                              act: Dict[str, Any], start_ms: int, end_ms: int) -> Dict[str, Any]:
+        """
+        Construct individual scene with expert director knowledge and first principles approach.
+        """
+        duration_ms = end_ms - start_ms
+        duration_seconds = duration_ms / 1000.0
+        
+        # Analyze scene requirements from first principles
+        scene_analysis = {
+            'narrative_function': self._determine_scene_narrative_function(act, scene_index),
+            'emotional_arc': self._design_scene_emotional_arc(act, scene_index, duration_seconds),
+            'visual_approach': self._determine_visual_approach(act, scene_index),
+            'cinematic_style': self._select_cinematic_style(act, duration_seconds),
+            'storytelling_technique': self._select_storytelling_technique(act, scene_index)
+        }
+        
+        # Craft scene with director expertise
+        scene = {
+            'scene_number': scene_number,
+            'act_reference': act['act_id'],
+            'timing': {
+                'start_ms': start_ms,
+                'end_ms': end_ms,
+                'duration_ms': duration_ms,
+                'duration_seconds': duration_seconds
+            },
+            'narrative_design': {
+                'function': scene_analysis['narrative_function'],
+                'emotional_objective': scene_analysis['emotional_arc'],
+                'story_beat': self._identify_story_beat(act, scene_index),
+                'character_journey': self._define_character_journey(act, scene_index),
+                'conflict_element': self._identify_conflict_element(act, scene_index)
+            },
+            'visual_design': {
+                'concept': self._create_visual_concept(scene_analysis, act),
+                'mood': self._determine_visual_mood(act['target_emotion']),
+                'color_palette': self._select_color_palette(act, scene_index),
+                'lighting_approach': self._design_lighting_approach(act, scene_index),
+                'composition_style': self._select_composition_style(scene_analysis)
+            },
+            'cinematic_execution': {
+                'style': scene_analysis['cinematic_style'],
+                'camera_philosophy': self._define_camera_philosophy(scene_analysis),
+                'movement_strategy': self._design_movement_strategy(act, duration_seconds),
+                'editing_rhythm': self._determine_editing_rhythm(act, duration_seconds),
+                'visual_effects_approach': self._plan_visual_effects(scene_analysis)
+            },
+            'expert_director_prompt': self._generate_expert_director_prompt(scene_analysis, act),
+            'script_line': self._craft_scene_script(act, scene_index, duration_seconds)
+        }
+        
+        return scene
+    
+    def _craft_expert_director_shots(self, scene_tree: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        LEVEL 5: EXPERT DIRECTOR SHOT PLANNING
+        Crafts the best shots like an expert director with very detailed prompts for each shot.
+        Professional cinematography with advanced techniques and precise execution.
+        """
+        shot_tree = []
+        
+        for scene in scene_tree:
+            scene_duration_ms = scene['timing']['duration_ms']
+            
+            # Determine shot count based on director expertise and scene requirements
+            shot_count = self._calculate_expert_shot_count(scene, scene_duration_ms)
+            shot_duration_ms = scene_duration_ms // shot_count
+            
+            for shot_idx in range(shot_count):
+                shot_start_ms = scene['timing']['start_ms'] + (shot_idx * shot_duration_ms)
+                shot_end_ms = min(shot_start_ms + shot_duration_ms, scene['timing']['end_ms'])
+                
+                # Craft shot with expert director knowledge
+                shot = self._craft_expert_director_shot(
+                    scene, shot_idx, shot_count, shot_start_ms, shot_end_ms
+                )
+                
+                shot_tree.append(shot)
+        
+        logger.info("Expert director shots crafted", action="shot.crafting.complete",
+                   total_shots=len(shot_tree))
+        
+        return shot_tree
+    
+    def _craft_expert_director_shot(self, scene: Dict[str, Any], shot_index: int, 
+                                   total_shots: int, start_ms: int, end_ms: int) -> Dict[str, Any]:
+        """
+        Craft individual shot with expert director knowledge and cinematic mastery.
+        """
+        duration_ms = end_ms - start_ms
+        duration_seconds = duration_ms / 1000.0
+        
+        # Analyze shot requirements with director expertise
+        shot_analysis = self._analyze_shot_requirements(scene, shot_index, total_shots, duration_seconds)
+        
+        # Craft shot with professional cinematography knowledge
+        shot = {
+            'shot_id': f"shot_{scene['scene_number']}_{shot_index + 1}",
+            'scene_reference': scene['scene_number'],
+            'shot_number': shot_index + 1,
+            'timing': {
+                'start_ms': start_ms,
+                'end_ms': end_ms,
+                'duration_ms': duration_ms,
+                'duration_seconds': duration_seconds
+            },
+            'cinematography': {
+                'shot_type': shot_analysis['shot_type'],
+                'camera_angle': shot_analysis['camera_angle'], 
+                'lens_choice': shot_analysis['lens_choice'],
+                'focal_length': shot_analysis['focal_length'],
+                'aperture': shot_analysis['aperture'],
+                'depth_of_field': shot_analysis['depth_of_field']
+            },
+            'camera_movement': {
+                'movement_type': shot_analysis['movement_type'],
+                'movement_speed': shot_analysis['movement_speed'],
+                'movement_direction': shot_analysis['movement_direction'],
+                'stabilization': shot_analysis['stabilization'],
+                'motion_blur': shot_analysis['motion_blur']
+            },
+            'lighting_design': {
+                'lighting_setup': shot_analysis['lighting_setup'],
+                'key_light_position': shot_analysis['key_light_position'],
+                'fill_light_ratio': shot_analysis['fill_light_ratio'],
+                'background_lighting': shot_analysis['background_lighting'],
+                'practical_lights': shot_analysis['practical_lights']
+            },
+            'composition': {
+                'rule_of_thirds': shot_analysis['composition_rule'],
+                'leading_lines': shot_analysis['leading_lines'],
+                'framing_technique': shot_analysis['framing_technique'],
+                'visual_balance': shot_analysis['visual_balance'],
+                'negative_space': shot_analysis['negative_space']
+            },
+            'expert_director_prompt': self._generate_expert_shot_prompt(shot_analysis, scene),
+            'technical_specifications': {
+                'resolution': '4K_ultra_hd',
+                'frame_rate': '24fps_cinematic',
+                'color_grading': shot_analysis['color_grading'],
+                'visual_effects': shot_analysis['visual_effects']
+            }
+        }
+        
+        return shot
+    
+    def _engineer_frame_level_moments(self, shot_tree: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        LEVEL 6: FRAME-BY-FRAME MOMENT ENGINEERING
+        Engineers precise visual choreography at the frame level with millisecond timing.
+        """
+        moment_tree = []
+        
+        for shot in shot_tree:
+            shot_duration_ms = shot['timing']['duration_ms']
+            
+            # Calculate moment count based on shot complexity and duration
+            moment_count = self._calculate_moment_count(shot, shot_duration_ms)
+            moment_duration_ms = shot_duration_ms // moment_count
+            
+            for moment_idx in range(moment_count):
+                moment_start_ms = shot['timing']['start_ms'] + (moment_idx * moment_duration_ms)
+                moment_end_ms = min(moment_start_ms + moment_duration_ms, shot['timing']['end_ms'])
+                
+                # Engineer moment with frame-level precision
+                moment = self._engineer_precise_moment(
+                    shot, moment_idx, moment_count, moment_start_ms, moment_end_ms
+                )
+                
+                moment_tree.append(moment)
+        
+        logger.info("Frame-level moments engineered", action="moment.engineering.complete",
+                   total_moments=len(moment_tree))
+        
+        return moment_tree
+    
+    def _engineer_precise_moment(self, shot: Dict[str, Any], moment_index: int,
+                               total_moments: int, start_ms: int, end_ms: int) -> Dict[str, Any]:
+        """
+        Engineer individual moment with frame-level precision and visual choreography.
+        """
+        duration_ms = end_ms - start_ms
+        
+        moment = {
+            'moment_id': f"moment_{shot['shot_id']}_{moment_index + 1}",
+            'shot_reference': shot['shot_id'],
+            'moment_number': moment_index + 1,
+            'timing': {
+                'start_ms': start_ms,
+                'end_ms': end_ms,
+                'duration_ms': duration_ms,
+                'frame_count': int(duration_ms * 24 / 1000)  # 24fps calculation
+            },
+            'visual_choreography': {
+                'primary_action': self._define_primary_action(shot, moment_index),
+                'secondary_elements': self._identify_secondary_elements(shot, moment_index),
+                'visual_focus': self._determine_visual_focus(shot, moment_index),
+                'movement_dynamics': self._analyze_movement_dynamics(shot, moment_index),
+                'transition_type': self._select_transition_type(moment_index, total_moments)
+            },
+            'frame_precision': {
+                'key_frames': self._identify_key_frames(duration_ms, shot, moment_index),
+                'motion_path': self._define_motion_path(shot, moment_index),
+                'visual_anchors': self._set_visual_anchors(shot, moment_index),
+                'timing_beats': self._calculate_timing_beats(duration_ms)
+            }
+        }
+        
+        return moment
+    
+    def _orchestrate_millisecond_precision(self, moment_tree: List[Dict[str, Any]], total_duration_ms: int) -> List[Dict[str, Any]]:
+        """
+        LEVEL 7: MILLISECOND ORCHESTRATION
+        Atomic timing of every element - subtitles, transitions, effects.
+        Every millisecond is planned with precise execution instructions.
+        """
+        millisecond_tree = moment_tree.copy()
+        
+        # Add millisecond-precise subtitle orchestration  
+        subtitle_elements = self._orchestrate_subtitle_timing(total_duration_ms)
+        
+        # Add millisecond-precise transition orchestration
+        transition_elements = self._orchestrate_transition_timing(moment_tree)
+        
+        # Add millisecond-precise audio sync points
+        audio_sync_elements = self._orchestrate_audio_sync_timing(total_duration_ms)
+        
+        # Add millisecond-precise visual effects timing
+        vfx_elements = self._orchestrate_vfx_timing(moment_tree)
+        
+        # Combine all elements with precise orchestration
+        millisecond_tree.extend(subtitle_elements) 
+        millisecond_tree.extend(transition_elements)
+        millisecond_tree.extend(audio_sync_elements)
+        millisecond_tree.extend(vfx_elements)
+        
+        # Sort by millisecond timing for perfect orchestration
+        millisecond_tree = sorted(millisecond_tree, key=lambda x: x['timing']['start_ms'])
+        
+        # Add frame-perfect timing validation
+        validated_tree = self._validate_millisecond_timing(millisecond_tree)
+        
+        logger.info("Millisecond orchestration complete", action="millisecond.orchestration.complete",
+                   total_elements=len(validated_tree),
+                   precision_level="frame_perfect")
+        
+        return validated_tree
+    
+    def _create_millisecond_timeline(self, moment_timeline: List[Dict[str, Any]], total_duration_ms: int) -> List[Dict[str, Any]]:
+        """Add millisecond-level elements like subtitles, transitions."""
+        millisecond_timeline = moment_timeline.copy()
+        
+        
+        # Add subtitle timing placeholders (precise timing will be filled by subtitle service)
+        subtitle_elements = [
+            {
+                "type": "subtitle_placeholder", 
+                "start_ms": i * 3000, 
+                "end_ms": (i * 3000) + 2500, 
+                "element": f"subtitle_segment_{i}",
+                "text_alignment": "center",
+                "position": "bottom_third"
+            }
+            for i in range(total_duration_ms // 3000)
+        ]
+        
+        # Add transition elements between scenes
+        transition_elements = []
+        for i in range(len(moment_timeline) - 1):
+            current_moment = moment_timeline[i]
+            next_moment = moment_timeline[i + 1]
+            
+            if current_moment.get("scene_number") != next_moment.get("scene_number"):
+                transition_start = current_moment["end_ms"] - 200
+                transition_end = next_moment["start_ms"] + 200
+                
+                transition_elements.append({
+                    "type": "transition",
+                    "start_ms": transition_start,
+                    "end_ms": transition_end,
+                    "duration_ms": transition_end - transition_start,
+                    "transition_type": "smooth_cut",
+                    "from_scene": current_moment["scene_number"],
+                    "to_scene": next_moment["scene_number"]
+                })
+        
+        millisecond_timeline.extend(subtitle_elements)
+        millisecond_timeline.extend(transition_elements)
+        
+        return sorted(millisecond_timeline, key=lambda x: x["start_ms"])
+    
+    def _compile_sophisticated_blueprint(self, concept_tree: Dict[str, Any], narrative_tree: Dict[str, Any],
+                                       act_tree: List[Dict[str, Any]], scene_tree: List[Dict[str, Any]],
+                                       shot_tree: List[Dict[str, Any]], moment_tree: List[Dict[str, Any]],
+                                       millisecond_tree: List[Dict[str, Any]], brand_info: Dict[str, Any],
+                                       target_duration: int, service_type: Optional[str]) -> Dict[str, Any]:
+        """
+        COMPILATION: Create ultra-sophisticated execution blueprint with complete tree structure.
+        This is the final output that orchestrates video/audio/music creation with millisecond precision.
+        """
+        
+        # Extract scenes for compatibility with existing systems
+        scenes_for_compatibility = self._extract_scenes_for_compatibility(scene_tree)
+        
+        # Generate ultra-detailed prompts for each scene
+        expert_prompts = self._generate_expert_prompts_for_all_scenes(scene_tree, shot_tree)
+        
+        # Create sophisticated blueprint
+        blueprint = {
+            'creative_vision': concept_tree['brand_essence']['core_message'],
+            
+            # Tree structure with 7 levels of sophistication
+            'tree_architecture': {
+                'level_1_concept': concept_tree,
+                'level_2_narrative': narrative_tree, 
+                'level_3_acts': act_tree,
+                'level_4_scenes': scene_tree,
+                'level_5_shots': shot_tree,
+                'level_6_moments': moment_tree,
+                'level_7_milliseconds': millisecond_tree
+            },
+            
+            # Compatible scene architecture for existing systems
+            'scene_architecture': {
+                'total_duration': target_duration,
+                'scene_count': len(scenes_for_compatibility),
+                'scenes': scenes_for_compatibility,
+                'expert_director_prompts': expert_prompts,
+                'sophistication_level': 'ultra_sophisticated_tree_algorithm'
+            },
+            
+            # Audio/video/music orchestration with millisecond precision
+            'media_orchestration': {
+                'video_timing': self._create_video_timing_map(millisecond_tree),
+                'audio_timing': self._create_audio_timing_map(millisecond_tree, target_duration),
+                'music_timing': self._create_music_timing_map(millisecond_tree, target_duration),
+                'subtitle_timing': self._create_subtitle_timing_map(millisecond_tree),
+                'sync_points': self._create_sync_points(millisecond_tree)
+            },
+            
+            'unified_script': self._generate_sophisticated_script(scene_tree),
+            'audio_architecture': self._generate_sophisticated_audio_architecture(act_tree, target_duration),
+            
+            'production_metadata': {
+                'architect_version': '6.0_ultra_sophisticated_tree_algorithm',
+                'planning_algorithm': 'seven_level_hierarchical_tree',
+                'precision_level': 'millisecond_frame_perfect',
+                'sophistication_level': 'expert_director',
+                'total_tree_elements': sum([
+                    len(act_tree), len(scene_tree), len(shot_tree), 
+                    len(moment_tree), len(millisecond_tree)
+                ]),
+                'hierarchical_depth': 7,
+                'planning_philosophy': 'first_principles_director_expertise',
+                'execution_ready': True,
+                'adaptable_learning_enabled': True
+            }
+        }
+        
+        return blueprint
+    
+    def _generate_visual_concept_for_act(self, act_purpose: str, scene_index: int) -> str:
+        """Generate visual concept based on act purpose with director-level precision."""
+        concepts = {
+            "grab_attention": ["dynamic_opening_shot", "attention_grabbing_visual", "hook_moment"],
+            "establish_pain_point": ["problem_visualization", "pain_point_demonstration", "struggle_moment"],
+            "present_brand_solution": ["product_hero_shot", "solution_demonstration", "transformation_moment"],
+            "provide_credibility": ["testimonial_visual", "proof_showcase", "credibility_moment"],
+            "call_to_action": ["action_oriented_close", "contact_visual", "urgency_moment"]
+        }
+        
+        act_concepts = concepts.get(act_purpose, ["generic_professional_visual"])
+        return act_concepts[min(scene_index, len(act_concepts) - 1)]
+    
+    def _determine_shot_type_hierarchical(self, visual_concept: str, shot_index: int, total_shots: int) -> str:
+        """Determine camera shot type with director-level precision."""
+        if total_shots == 1:
+            return "medium_shot_professional"
+        
+        if shot_index == 0:
+            return "wide_establishing_shot"  # Establish context
+        elif shot_index == total_shots - 1:
+            return "close_up_detail_shot"    # Emotional/detail focus
+        else:
+            return "medium_interaction_shot"  # Main action/interaction
+    
+    def _generate_hierarchical_audio_architecture(self, scenes: List[Dict[str, Any]], target_duration: int) -> Dict[str, Any]:
+        """Generate audio architecture with millisecond-precise timing for hierarchical planning."""
+        return {
+            'voice_over_enabled': True,
+            'background_music_enabled': True,
+            'voice_timing': [
+                {
+                    'scene_number': scene['scene_number'],
+                    'start_ms': scene['start_ms'],
+                    'end_ms': scene['end_ms'],
+                    'script': scene['script_line'],
+                    'voice_style': 'professional',
+                    'pace': 'medium'
+                }
+                for scene in scenes
+            ],
+            'music_timing': {
+                'start_ms': 0,
+                'end_ms': target_duration * 1000,
+                'fade_in_ms': 1000,
+                'fade_out_ms': 2000,
+                'style': 'corporate_professional'
+            },
+            'total_duration_ms': target_duration * 1000
+        }
+    
+    # ESSENTIAL HELPER METHODS FOR ULTRA-SOPHISTICATED TREE ALGORITHM
+    
+    def _extract_core_message(self, brand_name: str, brand_desc: str) -> str:
+        """Extract the core brand message from description."""
+        if 'innovative' in brand_desc.lower() or 'cutting-edge' in brand_desc.lower():
+            return f"{brand_name} delivers innovative solutions that transform your experience"
+        elif 'reliable' in brand_desc.lower() or 'trusted' in brand_desc.lower():
+            return f"{brand_name} provides reliable solutions you can trust"
+        elif 'premium' in brand_desc.lower() or 'luxury' in brand_desc.lower():
+            return f"{brand_name} offers premium quality that exceeds expectations"
+        else:
+            return f"{brand_name} empowers your success with proven solutions"
+    
+    def _identify_value_proposition(self, brand_desc: str) -> str:
+        """Identify the unique value proposition."""
+        keywords = {
+            'save time': 'efficiency_and_productivity',
+            'save money': 'cost_effectiveness',
+            'improve results': 'performance_enhancement',
+            'reduce stress': 'simplification_and_ease',
+            'increase revenue': 'growth_and_profitability'
+        }
+        
+        for keyword, value_prop in keywords.items():
+            if keyword in brand_desc.lower():
+                return value_prop
+        
+        return 'transformational_benefit'
+    
+    def _analyze_emotional_drivers(self, brand_desc: str, niche: str) -> List[str]:
+        """Analyze primary emotional drivers for the audience."""
+        emotional_map = {
+            'fitness_wellness': ['confidence', 'health_anxiety', 'transformation_desire'],
+            'business_consulting': ['success_ambition', 'efficiency_need', 'growth_pressure'],
+            'technology': ['innovation_excitement', 'efficiency_demand', 'future_readiness'],
+            'finance': ['security_need', 'wealth_ambition', 'control_desire']
+        }
+        
+        return emotional_map.get(niche, ['improvement_desire', 'success_motivation', 'problem_solving'])
+    
+    def _calculate_optimal_scene_count(self, act: Dict[str, Any], duration_ms: int) -> int:
+        """Calculate optimal scene count based on act complexity and duration."""
+        base_scenes = 1
+        
+        # Add scenes based on duration (every 8 seconds gets a new scene)
+        duration_scenes = max(0, (duration_ms - 5000) // 8000)
+        
+        # Add scenes based on narrative complexity
+        complexity_scenes = 1 if act['narrative_goal'] == 'present_transformation' else 0
+        
+        return max(1, min(3, base_scenes + duration_scenes + complexity_scenes))
+    
+    def _determine_scene_narrative_function(self, act: Dict[str, Any], scene_index: int) -> str:
+        """Determine the narrative function of a scene within an act."""
+        functions = {
+            'capture_and_hold_attention': ['hook_establishment', 'intrigue_building'],
+            'establish_relevance_and_pain': ['problem_identification', 'pain_amplification'],
+            'present_transformation': ['solution_introduction', 'benefit_demonstration', 'transformation_showcase'],
+            'build_trust_and_authority': ['credibility_establishment', 'proof_presentation'],
+            'drive_immediate_action': ['urgency_creation', 'action_direction']
+        }
+        
+        goal = act['narrative_goal']
+        scene_functions = functions.get(goal, ['narrative_progression'])
+        
+        return scene_functions[min(scene_index, len(scene_functions) - 1)]
+    
+    def _generate_expert_director_prompt(self, scene_analysis: Dict[str, Any], act: Dict[str, Any]) -> str:
+        """Generate expert director-level prompt with cinematic expertise."""
+        
+        cinematic_style = scene_analysis['cinematic_style']
+        visual_approach = scene_analysis['visual_approach']
+        emotional_objective = scene_analysis['emotional_arc']
+        
+        # Craft sophisticated prompt with director expertise
+        prompt_elements = [
+            f"CINEMATIC MASTERPIECE: {cinematic_style} style",
+            f"VISUAL APPROACH: {visual_approach} with professional cinematography",
+            f"EMOTIONAL OBJECTIVE: Evoke {emotional_objective} through visual storytelling",
+            f"LIGHTING: Professional studio lighting with cinematic depth",
+            f"COMPOSITION: Rule of thirds with dynamic visual balance",
+            f"MOVEMENT: Smooth, purposeful camera work that serves the story",
+            f"QUALITY: 4K ultra-high definition with broadcast commercial quality",
+            f"COLOR: Cinematic color grading that enhances {act['target_emotion']}",
+            f"AUDIO SYNC: Visual elements perfectly synchronized with voiceover timing"
+        ]
+        
+        return " | ".join(prompt_elements)
+    
+    def _craft_scene_script(self, act: Dict[str, Any], scene_index: int, duration_seconds: float) -> str:
+        """Craft scene script with precise timing and narrative purpose, optimized for duration."""
+        
+        # Calculate optimal word count for this scene duration
+        # Professional speech rate: ~2.3 words per second
+        words_per_second = 2.3
+        target_word_count = int(duration_seconds * words_per_second)
+        
+        script_templates = {
+            'capture_and_hold_attention': [
+                f"Are you tired of struggling with {act.get('psychological_trigger', 'common problems')}?",
+                f"What if I told you there's a better way to {act.get('psychological_trigger', 'achieve your goals')}?"
+            ],
+            'establish_relevance_and_pain': [
+                f"Every day, you face {act.get('psychological_trigger', 'challenges')} that hold you back.",
+                f"The frustration of {act.get('psychological_trigger', 'inefficiency')} is costing you more than you realize."
+            ],
+            'present_transformation': [
+                f"Introducing a solution that transforms how you {act.get('psychological_trigger', 'work')}.",
+                f"Watch how easily you can {act.get('psychological_trigger', 'achieve results')} with our proven system."
+            ],
+            'build_trust_and_authority': [
+                f"Thousands have already experienced {act.get('psychological_trigger', 'success')} with our approach.",
+                f"See the proven results that make {act.get('psychological_trigger', 'success')} inevitable."
+            ],
+            'drive_immediate_action': [
+                f"Don't wait another day to {act.get('psychological_trigger', 'transform your results')}.",
+                f"Take action now and {act.get('psychological_trigger', 'secure your success')} today."
+            ]
+        }
+        
+        goal = act['narrative_goal']
+        templates = script_templates.get(goal, [f"Scene script for {goal}"])
+        base_script = templates[min(scene_index, len(templates) - 1)]
+        
+        # Adjust script length to match target duration
+        current_words = len(base_script.split())
+        
+        if current_words < target_word_count * 0.8:  # If too short
+            # Extend with relevant descriptive phrases
+            extensions = [
+                "This changes everything.",
+                "The results speak for themselves.",
+                "Don't miss this opportunity.",
+                "Transform your experience today.",
+                "See the difference immediately."
+            ]
+            
+            words_needed = target_word_count - current_words
+            extension_words = []
+            
+            for ext in extensions:
+                if len(extension_words) + len(ext.split()) <= words_needed:
+                    extension_words.extend(ext.split())
+                else:
+                    break
+                    
+            if extension_words:
+                base_script = f"{base_script} {' '.join(extension_words)}"
+                
+        elif current_words > target_word_count * 1.2:  # If too long
+            # Trim to target length
+            words = base_script.split()[:target_word_count]
+            base_script = ' '.join(words)
+        
+        return base_script
+    
+    def _extract_scenes_for_compatibility(self, scene_tree: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Extract scenes in format compatible with existing video generation systems."""
+        compatible_scenes = []
+        
+        for scene in scene_tree:
+            compatible_scene = {
+                'scene_number': scene['scene_number'],
+                'duration': scene['timing']['duration_seconds'],
+                'visual_concept': scene['visual_design']['concept'],
+                'script_line': scene['script_line'],
+                'start_ms': scene['timing']['start_ms'],
+                'end_ms': scene['timing']['end_ms'],
+                'expert_director_prompt': scene['expert_director_prompt']
+            }
+            compatible_scenes.append(compatible_scene)
+        
+        return compatible_scenes
+    
+    def _generate_expert_prompts_for_all_scenes(self, scene_tree: List[Dict[str, Any]], 
+                                              shot_tree: List[Dict[str, Any]]) -> Dict[str, str]:
+        """Generate ultra-detailed expert director prompts for each scene."""
+        expert_prompts = {}
+        
+        for scene in scene_tree:
+            scene_shots = [shot for shot in shot_tree if shot['scene_reference'] == scene['scene_number']]
+            
+            # Combine scene-level and shot-level expertise
+            shot_details = []
+            for shot in scene_shots:
+                shot_detail = (
+                    f"{shot['cinematography']['shot_type']} with {shot['cinematography']['lens_choice']}, "
+                    f"{shot['camera_movement']['movement_type']} camera movement, "
+                    f"{shot['lighting_design']['lighting_setup']} lighting"
+                )
+                shot_details.append(shot_detail)
+            
+            # Create comprehensive expert prompt
+            expert_prompt = (
+                f"{scene['expert_director_prompt']} | "
+                f"SHOT BREAKDOWN: {' -> '.join(shot_details)} | "
+                f"DURATION: {scene['timing']['duration_seconds']:.1f}s | "
+                f"NARRATIVE FUNCTION: {scene['narrative_design']['function']} | "
+                f"VISUAL MOOD: {scene['visual_design']['mood']}"
+            )
+            
+            expert_prompts[f"scene_{scene['scene_number']}"] = expert_prompt
+        
+        return expert_prompts

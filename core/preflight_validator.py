@@ -424,13 +424,12 @@ class PreflightValidator:
             'detailed_results': self.validation_results
         }
     
-    def validate_complete_pipeline(self, brand_info: Dict[str, Any], logo_path: str = None, quality_mode: str = 'professional') -> Dict[str, Any]:
+    def validate_complete_pipeline(self, brand_info: Dict[str, Any], quality_mode: str = 'professional') -> Dict[str, Any]:
         """
         Validate complete pipeline before expensive API calls
         
         Args:
             brand_info: Brand information for video generation
-            logo_path: Optional logo file path  
             quality_mode: Video quality mode
             
         Returns:
@@ -452,12 +451,7 @@ class PreflightValidator:
             if not brand_info.get(field) or not str(brand_info.get(field)).strip():
                 validation_issues.append(f'Missing or empty required field: {field}')
         
-        # Validate logo path if provided
-        if logo_path:
-            if not os.path.exists(logo_path):
-                validation_issues.append(f'Logo file not found: {logo_path}')
-            elif not logo_path.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
-                validation_issues.append(f'Invalid logo file format: {logo_path}')
+        # Logo validation removed
         
         # Run critical system validations
         api_keys_result = self._validate_api_keys()

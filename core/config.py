@@ -11,6 +11,13 @@ from pathlib import Path
 from enum import Enum
 from core.exceptions import ConfigurationError
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed
+
 class Environment(Enum):
     """Deployment environments."""
     DEVELOPMENT = "development"
@@ -30,22 +37,13 @@ class VideoConfig:
     max_duration_seconds: int = 30
     default_scenes: int = 3
     scene_duration_seconds: int = 10
-    default_service: str = "hailuo"
-    fallback_service: str = "luma"
+    default_service: str = "luma"
+    fallback_service: str = "runway"
     quality_preset: str = "professional"
-    resolution: str = "1080p"
+    resolution: str = "720p"
     frame_rate: int = 30
     supported_formats: List[str] = field(default_factory=lambda: ["mp4", "mov", "avi"])
 
-@dataclass
-class LogoConfig:
-    """Logo analysis configuration."""
-    max_file_size_mb: int = 10
-    supported_formats: List[str] = field(default_factory=lambda: ["PNG", "JPG", "JPEG", "GIF", "BMP", "WEBP"])
-    analysis_timeout_seconds: int = 30
-    color_extraction_limit: int = 5
-    enable_style_detection: bool = True
-    enable_font_suggestions: bool = True
 
 @dataclass
 class BrandConfig:
@@ -129,7 +127,7 @@ class CostConfig:
     enable_cost_optimization: bool = True
     service_cost_weights: Dict[str, float] = field(default_factory=lambda: {
         "luma": 1.0,
-        "hailuo": 0.7,
+        "runway": 0.8,
         "openai": 0.1
     })
 
@@ -292,7 +290,6 @@ class ReliconConfig:
     
     # Component configurations
     video: VideoConfig = field(default_factory=VideoConfig)
-    logo: LogoConfig = field(default_factory=LogoConfig)
     brand: BrandConfig = field(default_factory=BrandConfig)
     api: APIConfig = field(default_factory=APIConfig)
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
@@ -497,9 +494,6 @@ class ConfigManager:
         if self._config.video.default_scenes < 1 or self._config.video.default_scenes > 10:
             raise ConfigurationError("Number of scenes must be between 1 and 10")
         
-        # Validate logo config
-        if self._config.logo.max_file_size_mb > 50:
-            raise ConfigurationError("Maximum logo file size cannot exceed 50MB")
         
         # Validate brand config
         if self._config.brand.min_description_length < 10:
@@ -561,15 +555,15 @@ class ConfigManager:
         base_urls = {
             Environment.DEVELOPMENT: {
                 "luma": "https://api.dev.lumalabs.ai",
-                "hailuo": "https://api.dev.hailuoai.com"
+                "runway": "https://api.runwayml.com"
             },
             Environment.STAGING: {
                 "luma": "https://api.staging.lumalabs.ai", 
-                "hailuo": "https://api.staging.hailuoai.com"
+                "runway": "https://api.runwayml.com"
             },
             Environment.PRODUCTION: {
                 "luma": "https://api.lumalabs.ai",
-                "hailuo": "https://api.hailuoai.com"
+                "runway": "https://api.runwayml.com"
             }
         }
         
@@ -668,14 +662,6 @@ class ConfigManager:
                 "resolution": self._config.video.resolution,
                 "frame_rate": self._config.video.frame_rate,
                 "supported_formats": self._config.video.supported_formats
-            },
-            "logo": {
-                "max_file_size_mb": self._config.logo.max_file_size_mb,
-                "supported_formats": self._config.logo.supported_formats,
-                "analysis_timeout_seconds": self._config.logo.analysis_timeout_seconds,
-                "color_extraction_limit": self._config.logo.color_extraction_limit,
-                "enable_style_detection": self._config.logo.enable_style_detection,
-                "enable_font_suggestions": self._config.logo.enable_font_suggestions
             },
             "ml_models": {
                 "enable_ml_optimization": self._config.ml_models.enable_ml_optimization,

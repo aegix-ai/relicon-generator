@@ -6,6 +6,7 @@ Generates high-accuracy video prompts adapted to business niches and brand requi
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from core.brand_intelligence import BusinessNiche, BrandElements, BusinessType
+from core.universal_brand_intelligence import UniversalBrandIntelligenceGenerator
 import openai
 import json
 import re
@@ -71,6 +72,7 @@ class NichePromptTemplateEngine:
         self.niche_templates = self._initialize_niche_templates()
         self.scene_structures = self._initialize_scene_structures()
         self.technical_specifications = self._initialize_technical_specs()
+        self.universal_brand_generator = UniversalBrandIntelligenceGenerator()
     
     def _initialize_niche_templates(self) -> Dict[BusinessNiche, Dict[str, Any]]:
         """Initialize comprehensive niche-specific prompt templates."""
@@ -79,9 +81,14 @@ class NichePromptTemplateEngine:
                 'visual_style': 'sleek, modern, high-tech, digital interfaces, clean environments',
                 'color_palette': ['blue', 'white', 'silver', 'neon accents'],
                 'scene_settings': [
-                    'modern office with multiple monitors',
-                    'clean tech workspace with digital displays',
-                    'futuristic interface close-ups'
+                    'server room with rows of humming machines and blue LED indicators',
+                    'holographic interface projections in darkened control center', 
+                    'macro shots of circuit boards with electrical currents flowing',
+                    'data center with cables and fiber optic light streams',
+                    'robotic assembly line with precision mechanical movements',
+                    'cloud computing visualization with abstract data particle flows',
+                    'cybersecurity command center with real-time threat mapping displays',
+                    'modern office with multiple monitors showing live data analytics'
                 ],
                 'product_showcase': 'screen recordings, interface demonstrations, data visualizations',
                 'lifestyle_context': 'professional productivity, digital transformation, innovation',
@@ -321,7 +328,7 @@ class NichePromptTemplateEngine:
     def generate_niche_specific_scenes(
         self, 
         brand_elements: BrandElements,
-        target_duration: int = 30,
+        target_duration: int = 18,
         service_type: str = "luma",
         creative_style: str = "professional",
         storytelling_approach: str = "problem-solution",
@@ -343,12 +350,37 @@ class NichePromptTemplateEngine:
         """
         # CRITICAL: Get business type for creative direction
         business_type = getattr(brand_elements, 'business_type', BusinessType.SERVICE)
+
+        # Optional overrides via settings (session-level control)
+        try:
+            from config.settings import settings
+            if getattr(settings, 'BUSINESS_TYPE_OVERRIDE', None):
+                forced = str(settings.BUSINESS_TYPE_OVERRIDE).strip().lower()
+                bt_map = {
+                    'product': BusinessType.PRODUCT,
+                    'service': BusinessType.SERVICE,
+                    'platform': BusinessType.PLATFORM,
+                    'hybrid': BusinessType.HYBRID
+                }
+                business_type = bt_map.get(forced, business_type)
+        except Exception:
+            pass
         
         # Get creative direction based on business type to prevent mismatches
         from core.brand_intelligence import brand_intelligence_service
         creative_direction = brand_intelligence_service.get_creative_direction_for_business_type(
             business_type, brand_elements.niche
         )
+
+        # Apply optional focus/CTA overrides from settings
+        try:
+            from config.settings import settings
+            if getattr(settings, 'FOCUS_OVERRIDE', None):
+                creative_direction['focus'] = str(settings.FOCUS_OVERRIDE).strip()
+            if getattr(settings, 'CTA_STYLE_OVERRIDE', None):
+                creative_direction['cta_style'] = str(settings.CTA_STYLE_OVERRIDE).strip()
+        except Exception:
+            pass
         
         # Validate alignment and log warnings if needed
         brand_intelligence_service._validate_business_type_niche_alignment(
@@ -365,8 +397,8 @@ class NichePromptTemplateEngine:
             self.niche_templates[BusinessNiche.PROFESSIONAL_SERVICES]
         )
         
-        # Calculate scene durations for 30-second format
-        scene_duration = target_duration // 3  # 10 seconds per scene
+        # Calculate scene durations for 18-second format
+        scene_duration = target_duration // 3  # 6 seconds per scene for 18s total
         
         # Apply business-type-aware creative style enhancements
         enhanced_template = self._enhance_template_with_business_type(
@@ -397,11 +429,11 @@ class NichePromptTemplateEngine:
         if business_type == BusinessType.PRODUCT:
             enhanced_template['business_type_focus'] = {
                 'visual_emphasis': 'product_showcase_and_features',
-                'scene_settings': enhanced_template.get('scene_settings', []) + [
+                'scene_settings': (enhanced_template.get('scene_settings', ['professional environment']) + [
                     'product display environments',
                     'unboxing and reveal scenarios',
                     'product in real-world usage contexts'
-                ],
+                ]),
                 'storytelling_elements': 'product benefits, feature demonstrations, value propositions',
                 'avoid_elements': creative_direction.get('avoid', []),
                 'cta_integration': 'purchase-focused call-to-action overlays'
@@ -410,11 +442,11 @@ class NichePromptTemplateEngine:
         elif business_type == BusinessType.SERVICE:
             enhanced_template['business_type_focus'] = {
                 'visual_emphasis': 'expertise_demonstration_and_results',
-                'scene_settings': enhanced_template.get('scene_settings', []) + [
+                'scene_settings': (enhanced_template.get('scene_settings', ['professional environment']) + [
                     'professional consultation environments',
                     'client success story settings',
                     'expert team collaboration spaces'
-                ],
+                ]),
                 'storytelling_elements': 'problem-solving expertise, client outcomes, professional credibility',
                 'avoid_elements': creative_direction.get('avoid', []),
                 'cta_integration': 'consultation-focused engagement invitations'
@@ -423,11 +455,11 @@ class NichePromptTemplateEngine:
         elif business_type == BusinessType.PLATFORM:
             enhanced_template['business_type_focus'] = {
                 'visual_emphasis': 'connectivity_and_ecosystem_benefits',
-                'scene_settings': enhanced_template.get('scene_settings', []) + [
+                'scene_settings': (enhanced_template.get('scene_settings', ['professional environment']) + [
                     'connected workflow environments',
                     'user interaction demonstrations',
                     'network effect visualizations'
-                ],
+                ]),
                 'storytelling_elements': 'connectivity solutions, scalability benefits, ecosystem value',
                 'avoid_elements': creative_direction.get('avoid', []),
                 'cta_integration': 'platform-joining and signup motivations'
@@ -436,11 +468,11 @@ class NichePromptTemplateEngine:
         elif business_type == BusinessType.HYBRID:
             enhanced_template['business_type_focus'] = {
                 'visual_emphasis': 'integrated_solution_ecosystem',
-                'scene_settings': enhanced_template.get('scene_settings', []) + [
+                'scene_settings': (enhanced_template.get('scene_settings', ['professional environment']) + [
                     'comprehensive solution environments',
                     'end-to-end journey demonstrations',
                     'integrated value showcases'
-                ],
+                ]),
                 'storytelling_elements': 'comprehensive solutions, integrated benefits, one-stop value',
                 'avoid_elements': creative_direction.get('avoid', []),
                 'cta_integration': 'complete-solution-oriented invitations'
@@ -744,7 +776,73 @@ class NichePromptTemplateEngine:
         service_type: str,
         logo_info: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Generate a creative scene with GPT-4o."""
+        """Generate a creative scene with GPT-4o using universal brand intelligence."""
+        
+        # Try to get universal brand intelligence for deeper creative insights
+        universal_intelligence = None
+        brand_name = brand_elements.brand_name
+        
+        # Extract company description from brand elements
+        company_description = None
+        if hasattr(brand_elements, 'company_description'):
+            company_description = brand_elements.company_description
+        elif hasattr(brand_elements, 'key_benefits') and brand_elements.key_benefits:
+            company_description = f"A business specializing in {', '.join(brand_elements.key_benefits[:3])}"
+        elif hasattr(brand_elements, 'industry'):
+            company_description = f"A {brand_elements.industry} company"
+        else:
+            company_description = f"A {brand_elements.niche.value} business"
+        
+        # Get universal brand intelligence for deeper creativity
+        try:
+            additional_context = {}
+            if hasattr(brand_elements, 'target_demographics'):
+                additional_context['target_audience'] = brand_elements.target_demographics
+            if hasattr(brand_elements, 'competitive_advantages'):
+                additional_context['competitive_advantages'] = brand_elements.competitive_advantages
+            if hasattr(brand_elements, 'brand_personality'):
+                additional_context['brand_personality'] = brand_elements.brand_personality
+                
+            universal_intelligence = self.universal_brand_generator.analyze_brand_deeply(
+                brand_name, company_description, additional_context
+            )
+        except Exception as e:
+            print(f"Universal brand intelligence unavailable for {brand_name}, using standard approach: {e}")
+        
+        # Build enhanced strategic brand intelligence section
+        if universal_intelligence:
+            brand_intelligence_section = f"""
+        **DEEP UNIVERSAL BRAND INTELLIGENCE:**
+        • Brand Name: {universal_intelligence.brand_name}
+        • Business Type: {universal_intelligence.business_type}
+        • Industry Category: {universal_intelligence.industry_category}
+        • Authentic Brand Personality: {', '.join(universal_intelligence.brand_essence.get('authentic_personality', ['professional']))}
+        • Core Values Demonstrated: {', '.join(universal_intelligence.brand_essence.get('core_values_demonstrated', ['quality']))}
+        • Brand Voice Characteristics: {universal_intelligence.brand_essence.get('brand_voice_characteristics', 'professional and trustworthy')}
+        • Primary Customer Profile: {universal_intelligence.customer_profile.get('primary_customer_profile', 'professionals')}
+        • Customer Motivations: {universal_intelligence.customer_profile.get('customer_motivations', 'quality solutions')}
+        • Unique Value Delivery: {universal_intelligence.value_architecture.get('unique_value_delivery', 'trusted solutions')}
+        • Emotional Territory: {universal_intelligence.brand_essence.get('emotional_territory', 'trust and confidence')}
+        • Competitive Differentiation: {universal_intelligence.value_architecture.get('competitive_differentiation', 'market leadership')}
+        • Authenticity Markers: {', '.join(universal_intelligence.authenticity_markers[:3])}
+        • Creative Opportunities: {', '.join(universal_intelligence.creative_opportunities[:3])}
+        
+        **AVOID THESE CREATIVE MISMATCHES:**
+        - Tech innovation focus if brand is not technology-focused
+        - Holographic/digital elements unless brand is actually tech-focused
+        - Generic corporate settings - use industry-appropriate environments
+        - One-size-fits-all approaches - customize to actual brand essence"""
+        else:
+            brand_intelligence_section = f"""
+        **STRATEGIC BRAND INTELLIGENCE:**
+        • Primary Brand: {brand_elements.brand_name}
+        • Core Business: {brand_elements.industry if hasattr(brand_elements, 'industry') else brand_elements.niche.value}
+        • Key Differentiators: {brand_elements.key_benefits if hasattr(brand_elements, 'key_benefits') else 'Premium quality and innovation'}
+        • Competitive Edge: {brand_elements.competitive_advantages if hasattr(brand_elements, 'competitive_advantages') else 'Market leadership and excellence'}
+        • Brand DNA: {brand_elements.brand_personality if hasattr(brand_elements, 'brand_personality') else 'Professional, trustworthy, innovative'}
+        • Emotional Drivers: {brand_elements.emotional_triggers if hasattr(brand_elements, 'emotional_triggers') else 'Aspiration, success, transformation'}
+        • Target Psychographics: {brand_elements.target_demographics if hasattr(brand_elements, 'target_demographics') else 'Achievement-oriented professionals'}"""
+        
         prompt = f"""
         You are an award-winning Executive Creative Director at a top-tier global advertising agency (think Wieden+Kennedy, BBDO, Ogilvy level). You've created iconic campaigns for BMW, Coca-Cola, Apple, and Nike. Your expertise spans consumer psychology, cinematic storytelling, and cutting-edge video production.
 
@@ -755,14 +853,7 @@ class NichePromptTemplateEngine:
         Duration: {duration} seconds of pure cinematic excellence
         Production Budget: $500K+ equivalent quality
 
-        **STRATEGIC BRAND INTELLIGENCE:**
-        • Primary Brand: {brand_elements.brand_name}
-        • Core Business: {brand_elements.industry if hasattr(brand_elements, 'industry') else brand_elements.niche.value}
-        • Key Differentiators: {brand_elements.key_benefits if hasattr(brand_elements, 'key_benefits') else 'Premium quality and innovation'}
-        • Competitive Edge: {brand_elements.competitive_advantages if hasattr(brand_elements, 'competitive_advantages') else 'Market leadership and excellence'}
-        • Brand DNA: {brand_elements.brand_personality if hasattr(brand_elements, 'brand_personality') else 'Professional, trustworthy, innovative'}
-        • Emotional Drivers: {brand_elements.emotional_triggers if hasattr(brand_elements, 'emotional_triggers') else 'Aspiration, success, transformation'}
-        • Target Psychographics: {brand_elements.target_demographics if hasattr(brand_elements, 'target_demographics') else 'Achievement-oriented professionals'}
+        {brand_intelligence_section}
 
         **ADVANCED CREATIVE STRATEGY:**
 
@@ -797,6 +888,25 @@ class NichePromptTemplateEngine:
 
         **Visual Concept Requirements:**
         Create a mini-masterpiece that could win Cannes Lions. Think Denis Villeneuve directing a luxury brand commercial. Every frame should justify the production budget through visual sophistication, authentic human truth, and brand-story integration.
+
+        **SCENE DEPTH & VARIETY MANDATE:**
+        - **Environmental Storytelling**: Use locations as active narrative elements, not just backdrops
+        - **Multi-Layer Compositions**: Foreground action, midground context, background atmosphere 
+        - **Product/Service Integration**: Show functionality in authentic contexts beyond person demonstrations
+        - **Macro/Micro Details**: Close-ups of textures, materials, processes that reveal quality/craftsmanship
+        - **Symbolic Visual Elements**: Abstract concepts made tangible through objects, lighting, movement
+        - **Process Visualization**: Show behind-the-scenes, creation, transformation, or methodology
+        - **Atmospheric Depth**: Weather, time of day, seasonal elements that enhance narrative mood
+        - **Technical Demonstrations**: Equipment, tools, systems working in sophisticated ways
+        - **Spatial Relationships**: Architecture, geometry, scale that reinforces brand positioning
+        - **Temporal Layering**: Before/after states, progression sequences, time-lapse elements
+
+        **AVOID OVERDEPENDENCE ON:**
+        - Generic person-talking-to-camera shots
+        - Basic product-in-hand demonstrations  
+        - Standard office/meeting room settings
+        - Predictable lifestyle poses
+        - Surface-level human interactions
 
         **Luma AI Optimization (280 chars max):**
         Luma excels with: detailed environmental descriptions, specific lighting conditions, precise camera movements, emotional character states, realistic physics, atmospheric elements. Use technical cinematography language.
@@ -857,7 +967,7 @@ class NichePromptTemplateEngine:
                 'script_line': scene_data['script_line'],
                 'character_description': scene_data['character_description'],
                 'creative_focus': focus,
-                'logo_integration': self._generate_logo_integration(logo_info, scene_type) if logo_info else "",
+                'logo_integration': "",
                 'music_cues': scene_data['music_cues'],
                 'audio_cues': scene_data['audio_cues'],
                 'brand_alignment': f"Enhanced {brand_elements.brand_name} brand integration with professional positioning",
@@ -892,11 +1002,17 @@ class NichePromptTemplateEngine:
         lighting_enhancement = creative_style.get('lighting_enhancement', 'professional lighting')
         atmosphere_enhancement = creative_style.get('atmosphere_enhancement', 'confident')
         
-        # Generate logo-based enhancements
-        logo_enhancement = self._generate_logo_based_enhancement(brand_elements, scene_type)
+        # Logo functionality removed
+        logo_enhancement = {
+            'color_environment': 'professional branded environment',
+            'brand_style': 'consistent brand styling',
+            'lighting_style': 'professional commercial lighting',
+            'font_style': 'clean professional typography',
+            'visual_consistency': 'brand-aligned visual elements'
+        }
         
-        # Integrate logo information if provided
-        logo_integration = self._generate_logo_integration(logo_info, scene_type) if logo_info else ""
+        # Logo integration removed
+        logo_integration = ""
         
         # Build LUXURY CINEMATIC COMMERCIAL visual concept (BMW/Coca-Cola level)
         # Advanced cinematography elements for premium brand commercials
@@ -926,9 +1042,13 @@ class NichePromptTemplateEngine:
         selected_camera = random.choice(camera_techniques)
         selected_lighting = random.choice(lighting_styles)
         
+        # Safely get scene settings with fallback
+        scene_settings = template.get('scene_settings', ['professional business environment', 'modern workspace', 'brand showcase setting'])
+        first_setting = scene_settings[0] if scene_settings else 'professional business environment'
+        
         visual_concept = (
             f"A {creative_style.get('visual_enhancement', 'professional')} and {atmosphere_enhancement} cinematic ad for {brand_elements.brand_name}, a {brand_elements.niche.value} company. "
-            f"The scene features a {character_description} in a {template['scene_settings'][0]}. "
+            f"The scene features a {character_description} in a {first_setting}. "
             f"The visual style is {template['visual_style']} with {selected_lighting} and {selected_camera}. "
             f"The ad should convey a sense of {brand_elements.brand_personality.get('primary', 'trust')} and {brand_elements.emotional_triggers[0] if brand_elements.emotional_triggers else 'excitement'}."
             f"{logo_integration}"
@@ -963,31 +1083,6 @@ class NichePromptTemplateEngine:
             'hyperrealistic_elements': f"authentic_{atmosphere_enhancement}_expressions_with_{visual_enhancement}_cinematography"
         }
     
-    def _generate_logo_integration(self, logo_info: Dict[str, Any], scene_type: str) -> str:
-        """Generate specific logo integration instructions for scenes."""
-        if not logo_info:
-            return ""
-        
-        position = logo_info.get('position', 'top-right')
-        size = logo_info.get('size', 'medium')
-        opacity = logo_info.get('opacity', 0.9)
-        
-        integration_templates = {
-            'problem_hook': f"subtle {size} logo overlay at {position} with {opacity} opacity during problem introduction",
-            'solution_reveal': f"prominent {size} logo integration at {position} during brand solution reveal",
-            'results_cta': f"strong {size} logo presence at {position} with clear brand call-to-action",
-            'transformation_before': f"minimal {size} logo at {position} maintaining scene focus",
-            'transformation_process': f"growing {size} logo presence at {position} as transformation occurs",
-            'transformation_after': f"confident {size} logo display at {position} showcasing results",
-            'testimonial_intro': f"professional {size} logo at {position} during customer introduction",
-            'testimonial_experience': f"integrated {size} logo at {position} during positive experience",
-            'testimonial_recommendation': f"prominent {size} logo at {position} with recommendation",
-            'showcase_intro': f"premium {size} logo presentation at {position} for brand introduction",
-            'showcase_demo': f"feature-integrated {size} logo at {position} during demonstration",
-            'showcase_impact': f"impactful {size} logo finale at {position} for maximum brand impact"
-        }
-        
-        return integration_templates.get(scene_type, f"professional {size} logo overlay at {position}")
     
     def _generate_scene_script(self, scene_type: str, brand_elements: BrandElements, focus: str) -> str:
         """Generate luxury commercial narratives matching BMW/Coca-Cola quality using GPT-4o."""
@@ -1088,13 +1183,20 @@ class NichePromptTemplateEngine:
         # Extract brand-specific visual elements
         brand_name = brand_elements.brand_name
         visual_style = niche_template['visual_style']
-        settings = niche_template['scene_settings'][0]  # First setting for hook
+        scene_settings = niche_template.get('scene_settings', ['professional environment', 'modern workspace', 'brand showcase'])
+        settings = scene_settings[0] if scene_settings else 'professional environment'  # First setting for hook
         
         # Create hyperrealistic character-driven opening
         character_description = self._generate_character_for_niche(brand_elements.niche)
         
-        # Add logo-based visual consistency if available
-        logo_enhancement = self._generate_logo_based_enhancement(brand_elements, 'hook')
+        # Logo functionality removed - using default enhancement
+        logo_enhancement = {
+            'color_environment': 'professional branded environment',
+            'brand_style': 'consistent brand styling',
+            'lighting_style': 'professional commercial lighting',
+            'font_style': 'clean professional typography',
+            'visual_consistency': 'brand-aligned visual elements'
+        }
         
         # Build hyperrealistic visual concept with logo consistency
         visual_concept = (
@@ -1145,7 +1247,8 @@ class NichePromptTemplateEngine:
         
         brand_name = brand_elements.brand_name
         visual_style = niche_template['visual_style']
-        settings = niche_template['scene_settings'][1]  # Second setting for problem/solution
+        scene_settings = niche_template.get('scene_settings', ['professional environment', 'modern workspace', 'brand showcase'])
+        settings = scene_settings[1] if len(scene_settings) > 1 else scene_settings[0] if scene_settings else 'modern workspace'  # Second setting for problem/solution
         
         # Create same character continuity from hook scene
         character_description = self._generate_character_for_niche(brand_elements.niche)
@@ -1153,8 +1256,14 @@ class NichePromptTemplateEngine:
         # Extract key benefit for solution
         primary_benefit = brand_elements.key_benefits[0] if brand_elements.key_benefits else "enhanced efficiency"
         
-        # Add logo-based visual consistency
-        logo_enhancement = self._generate_logo_based_enhancement(brand_elements, 'problem_solution')
+        # Logo functionality removed - using default enhancement
+        logo_enhancement = {
+            'color_environment': 'professional branded environment',
+            'brand_style': 'consistent brand styling',
+            'lighting_style': 'professional commercial lighting',
+            'font_style': 'clean professional typography',
+            'visual_consistency': 'brand-aligned visual elements'
+        }
         
         # Build hyperrealistic transformation scene with logo consistency
         visual_concept = (
@@ -1208,7 +1317,8 @@ class NichePromptTemplateEngine:
         
         brand_name = brand_elements.brand_name
         visual_style = niche_template['visual_style']
-        settings = niche_template['scene_settings'][2]  # Third setting for CTA
+        scene_settings = niche_template.get('scene_settings', ['professional environment', 'modern workspace', 'brand showcase'])
+        settings = scene_settings[2] if len(scene_settings) > 2 else scene_settings[-1] if scene_settings else 'brand showcase'  # Third setting for CTA
         
         # Maintain character continuity
         character_description = self._generate_character_for_niche(brand_elements.niche)
@@ -1216,8 +1326,14 @@ class NichePromptTemplateEngine:
         # Extract competitive advantage
         advantage = brand_elements.competitive_advantages[0] if brand_elements.competitive_advantages else "proven results"
         
-        # Add logo-based visual consistency
-        logo_enhancement = self._generate_logo_based_enhancement(brand_elements, 'call_to_action')
+        # Logo functionality removed - using default enhancement
+        logo_enhancement = {
+            'color_environment': 'professional branded environment',
+            'brand_style': 'consistent brand styling',
+            'lighting_style': 'professional commercial lighting',
+            'font_style': 'clean professional typography',
+            'visual_consistency': 'brand-aligned visual elements'
+        }
         
         # Build hyperrealistic conclusion with logo-consistent satisfaction
         visual_concept = (
@@ -1365,24 +1481,24 @@ class NichePromptTemplateEngine:
         brand_name = brand_elements.brand_name
         niche = brand_elements.niche.value
         
-        # Professional commercial cinematography elements for luxury brand feel
+        # Hyperrealistic cinematography elements focused on natural quality
         cinematic_elements = [
-            "cinematic commercial cinematography with dynamic camera movement",
-            "luxury brand aesthetic with premium lighting design", 
-            "professional actor performance with authentic brand interaction",
-            "high-end production value with color grading",
-            "commercial-grade visual storytelling with product integration",
-            "sophisticated brand presentation with lifestyle context"
+            "hyperrealistic cinematography with smooth natural camera movements and perfect motion blur",
+            "photorealistic lighting with accurate shadows and natural reflections", 
+            "authentic human expressions with natural facial micro-movements and realistic body language",
+            "seamless temporal consistency with no morphing or distortion artifacts",
+            "fluid character movements with accurate physics and natural walking patterns",
+            "realistic environmental interactions with proper lighting response"
         ]
         
-        # Visual enhancement elements for luxury commercial feel
+        # Visual quality enhancement elements for hyperrealistic results
         luxury_visuals = [
-            "dramatic depth of field with premium bokeh effects",
-            "golden hour cinematography with soft directional lighting",
-            "sleek modern environment with sophisticated design elements",
-            "clean minimalist composition with brand-focused framing",
-            "elegant camera movements with smooth transitions",
-            "commercial-grade color palette with brand consistency"
+            "ultra-high definition detail with perfect edge definition and skin texture accuracy",
+            "natural color grading with accurate skin tones and realistic material properties",
+            "smooth motion interpolation with 60fps quality and no frame stuttering",
+            "photorealistic human features with natural pore detail and authentic expressions",
+            "consistent character appearance throughout with no face or body morphing",
+            "cinema-grade visual fidelity with professional color accuracy and contrast"
         ]
         
         # Select random elements for uniqueness (like force_unique in Luma provider)
@@ -1390,12 +1506,12 @@ class NichePromptTemplateEngine:
         selected_cinematic = random.choice(cinematic_elements)
         selected_luxury = random.choice(luxury_visuals)
         
-        # Build luxury brand commercial prompt 
+        # Build hyperrealistic quality-focused prompt 
         enhanced_prompt = (
-            f"LUXURY COMMERCIAL: {core_character} featuring {brand_name} {niche}, "
+            f"HYPERREALISTIC: {core_character} featuring {brand_name} {niche}, "
             f"{selected_cinematic}, {selected_luxury}, "
-            f"professional brand integration, premium lifestyle setting, "
-            f"8K cinema quality, sophisticated lighting, commercial excellence"
+            f"natural human movement with realistic physics, no artificial motion artifacts, "
+            f"8K hyperrealistic quality with perfect temporal consistency"
         )
         
         # Optimal length for Luma Dream Machine (250 chars for best quality/cost ratio)
@@ -1419,78 +1535,13 @@ class NichePromptTemplateEngine:
         # Limit to cost-optimized length (extended slightly to include no-text instruction)
         return story_prompt[:130]
     
-    def _generate_logo_based_enhancement(self, brand_elements: BrandElements, scene_type: str) -> Dict[str, str]:
-        """Generate logo-based visual enhancements for scenes."""
-        
-        # Default professional enhancement if no logo
-        default_enhancement = {
-            'color_environment': 'professional branded environment',
-            'brand_style': 'consistent brand styling',
-            'lighting_style': 'professional commercial lighting',
-            'font_style': 'clean professional typography',
-            'visual_consistency': 'brand-aligned visual elements'
-        }
-        
-        # Return logo-based enhancement if available
-        if brand_elements.logo_analysis:
-            logo_analysis = brand_elements.logo_analysis
-            
-            # Color-based environment
-            primary_color = logo_analysis.brand_colors.primary_color
-            color_temp = logo_analysis.brand_colors.color_temperature
-            color_environment = f"{color_temp} color scheme with {primary_color} brand accents"
-            
-            # Brand style consistency
-            logo_style = logo_analysis.logo_style.value.replace('_', ' ')
-            brand_style = f"{logo_style} brand styling with {logo_analysis.visual_weight} visual weight"
-            
-            # Lighting based on logo mood
-            mood_lighting = {
-                'professional': 'professional commercial lighting',
-                'luxury': 'elegant premium lighting with soft highlights',
-                'tech': 'modern crisp lighting with clean shadows', 
-                'creative': 'artistic dynamic lighting with visual interest',
-                'friendly': 'warm inviting lighting with soft atmosphere'
-            }
-            
-            logo_mood_key = logo_analysis.brand_mood.split('_')[0]
-            lighting_style = mood_lighting.get(logo_mood_key, 'professional commercial lighting')
-            
-            # Font style from logo
-            font_style = logo_analysis.suggested_font_style.value.replace('_', ' ')
-            
-            return {
-                'color_environment': color_environment,
-                'brand_style': brand_style, 
-                'lighting_style': lighting_style,
-                'font_style': font_style,
-                'visual_consistency': f"{logo_style} brand visual consistency"
-            }
-        
-        return default_enhancement
     
-    def _enhance_prompt_with_logo_colors(self, base_prompt: str, brand_elements: BrandElements) -> str:
-        """Enhance prompt with specific logo colors for better brand accuracy."""
-        
-        if brand_elements.brand_colors and len(brand_elements.brand_colors) > 0:
-            primary_color = brand_elements.brand_colors[0]
-            
-            # Add color specification to prompt
-            color_enhancement = f"brand colors: {primary_color}"
-            if len(brand_elements.brand_colors) > 1:
-                secondary_color = brand_elements.brand_colors[1]
-                color_enhancement += f" and {secondary_color}"
-            
-            enhanced_prompt = f"{base_prompt}, {color_enhancement} color scheme"
-            return enhanced_prompt
-        
-        return base_prompt
     
     def generate_audio_architecture(
         self,
         brand_elements: BrandElements,
         scenes: List[Dict[str, Any]],
-        total_duration: int = 30
+        total_duration: int = 18
     ) -> Dict[str, Any]:
         """Generate comprehensive audio architecture for the video."""
         

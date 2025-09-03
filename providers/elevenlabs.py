@@ -252,24 +252,21 @@ class ElevenLabsProvider(AudioGenerator):
             # Concatenate all segments
             concat_filter = f"{''.join(filter_parts)}concat=n={len(audio_segments)}:v=0:a=1[concatenated]"
             
-            # Adjust speed to fit target duration
-            speed_factor = total_duration / target_duration
+            # Keep audio at normal 1x speed - pad with silence or extend video instead
+            # Never change audio speed to maintain natural voice quality
             
-            # For voice audio, we should never slow it down below 1.0x as it sounds unnatural
-            # Instead, we should pad with silence or use other techniques
-            if speed_factor < 1.0:
-                # If audio is shorter than target, pad with silence instead of slowing down
-                # This preserves natural voice speed
+            if total_duration < target_duration:
+                # If audio is shorter than target, pad with silence at the end
                 silence_duration = target_duration - total_duration
                 speed_filter = f"[concatenated]apad=pad_dur={silence_duration:.3f}[adjusted]"
-            elif speed_factor > 100.0:
-                # If audio is too long, speed it up to maximum
-                clamped_speed = 100.0
-                speed_filter = f"[concatenated]atempo={clamped_speed:.3f}[adjusted]"
+                print(f"Audio is shorter than target - padding with {silence_duration:.1f}s of silence")
+            elif total_duration > target_duration:
+                # If audio is longer than target, truncate to target duration
+                speed_filter = f"[concatenated]atrim=start=0:end={target_duration:.3f}[adjusted]"
+                print(f"Audio is longer than target - truncating to {target_duration:.1f}s")
             else:
-                # Normal case - speed up if needed (but not slow down)
-                clamped_speed = max(1.0, speed_factor)  # Ensure we don't slow down voice
-                speed_filter = f"[concatenated]atempo={clamped_speed:.3f}[adjusted]"
+                # Audio duration matches target - no adjustment needed
+                speed_filter = f"[concatenated]anull[adjusted]"
             
             # Add fade out at the end
             fade_filter = f"[adjusted]afade=out:st={target_duration-1:.1f}:d=1[final]"
@@ -288,7 +285,7 @@ class ElevenLabsProvider(AudioGenerator):
             ]
             
             print(f"Creating unified {target_duration}s audio from {len(audio_segments)} segments...")
-            print(f"Audio duration: total={total_duration:.3f}s, target={target_duration:.3f}s (keeping normal voice speed)")
+            print(f"Audio duration: total={total_duration:.3f}s, target={target_duration:.3f}s (maintaining 1x speed)")
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
@@ -338,8 +335,8 @@ class ElevenLabsProvider(AudioGenerator):
                 return False
             
             # Estimate timing based on word length and speech rate
-            # Average speech rate: 150 words per minute = 2.5 words per second
-            speech_rate = 2.2  # Slightly slower for better clarity
+            # Professional speech rate: 2.3 words per second (standardized across system)
+            speech_rate = 2.3  # Consistent with planning service
             
             alignment_data = {
                 'text': text,

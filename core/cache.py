@@ -36,33 +36,13 @@ class CacheKey:
         hash_obj = hashlib.sha256(content.encode())
         return f"brand_analysis:{hash_obj.hexdigest()[:16]}"
     
-    @staticmethod
-    def logo_analysis(logo_data: Union[str, bytes]) -> str:
-        """Generate cache key for logo analysis."""
-        if isinstance(logo_data, str):
-            # For file paths, use path + modification time
-            try:
-                path = Path(logo_data)
-                if path.exists():
-                    mtime = path.stat().st_mtime
-                    content = f"{logo_data}:{mtime}"
-                else:
-                    content = logo_data
-            except:
-                content = logo_data
-        else:
-            # For binary data, hash it
-            content = str(logo_data)
-        
-        hash_obj = hashlib.sha256(content.encode() if isinstance(content, str) else content)
-        return f"logo_analysis:{hash_obj.hexdigest()[:16]}"
     
     @staticmethod
-    def video_blueprint(brand_info: Dict[str, Any], service_type: str, has_logo: bool) -> str:
+    def video_blueprint(brand_info: Dict[str, Any], service_type: str) -> str:
         """Generate cache key for video blueprint."""
         # Create deterministic string from brand info
         sorted_items = sorted(brand_info.items())
-        content = f"{json.dumps(sorted_items)}:{service_type}:{has_logo}"
+        content = f"{json.dumps(sorted_items)}:{service_type}"
         hash_obj = hashlib.sha256(content.encode())
         return f"video_blueprint:{hash_obj.hexdigest()[:16]}"
     
@@ -557,38 +537,6 @@ def cache_brand_analysis(func: Callable) -> Callable:
     
     return wrapper
 
-def cache_logo_analysis(func: Callable) -> Callable:
-    """Specific caching decorator for logo analysis."""
-    
-    @wraps(func)
-    def wrapper(self, logo_data: Union[str, bytes], *args, **kwargs):
-        # Generate cache key
-        cache_key = CacheKey.logo_analysis(logo_data)
-        
-        # Try cache first  
-        cached_result = cache.get(cache_key)
-        if cached_result is not None:
-            logger.info("Logo analysis cache HIT")
-            return cached_result
-        
-        # Execute analysis
-        start_time = time.time()
-        result = func(self, logo_data, *args, **kwargs)
-        execution_time = time.time() - start_time
-        
-        # Cache for 7 days
-        cache.set(cache_key, result, config.cache.logo_analysis_ttl_seconds)
-        
-        logger.info(
-            "Logo analysis completed and cached",
-            action="logo_analysis.cached",
-            execution_time_ms=execution_time * 1000,
-            cache_key=cache_key
-        )
-        
-        return result
-    
-    return wrapper
 
 # Global enhanced cache instance
 cache = CacheManager()

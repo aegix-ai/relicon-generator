@@ -35,41 +35,51 @@ class LumaProvider(VideoGenerator):
         else:
             scene_duration = 9
         
-        # Enhance prompt for cinematic quality if force_unique is True
+        # Enhance prompt for hyper-realistic professional promotional quality
         if force_unique:
-            # Modern commercial elements for Luma
+            # Hyperrealistic cinematography elements focused on natural movement and quality
             cinematic_elements = [
-                "professional commercial cinematography with dynamic product showcase",
-                "cinematic depth of field emphasizing product features and benefits",
-                "golden hour lighting creating premium product aesthetics",
-                "commercial-grade color grading highlighting brand identity",
-                "sleek modern commercial visual style with product focus",
-                "high-end product photography with lifestyle integration"
+                "hyperrealistic cinematography with smooth natural camera movements, no jitter or artificial motion artifacts",
+                "photorealistic lighting with accurate shadow casting and natural reflections, perfect exposure balance",
+                "cinematic depth of field with sharp focus transitions, natural bokeh effects, professional lens quality",
+                "fluid camera tracking with stabilized footage, organic movement patterns, no robotic or unnatural motion",
+                "realistic environmental lighting with proper color temperature, natural illumination consistency",
+                "seamless temporal coherence across frames, consistent visual quality with no morphing or distortion"
             ]
             
-            # Product demonstration and lifestyle elements
+            # Hyperrealistic technical elements focused on natural human behavior and physics
             technical_elements = [
-                "dynamic product demonstration with clear benefit visualization",
-                "smooth camera movements following product usage and workflow",
-                "macro details highlighting product quality and craftsmanship",
-                "lifestyle integration showing product in natural environments",
-                "before-and-after transformation sequences demonstrating results",
-                "premium commercial production values with modern aesthetics"
+                "natural human expressions and gestures with realistic facial micro-movements, authentic body language",
+                "accurate object physics with realistic material properties, proper weight and momentum simulation",
+                "consistent character appearance throughout with no face morphing or body distortions",
+                "realistic environmental interactions with proper lighting response and shadow dynamics",
+                "authentic muscle movement and natural walking patterns, no unnatural or robotic gestures",
+                "perfect temporal consistency with smooth motion interpolation, fluid character movements"
+            ]
+            
+            # Hyperrealistic quality modifiers focused on visual fidelity
+            quality_modifiers = [
+                "ultra-high definition 8K quality with perfect edge definition and zero compression artifacts",
+                "photorealistic human skin texture with accurate pore detail and natural color variation",
+                "flawless motion interpolation with smooth 60fps movement quality, no stuttering or frame drops",
+                "cinema-grade visual fidelity with professional color accuracy and natural contrast ratios",
+                "hyperrealistic material rendering with accurate surface properties and realistic wear patterns"
             ]
             
             import random
             selected_cinematic = random.choice(cinematic_elements)
             selected_technical = random.choice(technical_elements)
+            selected_quality = random.choice(quality_modifiers)
             
-            enhanced_prompt = f"{prompt}, {selected_cinematic}, {selected_technical}"
+            enhanced_prompt = f"{prompt}, {selected_cinematic}, {selected_technical}, {selected_quality}"
         else:
             enhanced_prompt = prompt
             
         payload = {
             "prompt": enhanced_prompt,
             "aspect_ratio": aspect_ratio,
-            "model": "ray-2",  # Highest quality model for cinematic results
-            "resolution": "720p",  # Cost-optimized resolution: 720p = $0.4 vs 1080p = $0.9 per 5s
+            "model": "ray-2",  # Project preference: best-quality Ray 2
+            "resolution": "720p",  # Project preference: 720p output
             "duration": f"{scene_duration}s"  # Dynamic duration based on target
         }
         
@@ -80,10 +90,46 @@ class LumaProvider(VideoGenerator):
         print(f"Starting Luma generation with prompt: {enhanced_prompt[:100]}...")
         print(f"Luma payload: {payload}")
         
-        response = requests.post(self.base_url, json=payload, headers=self.headers)
+        # Add connection timeout and retry logic for DNS resolution issues
+        max_connection_retries = 3
+        for connection_attempt in range(max_connection_retries):
+            try:
+                response = requests.post(
+                    self.base_url, 
+                    json=payload, 
+                    headers=self.headers,
+                    timeout=(10, 30)  # 10s connection timeout, 30s read timeout
+                )
+                break  # Success, exit retry loop
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as conn_error:
+                if connection_attempt < max_connection_retries - 1:
+                    wait_time = (connection_attempt + 1) * 2  # 2s, 4s, 6s
+                    print(f"🔄 Connection attempt {connection_attempt + 1} failed, retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    raise Exception(f"Connection failed after {max_connection_retries} attempts: {conn_error}")
         
         if response.status_code != 201:
-            raise Exception(f"Failed to create Luma generation: {response.status_code} - {response.text}")
+            error_text = response.text
+            # Check for specific error conditions
+            if response.status_code == 400:
+                try:
+                    error_data = response.json()
+                    detail = error_data.get("detail", "")
+                    if "Insufficient credits" in detail or "insufficient credits" in detail.lower():
+                        raise Exception(f"Insufficient credits in Luma account. Please add credits to continue. Details: {detail}")
+                    elif "rate limit" in detail.lower() or "too many requests" in detail.lower():
+                        raise Exception(f"Rate limit exceeded for Luma API. Please wait before retrying. Details: {detail}")
+                    else:
+                        raise Exception(f"Luma API validation error: {detail}")
+                except (ValueError, KeyError):
+                    pass
+            elif response.status_code == 429:
+                raise Exception("Rate limit exceeded for Luma API. Please wait before retrying.")
+            elif response.status_code == 402:
+                raise Exception("Payment required for Luma API. Please add credits to your account.")
+            
+            raise Exception(f"Failed to create Luma generation: {response.status_code} - {error_text}")
         
         generation_data = response.json()
         generation_id = generation_data.get("id")
@@ -108,7 +154,17 @@ class LumaProvider(VideoGenerator):
             attempt += 1
             
             status_url = f"{self.base_url}/{generation_id}"
-            status_response = requests.get(status_url, headers=self.headers)
+            
+            # Add connection retry for status checks too
+            try:
+                status_response = requests.get(
+                    status_url, 
+                    headers=self.headers,
+                    timeout=(5, 15)  # Shorter timeout for status checks
+                )
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as status_error:
+                print(f"🔄 Status check connection failed (attempt {attempt}): {status_error}")
+                continue  # Continue to next attempt
             
             if status_response.status_code != 200:
                 print(f"Warning: Luma status check failed: {status_response.status_code}")
@@ -132,6 +188,25 @@ class LumaProvider(VideoGenerator):
                 raise Exception(f"Luma video generation failed: {error_msg}")
         
         raise Exception(f"Luma video generation timed out after {max_attempts} attempts")
+    
+    def generate_professional_promotional_video(self, prompt: str, aspect_ratio: str = "9:16", 
+                                               image_url: Optional[str] = None, **kwargs) -> str:
+        """Generate video using Luma's best model with professional promotional quality enhancements."""
+        print(f"🎬 Generating professional promotional video with Luma ray-2 (best quality)")
+        print(f"📱 Resolution: 720p | Aspect Ratio: {aspect_ratio} | Model: ray-2 (best)")
+        
+        # Always use force_unique for professional promotional content
+        # Remove force_unique from kwargs to avoid duplicate parameter
+        kwargs_copy = kwargs.copy()
+        kwargs_copy.pop('force_unique', None)  # Remove if it exists
+        
+        return self.generate_video(
+            prompt=prompt,
+            aspect_ratio=aspect_ratio,
+            image_url=image_url,
+            force_unique=True,  # Always enhance for professional quality
+            **kwargs_copy
+        )
     
     def download_video(self, video_url: str, output_path: str, max_retries: int = 3) -> bool:
         """Download video from URL to local file."""

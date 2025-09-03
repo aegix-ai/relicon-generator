@@ -12,10 +12,32 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from contextvars import ContextVar
 
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+
 
 # Context variables for trace correlation
 trace_context: ContextVar[str] = ContextVar('trace_id', default='')
 transaction_context: ContextVar[str] = ContextVar('transaction_id', default='')
+
+
+class NumpyJSONEncoder(json.JSONEncoder):
+    """JSON encoder that handles numpy types."""
+    
+    def default(self, obj):
+        if NUMPY_AVAILABLE:
+            if isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, (np.integer, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float64)):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+        return super().default(obj)
 
 
 class StructuredJSONFormatter(logging.Formatter):
@@ -63,7 +85,7 @@ class StructuredJSONFormatter(logging.Formatter):
             log_entry["error.message"] = str(record.exc_info[1])
             log_entry["error.type"] = record.exc_info[0].__name__
         
-        return json.dumps(log_entry, separators=(',', ':'))
+        return json.dumps(log_entry, separators=(',', ':'), cls=NumpyJSONEncoder)
     
     def _get_severity(self, level: int) -> int:
         """Convert Python log level to numeric severity."""
