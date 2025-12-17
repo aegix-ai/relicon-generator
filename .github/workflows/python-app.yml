@@ -19,6 +19,8 @@ jobs:
 
     - name: Plarix - LLM Cost Estimator
       uses: aegix-ai/plarix-action@v0.3.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python 3.11
       uses: actions/setup-python@v3
