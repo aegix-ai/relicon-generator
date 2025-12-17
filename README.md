@@ -162,6 +162,7 @@ npm run dev
 * **Email:** [contact@relicon.co](mailto:contact@relicon.co)
 * **Twitter:** [@reliconAI](https://twitter.com/reliconAI)
 
+
 ---
 
 > © 2025 Relicon by Aegix Group. All rights reserved.
