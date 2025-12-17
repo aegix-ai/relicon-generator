@@ -17,11 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Plarix - LLM Cost Estimator
-      uses: aegix-ai/plarix-action@v0.4.0
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Set up Python 3.11
       uses: actions/setup-python@v3
       with:
@@ -53,3 +48,8 @@ jobs:
         else
           echo "⚠️ No API keys - skipping enhanced tests"
         fi
+
+    - name: Plarix - LLM Cost Estimator
+      uses: aegix-ai/plarix-action@v0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
